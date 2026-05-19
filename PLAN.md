@@ -52,6 +52,7 @@
 - Keep authenticated user display and sign out.
 
 ## Milestone 3: Folder Workflow
+- Status: server actions and UI implemented; browser login workflow still needs manual smoke testing.
 - Create folders.
 - Rename folders.
 - Select folders as the primary navigation model.

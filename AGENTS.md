@@ -1,13 +1,15 @@
 # Filebucket
 
 ## Git workflow
-- Create and work in new branch for every new feature.
-- When done implementing, commit and merge with the main branch.
-- Always pull main branch to check for changes before pushing to it.
-- Use `git pull --rebase` first, if there are conflicts, then use `git pull` and resolve them.
 
+- Create a new branch for every new feature or implementation slice.
+- Keep `main` stable and merge feature branches back into `main` when done.
+- Before merging or pushing, update from `main` with `git pull --rebase origin main`.
+- If rebase conflicts happen, resolve them, stage the fixes, then run `git rebase --continue`.
+- Do not commit `.env` or other secrets.
 
 ## Product Scope
+
 - Personal-first hosted file-and-note vault.
 - Login required; no public signup for MVP.
 - Markdown notes are the primary content.
@@ -19,6 +21,7 @@
 - Keep collaboration, sharing, comments, backlinks, teams, and block-editor features out of scope unless explicitly requested.
 
 ## Tech Stack
+
 - Next.js App Router for UI, route handlers, and server actions.
 - TypeScript, Tailwind CSS, and shadcn-style UI primitives.
 - Auth.js/NextAuth for authentication.
@@ -28,8 +31,10 @@
 - Vercel is the intended app host.
 
 ## Project Structure
+
 - `app/`: routes, layouts, route handlers, and server actions.
 - `app/page.tsx`: current authenticated home/dashboard screen.
+- `app/folders/`: folder workflow server actions.
 - `app/login/`: custom login page and login/logout server actions.
 - `app/api/auth/[...nextauth]/route.ts`: Auth.js route handler.
 - `components/ui/`: reusable shadcn-style UI primitives.
@@ -40,6 +45,7 @@
 - `types/`: local TypeScript module augmentation.
 
 ## Commands
+
 - Use npm with the checked-in `package-lock.json`.
 - `npm run dev`: start local Next.js development server.
 - `npm run build`: production build and type/build validation.
@@ -51,6 +57,7 @@
 - There is no `npm test` script yet; add one only when introducing a test framework.
 
 ## Environment
+
 - Required for app/runtime work:
   - `DATABASE_URL`
   - `AUTH_SECRET`
@@ -65,6 +72,7 @@
   - `R2_PUBLIC_BASE_URL`
 
 ## Coding Style
+
 - Use TypeScript, React function components, and strict typing.
 - Prefer the `@/` import alias for local imports.
 - Keep shadcn-style primitive filenames lowercase, for example `components/ui/button.tsx`.
@@ -74,6 +82,7 @@
 - Keep edits scoped; avoid unrelated refactors.
 
 ## Auth And Data Notes
+
 - Use `auth()`, `signIn()`, and `signOut()` from `@/auth`.
 - Use `getSession()` or `requireSession()` from `lib/auth.ts` inside app code.
 - Credentials login uses hashed passwords stored on `User.passwordHash`.
@@ -82,6 +91,7 @@
 - Run Prisma validation/generation after schema changes.
 
 ## Verification
+
 - For normal code changes, run `npm run lint`.
 - For auth, database, route, or build-sensitive changes, also run `npm run build`.
 - For Prisma schema changes, run `npm run prisma:generate`.
