@@ -16,7 +16,7 @@
 - PostgreSQL stores users, folders, notes, tags, trash state, media metadata, and backup/export metadata.
 
 ## Milestone 1: Auth And Database Foundation
-- Status: started.
+- Status: code foundation added; Supabase migration and admin seed completed. Login smoke test still needs browser verification.
 - Add Prisma, Prisma Client, Auth.js, Prisma adapter, validation, and password hashing dependencies.
 - Add Prisma schema for Auth.js models:
   - `User`
@@ -42,6 +42,7 @@
 - Validate with lint, build, Prisma generation, migration, seed, login, logout, and protected-route smoke tests.
 
 ## Milestone 2: Real Vault Shell
+- Status: static authenticated shell implemented; real folder/note data wiring belongs to the next milestones.
 - Replace the placeholder dashboard.
 - Build a three-pane personal vault layout:
   - left folder side panel
