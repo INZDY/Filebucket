@@ -1,21 +1,37 @@
 "use server";
 
+import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 
-import { authenticate, clearSession } from "@/lib/auth";
+import { signIn, signOut } from "@/auth";
 
 export async function loginAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
 
-  if (!email || !password || !(await authenticate(email, password))) {
+  if (!email || !password) {
     redirect("/login?error=invalid");
+  }
+
+  try {
+    await signIn("credentials", {
+      email,
+      password,
+      redirectTo: "/",
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      redirect("/login?error=invalid");
+    }
+
+    throw error;
   }
 
   redirect("/");
 }
 
 export async function logoutAction() {
-  await clearSession();
-  redirect("/login");
+  await signOut({
+    redirectTo: "/login",
+  });
 }

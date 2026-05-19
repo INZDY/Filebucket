@@ -1,38 +1,81 @@
-# Repository Guidelines
+# Filebucket
 
-## Project Structure & Module Organization
+## Product Scope
+- Personal-first hosted file-and-note vault.
+- Login required; no public signup for MVP.
+- Markdown notes are the primary content.
+- Files are supporting media and attachments, especially images/audio/video.
+- Folders are the main organization model; tags are secondary filters.
+- Opening an item should immediately show its content.
+- Use soft delete with trash/restore.
+- Prioritize filename/title search before full-text note search.
+- Keep collaboration, sharing, comments, backlinks, teams, and block-editor features out of scope unless explicitly requested.
 
-This is a private Next.js App Router project for Filebucket. Application routes and layouts live in `app/`; the current home screen is `app/page.tsx`, with global styles in `app/globals.css`. Reusable UI primitives are in `components/ui/`, and shared helpers live in `lib/`, such as `lib/utils.ts`. Root configuration includes `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, `tailwind.config.ts`, and `components.json`.
+## Tech Stack
+- Next.js App Router for UI, route handlers, and server actions.
+- TypeScript, Tailwind CSS, and shadcn-style UI primitives.
+- Auth.js/NextAuth for authentication.
+- Prisma with PostgreSQL for relational data.
+- Supabase PostgreSQL is the intended hosted database.
+- Cloudflare R2 is the intended media blob store.
+- Vercel is the intended app host.
 
-No dedicated `tests/` or `public/` asset directory exists yet. Add them only when there is a concrete need, and keep assets referenced by Next.js conventions.
+## Project Structure
+- `app/`: routes, layouts, route handlers, and server actions.
+- `app/page.tsx`: current authenticated home/dashboard screen.
+- `app/login/`: custom login page and login/logout server actions.
+- `app/api/auth/[...nextauth]/route.ts`: Auth.js route handler.
+- `components/ui/`: reusable shadcn-style UI primitives.
+- `lib/`: shared helpers such as auth/session wrappers, Prisma client, and utilities.
+- `prisma/schema.prisma`: database schema.
+- `prisma/migrations/`: checked-in Prisma migrations.
+- `prisma/seed.mjs`: admin-user seed script.
+- `types/`: local TypeScript module augmentation.
 
-## Build, Test, and Development Commands
+## Commands
+- Use npm with the checked-in `package-lock.json`.
+- `npm run dev`: start local Next.js development server.
+- `npm run build`: production build and type/build validation.
+- `npm run start`: serve a production build.
+- `npm run lint`: run ESLint.
+- `npm run prisma:generate`: generate Prisma Client.
+- `npm run prisma:migrate`: run Prisma migrations locally.
+- `npm run prisma:seed`: seed the configured admin user.
+- There is no `npm test` script yet; add one only when introducing a test framework.
 
-Use npm with the checked-in `package-lock.json`.
+## Environment
+- Required for app/runtime work:
+  - `DATABASE_URL`
+  - `AUTH_SECRET`
+  - `AUTH_URL`
+  - `FILEBUCKET_ADMIN_EMAIL`
+  - `FILEBUCKET_ADMIN_PASSWORD`
+- Future R2 variables should stay out of scope until media upload work starts:
+  - `R2_ACCOUNT_ID`
+  - `R2_ACCESS_KEY_ID`
+  - `R2_SECRET_ACCESS_KEY`
+  - `R2_BUCKET_NAME`
+  - `R2_PUBLIC_BASE_URL`
 
-- `npm run dev`: starts the local Next.js development server.
-- `npm run build`: creates a production build and catches type/build errors.
-- `npm run start`: serves the production build after `npm run build`.
-- `npm run lint`: runs ESLint over the repository.
+## Coding Style
+- Use TypeScript, React function components, and strict typing.
+- Prefer the `@/` import alias for local imports.
+- Keep shadcn-style primitive filenames lowercase, for example `components/ui/button.tsx`.
+- Use two-space indentation, semicolons, and double quotes.
+- Build styling with Tailwind utilities.
+- Use `cn()` from `lib/utils.ts` for conditional class merging.
+- Keep edits scoped; avoid unrelated refactors.
 
-There is currently no `npm test` script. Add one when introducing a test framework.
+## Auth And Data Notes
+- Use `auth()`, `signIn()`, and `signOut()` from `@/auth`.
+- Use `getSession()` or `requireSession()` from `lib/auth.ts` inside app code.
+- Credentials login uses hashed passwords stored on `User.passwordHash`.
+- Auth.js Credentials sessions are JWT-based; relational app data remains in PostgreSQL through Prisma.
+- Use the shared Prisma client from `lib/prisma.ts`.
+- Run Prisma validation/generation after schema changes.
 
-## Coding Style & Naming Conventions
-
-Use TypeScript, React function components, and strict typing. Prefer the `@/` import alias from `tsconfig.json` for local imports. Keep component filenames lowercase where they mirror the existing shadcn-style UI primitives, for example `components/ui/button.tsx`.
-
-Follow the existing formatting style: two-space indentation, semicolons, double quotes, and trailing commas only where surrounding code uses them. Build class names with Tailwind CSS utilities, and use `cn()` from `lib/utils.ts` for conditional class merging.
-
-## Testing Guidelines
-
-When tests are added, place unit tests next to the code or under a clear `tests/` directory, and name files `*.test.ts` or `*.test.tsx`. Prefer focused tests for shared helpers, stateful UI behavior, and future file/note operations. Until a test runner exists, validate changes with `npm run lint` and `npm run build`.
-
-## Commit & Pull Request Guidelines
-
-This repository has no commits yet, so no historical commit convention is established. Use short imperative messages such as `Add vault sidebar layout` or `Fix note search filter`.
-
-Pull requests should include a brief summary, validation steps run, and screenshots for UI changes. Link related issues or planning notes when available, and call out any new environment variables, storage assumptions, or migrations.
-
-## Agent-Specific Instructions
-
-Keep MVP work personal-first: hosted web app, login, Markdown notes as the primary content, folders first with tag filtering, direct item open behavior, trash/restore, and filename-first search. Avoid adding collaboration, sharing, backlinks, or block-editor features unless explicitly requested.
+## Verification
+- For normal code changes, run `npm run lint`.
+- For auth, database, route, or build-sensitive changes, also run `npm run build`.
+- For Prisma schema changes, run `npm run prisma:generate`.
+- Run migrations and seed only when a real `DATABASE_URL` is configured.
