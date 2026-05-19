@@ -1,5 +1,12 @@
 # Filebucket
 
+## Git workflow
+- Create and work in new branch for every new feature.
+- When done implementing, commit and merge with the main branch.
+- Always pull main branch to check for changes before pushing to it.
+- Use `git pull --rebase` first, if there are conflicts, then use `git pull` and resolve them.
+
+
 ## Product Scope
 - Personal-first hosted file-and-note vault.
 - Login required; no public signup for MVP.
