@@ -8,6 +8,20 @@
 - If rebase conflicts happen, resolve them, stage the fixes, then run `git rebase --continue`.
 - Do not commit `.env` or other secrets.
 
+## Milestone Execution Workflow
+
+- Use `PLAN.md` as the source of truth for milestone order, scope, and status.
+- At the start of each implementation cycle, read `PLAN.md`, this file, `git status --short`, and the current branch.
+- If the current milestone has uncommitted changes, verify and commit them before starting another milestone.
+- When starting a new milestone, create a dedicated `feature/<milestone-name>` branch unless already on the correct feature branch.
+- Implement only the next incomplete milestone from `PLAN.md`; keep edits scoped to that milestone.
+- Update the milestone status in `PLAN.md` after implementation.
+- During active development, verify with `npm run lint`.
+- Run `npm run build` before merge readiness or after risky changes such as dependencies, config, schema, auth, route handlers, or database code.
+- Commit each verified milestone with a concise milestone message.
+- Continue to the next milestone after a successful commit unless a stop condition applies.
+- Stop and ask for action if required secrets/config are missing, verification fails without a clear fix, browser/manual smoke testing is required, a destructive or data-risking operation is needed, or the implementation would expand MVP scope beyond `PLAN.md` or this file.
+
 ## Product Scope
 
 - Personal-first hosted file-and-note vault.
