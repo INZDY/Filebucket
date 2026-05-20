@@ -69,3 +69,77 @@ export async function updateNoteAction(noteId: string, title: string, body: stri
 
   revalidatePath("/");
 }
+
+export async function trashNoteAction(formData: FormData) {
+  const session = await requireSession();
+  const noteId = readId(formData, "noteId");
+  const folderId = readId(formData, "folderId");
+
+  if (!noteId) {
+    revalidatePath("/");
+    return;
+  }
+
+  await prisma.note.updateMany({
+    where: {
+      id: noteId,
+      userId: session.user.id,
+      deletedAt: null,
+      folder: {
+        is: {
+          deletedAt: null,
+        },
+      },
+    },
+    data: {
+      deletedAt: new Date(),
+    },
+  });
+
+  revalidatePath("/");
+  redirect(folderId ? `/?folder=${folderId}` : "/");
+}
+
+export async function restoreNoteAction(formData: FormData) {
+  const session = await requireSession();
+  const noteId = readId(formData, "noteId");
+
+  if (!noteId) {
+    revalidatePath("/");
+    return;
+  }
+
+  const note = await prisma.note.findFirst({
+    where: {
+      id: noteId,
+      userId: session.user.id,
+      deletedAt: { not: null },
+      folder: {
+        is: {
+          deletedAt: null,
+        },
+      },
+    },
+    select: {
+      id: true,
+      folderId: true,
+    },
+  });
+
+  if (!note) {
+    revalidatePath("/");
+    redirect("/?view=trash");
+  }
+
+  await prisma.note.update({
+    where: {
+      id: note.id,
+    },
+    data: {
+      deletedAt: null,
+    },
+  });
+
+  revalidatePath("/");
+  redirect(`/?folder=${note.folderId}&note=${note.id}`);
+}

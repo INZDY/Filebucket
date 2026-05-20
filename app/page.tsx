@@ -6,7 +6,6 @@ import {
   FileText,
   Folder,
   ImagePlus,
-  MoreHorizontal,
   PanelLeft,
   Plus,
   Search,
@@ -20,7 +19,11 @@ import {
 } from "@/app/folders/actions";
 import { FolderRow } from "@/app/folders/folder-row";
 import { logoutAction } from "@/app/login/actions";
-import { createNoteAction } from "@/app/notes/actions";
+import {
+  createNoteAction,
+  restoreNoteAction,
+  trashNoteAction,
+} from "@/app/notes/actions";
 import { NoteEditor } from "@/app/notes/note-editor";
 import {
   createTagAction,
@@ -60,7 +63,7 @@ export default async function Home({ searchParams }: HomeProps) {
   const activeTagSlug = String(params?.tag ?? "").trim();
   const isFilteredView = !isTrashView && Boolean(query || activeTagSlug);
 
-  const [folders, deletedFolders, tags] = await Promise.all([
+  const [folders, deletedFolders, deletedNotes, tags] = await Promise.all([
     prisma.folder.findMany({
       where: {
         userId: session.user.id,
@@ -82,6 +85,22 @@ export default async function Home({ searchParams }: HomeProps) {
       include: {
         _count: {
           select: { notes: true },
+        },
+      },
+    }),
+    prisma.note.findMany({
+      where: {
+        userId: session.user.id,
+        deletedAt: { not: null },
+      },
+      orderBy: [{ deletedAt: "desc" }, { title: "asc" }],
+      include: {
+        folder: {
+          select: {
+            id: true,
+            name: true,
+            deletedAt: true,
+          },
         },
       },
     }),
@@ -192,6 +211,7 @@ export default async function Home({ searchParams }: HomeProps) {
   }
 
   const returnTo = `/${currentPathParams.toString() ? `?${currentPathParams.toString()}` : ""}`;
+  const trashCount = deletedFolders.length + deletedNotes.length;
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -275,7 +295,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 <Link href="/?view=trash">
                   <ArchiveRestore className="h-4 w-4" />
                   <span className="flex-1 text-left">Trash</span>
-                  <span className="text-xs text-muted-foreground">{deletedFolders.length}</span>
+                  <span className="text-xs text-muted-foreground">{trashCount}</span>
                 </Link>
               </Button>
             </div>
@@ -288,7 +308,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 <div className="min-w-0">
                   <h2 className="truncate text-base font-semibold tracking-normal">{activeTitle}</h2>
                   <p className="text-sm text-muted-foreground">
-                    {isTrashView ? "Restore deleted folders" : "Notes and attachments"}
+                    {isTrashView ? "Restore deleted folders and notes" : "Notes and attachments"}
                   </p>
                 </div>
                 <form action={createNoteAction}>
@@ -348,30 +368,66 @@ export default async function Home({ searchParams }: HomeProps) {
 
             {isTrashView ? (
               <div className="divide-y">
-                {deletedFolders.length > 0 ? (
-                  deletedFolders.map((folder) => (
-                    <div key={folder.id} className="flex items-center gap-3 px-4 py-4">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
-                        <Trash2 className="h-4 w-4" />
+                {trashCount > 0 ? (
+                  <>
+                    {deletedFolders.map((folder) => (
+                      <div key={folder.id} className="flex items-center gap-3 px-4 py-4">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                          <Trash2 className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{folder.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Folder deleted {folder.deletedAt ? formatDate(folder.deletedAt) : "recently"}
+                          </p>
+                        </div>
+                        <form action={restoreFolderAction}>
+                          <input type="hidden" name="folderId" value={folder.id} />
+                          <Button variant="outline" size="sm" type="submit">
+                            Restore
+                          </Button>
+                        </form>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{folder.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Deleted {folder.deletedAt ? formatDate(folder.deletedAt) : "recently"}
-                        </p>
-                      </div>
-                      <form action={restoreFolderAction}>
-                        <input type="hidden" name="folderId" value={folder.id} />
-                        <Button variant="outline" size="sm" type="submit">
-                          Restore
-                        </Button>
-                      </form>
-                    </div>
-                  ))
+                    ))}
+                    {deletedNotes.map((note) => {
+                      const folderDeleted = Boolean(note.folder.deletedAt);
+
+                      return (
+                        <div key={note.id} className="flex items-center gap-3 px-4 py-4">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">{note.title}</p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              Note in {note.folder.name}
+                              {note.deletedAt ? ` deleted ${formatDate(note.deletedAt)}` : ""}
+                            </p>
+                            {folderDeleted ? (
+                              <p className="mt-1 text-xs text-amber-700">
+                                Restore the folder before restoring this note.
+                              </p>
+                            ) : null}
+                          </div>
+                          <form action={restoreNoteAction}>
+                            <input type="hidden" name="noteId" value={note.id} />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              type="submit"
+                              disabled={folderDeleted}
+                            >
+                              Restore
+                            </Button>
+                          </form>
+                        </div>
+                      );
+                    })}
+                  </>
                 ) : (
                   <div className="px-4 py-10 text-center">
                     <p className="text-sm font-medium">Trash is empty</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Deleted folders will appear here.</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Deleted folders and notes will appear here.</p>
                   </div>
                 )}
               </div>
@@ -384,7 +440,7 @@ export default async function Home({ searchParams }: HomeProps) {
                       className="flex gap-3 px-4 py-4 text-left transition-colors hover:bg-slate-50"
                       href={`/?folder=${folder.id}`}
                     >
-                      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
                         <Folder className="h-4 w-4" />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -498,9 +554,14 @@ export default async function Home({ searchParams }: HomeProps) {
                         <ImagePlus className="h-4 w-4" />
                         Insert image
                       </Button>
-                      <Button variant="outline" size="icon" aria-label="More note actions">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      <form action={trashNoteAction}>
+                        <input type="hidden" name="noteId" value={selectedNote.id} />
+                        <input type="hidden" name="folderId" value={selectedNote.folder.id} />
+                        <Button variant="outline" type="submit">
+                          <Trash2 className="h-4 w-4" />
+                          Move to trash
+                        </Button>
+                      </form>
                     </div>
                   </div>
 

@@ -79,6 +79,7 @@
 - Defer full-text note-body search unless requested later.
 
 ## Milestone 6: Trash And Restore
+- Status: Trash view, folder soft-delete/restore, note soft-delete/restore implemented; browser smoke test pending.
 - Add a Trash view.
 - Soft-delete folders and notes.
 - Restore deleted folders and notes.
