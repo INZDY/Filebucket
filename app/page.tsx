@@ -4,6 +4,7 @@ import {
   BookOpenText,
   Cloud,
   FileText,
+  Folder,
   ImagePlus,
   MoreHorizontal,
   PanelLeft,
@@ -21,6 +22,10 @@ import { FolderRow } from "@/app/folders/folder-row";
 import { logoutAction } from "@/app/login/actions";
 import { createNoteAction } from "@/app/notes/actions";
 import { NoteEditor } from "@/app/notes/note-editor";
+import {
+  createTagAction,
+  toggleNoteTagAction,
+} from "@/app/tags/actions";
 import { ResizableVault } from "@/app/vault/resizable-vault";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,13 +34,13 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
 
-const tags = ["planning", "research", "images", "draft"];
-
 type HomeProps = {
   searchParams?: Promise<{
     folder?: string;
     note?: string;
     view?: string;
+    q?: string;
+    tag?: string;
   }>;
 };
 
@@ -51,8 +56,11 @@ export default async function Home({ searchParams }: HomeProps) {
   const session = await requireSession();
   const params = await searchParams;
   const isTrashView = params?.view === "trash";
+  const query = String(params?.q ?? "").trim();
+  const activeTagSlug = String(params?.tag ?? "").trim();
+  const isFilteredView = !isTrashView && Boolean(query || activeTagSlug);
 
-  const [folders, deletedFolders] = await Promise.all([
+  const [folders, deletedFolders, tags] = await Promise.all([
     prisma.folder.findMany({
       where: {
         userId: session.user.id,
@@ -77,28 +85,113 @@ export default async function Home({ searchParams }: HomeProps) {
         },
       },
     }),
+    prisma.tag.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      orderBy: { name: "asc" },
+      include: {
+        _count: {
+          select: { notes: true },
+        },
+      },
+    }),
   ]);
+
+  const activeTag = activeTagSlug
+    ? tags.find((tag) => tag.slug === activeTagSlug) ?? null
+    : null;
 
   const selectedFolder =
     folders.find((folder) => folder.id === params?.folder) ?? folders[0] ?? null;
 
-  const notes = selectedFolder && !isTrashView
+  const notes = !isTrashView && (isFilteredView || selectedFolder)
     ? await prisma.note.findMany({
         where: {
           userId: session.user.id,
-          folderId: selectedFolder.id,
           deletedAt: null,
+          folder: {
+            deletedAt: null,
+          },
+          ...(isFilteredView
+            ? {}
+            : {
+                folderId: selectedFolder?.id,
+              }),
+          ...(query
+            ? {
+                title: {
+                  contains: query,
+                  mode: "insensitive",
+                },
+              }
+            : {}),
+          ...(activeTag
+            ? {
+                tags: {
+                  some: {
+                    tagId: activeTag.id,
+                  },
+                },
+              }
+            : {}),
         },
         orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
+        include: {
+          folder: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          tags: {
+            include: {
+              tag: true,
+            },
+            orderBy: {
+              tag: {
+                name: "asc",
+              },
+            },
+          },
+        },
       })
     : [];
 
   const selectedNote =
     params?.note ? notes.find((note) => note.id === params.note) ?? null : null;
 
+  const matchingFolders = query
+    ? folders.filter((folder) => folder.name.toLowerCase().includes(query.toLowerCase()))
+    : [];
+
   const activeTitle = isTrashView
     ? "Trash"
-    : selectedFolder?.name ?? "No folder selected";
+    : activeTag
+      ? `#${activeTag.name}`
+      : query
+        ? "Search results"
+        : selectedFolder?.name ?? "No folder selected";
+
+  const currentPathParams = new URLSearchParams();
+
+  if (params?.folder) {
+    currentPathParams.set("folder", params.folder);
+  }
+
+  if (params?.note) {
+    currentPathParams.set("note", params.note);
+  }
+
+  if (query) {
+    currentPathParams.set("q", query);
+  }
+
+  if (activeTagSlug) {
+    currentPathParams.set("tag", activeTagSlug);
+  }
+
+  const returnTo = `/${currentPathParams.toString() ? `?${currentPathParams.toString()}` : ""}`;
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -207,18 +300,49 @@ export default async function Home({ searchParams }: HomeProps) {
                 </form>
               </div>
 
-              <div className="relative">
+              <form action="/" className="relative">
+                {activeTagSlug ? <input type="hidden" name="tag" value={activeTagSlug} /> : null}
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input className="pl-9" placeholder="Search titles and filenames" disabled={isTrashView} />
-              </div>
+                <Input
+                  className="pl-9"
+                  defaultValue={query}
+                  name="q"
+                  placeholder="Search titles and folders"
+                  disabled={isTrashView}
+                />
+              </form>
 
               <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <Badge key={tag} variant={tag === "planning" ? "default" : "outline"}>
-                    <Tags className="mr-1 h-3 w-3" />
-                    {tag}
-                  </Badge>
-                ))}
+                {tags.length > 0 ? (
+                  tags.map((tag) => {
+                    const tagParams = new URLSearchParams();
+
+                    if (query) {
+                      tagParams.set("q", query);
+                    }
+
+                    if (activeTagSlug !== tag.slug) {
+                      tagParams.set("tag", tag.slug);
+                    }
+
+                    const href = tagParams.toString() ? `/?${tagParams.toString()}` : "/";
+
+                    return (
+                      <Link key={tag.id} href={href}>
+                        <Badge
+                          className="gap-1 hover:bg-primary hover:text-primary-foreground"
+                          variant={activeTagSlug === tag.slug ? "default" : "outline"}
+                        >
+                          <Tags className="h-3 w-3" />
+                          {tag.name}
+                          <span className="text-[10px] opacity-70">{tag._count.notes}</span>
+                        </Badge>
+                      </Link>
+                    );
+                  })
+                ) : (
+                  <p className="text-xs text-muted-foreground">No tags yet</p>
+                )}
               </div>
             </div>
 
@@ -253,9 +377,35 @@ export default async function Home({ searchParams }: HomeProps) {
               </div>
             ) : (
               <div className="divide-y">
+                {matchingFolders.length > 0 ? (
+                  matchingFolders.map((folder) => (
+                    <Link
+                      key={folder.id}
+                      className="flex gap-3 px-4 py-4 text-left transition-colors hover:bg-slate-50"
+                      href={`/?folder=${folder.id}`}
+                    >
+                      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                        <Folder className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="truncate text-sm font-medium">{folder.name}</p>
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            {folder._count.notes} notes
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs leading-5 text-muted-foreground">Folder</p>
+                      </div>
+                    </Link>
+                  ))
+                ) : null}
+
                 {notes.length > 0 ? (
                   notes.map((note) => {
                     const isActive = selectedNote?.id === note.id;
+                    const noteHref = `/?folder=${note.folder.id}&note=${note.id}${
+                      query ? `&q=${encodeURIComponent(query)}` : ""
+                    }${activeTagSlug ? `&tag=${encodeURIComponent(activeTagSlug)}` : ""}`;
 
                     return (
                       <Link
@@ -264,7 +414,7 @@ export default async function Home({ searchParams }: HomeProps) {
                           "flex gap-3 px-4 py-4 text-left transition-colors hover:bg-slate-50",
                           isActive && "bg-teal-50/70 hover:bg-teal-50",
                         )}
-                        href={`/?folder=${selectedFolder?.id}&note=${note.id}`}
+                        href={noteHref}
                       >
                         <div
                           className={cn(
@@ -279,28 +429,48 @@ export default async function Home({ searchParams }: HomeProps) {
                             <p className="truncate text-sm font-medium">{note.title}</p>
                             <span className="shrink-0 text-xs text-muted-foreground">{formatDate(note.updatedAt)}</span>
                           </div>
+                          {isFilteredView ? (
+                            <p className="mt-1 truncate text-xs text-muted-foreground">
+                              {note.folder.name}
+                            </p>
+                          ) : null}
                           <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
                             {note.body.replaceAll("#", "").replaceAll("-", "").trim() || "Empty note"}
                           </p>
+                          {note.tags.length > 0 ? (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {note.tags.map(({ tag }) => (
+                                <Badge key={tag.id} variant="outline" className="px-1.5 py-0 text-[10px]">
+                                  {tag.name}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : null}
                         </div>
                       </Link>
                     );
                   })
-                ) : (
+                ) : matchingFolders.length === 0 ? (
                   <div className="px-4 py-10 text-center">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-slate-100 text-slate-700">
                       <FileText className="h-5 w-5" />
                     </div>
                     <p className="mt-4 text-sm font-medium">
-                      {selectedFolder ? "No notes in this folder yet" : "No folder selected"}
+                      {isFilteredView
+                        ? "No matching notes or folders"
+                        : selectedFolder
+                          ? "No notes in this folder yet"
+                          : "No folder selected"}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {selectedFolder
-                        ? "Create a Markdown note to start writing in this folder."
-                        : "Create a folder to start building your vault."}
+                      {isFilteredView
+                        ? "Try a different title search or tag filter."
+                        : selectedFolder
+                          ? "Create a Markdown note to start writing in this folder."
+                          : "Create a folder to start building your vault."}
                     </p>
                   </div>
-                )}
+                ) : null}
               </div>
             )}
           </section>
@@ -314,7 +484,7 @@ export default async function Home({ searchParams }: HomeProps) {
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                         <BookOpenText className="h-4 w-4" />
-                        <span>{selectedFolder?.name ?? "Vault"}</span>
+                        <span>{selectedNote.folder.name}</span>
                         <span>/</span>
                         <span>Markdown note</span>
                       </div>
@@ -332,6 +502,48 @@ export default async function Home({ searchParams }: HomeProps) {
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-3 border-t pt-4">
+                    <div className="flex flex-wrap gap-2">
+                      {tags.length > 0 ? (
+                        tags.map((tag) => {
+                          const isAssigned = selectedNote.tags.some((noteTag) => noteTag.tagId === tag.id);
+
+                          return (
+                            <form key={tag.id} action={toggleNoteTagAction}>
+                              <input type="hidden" name="noteId" value={selectedNote.id} />
+                              <input type="hidden" name="tagId" value={tag.id} />
+                              <input type="hidden" name="returnTo" value={returnTo} />
+                              <Button
+                                type="submit"
+                                size="sm"
+                                variant={isAssigned ? "secondary" : "outline"}
+                                className={cn(
+                                  "h-8 gap-1",
+                                  isAssigned && "bg-teal-50 text-teal-950 hover:bg-teal-100",
+                                )}
+                              >
+                                <Tags className="h-3 w-3" />
+                                {tag.name}
+                              </Button>
+                            </form>
+                          );
+                        })
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Create a tag to classify this note.</p>
+                      )}
+                    </div>
+
+                    <form action={createTagAction} className="flex max-w-md gap-2">
+                      <input type="hidden" name="noteId" value={selectedNote.id} />
+                      <input type="hidden" name="returnTo" value={returnTo} />
+                      <Input name="name" placeholder="New tag" />
+                      <Button type="submit" variant="outline">
+                        <Plus className="h-4 w-4" />
+                        Add tag
+                      </Button>
+                    </form>
                   </div>
                 </div>
                 <NoteEditor

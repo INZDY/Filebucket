@@ -71,6 +71,7 @@
 - Store note title and body in PostgreSQL.
 
 ## Milestone 5: Search And Tags
+- Status: title search across folders and notes, tag creation, note-tag assignment, and tag filtering implemented; browser smoke test pending.
 - Implement filename/title search first across folders and notes.
 - Add tag creation.
 - Add note-tag assignment.
