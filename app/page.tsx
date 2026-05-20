@@ -4,8 +4,6 @@ import {
   BookOpenText,
   Cloud,
   FileText,
-  Folder,
-  FolderOpen,
   ImagePlus,
   MoreHorizontal,
   PanelLeft,
@@ -17,15 +15,16 @@ import {
 
 import {
   createFolderAction,
-  renameFolderAction,
   restoreFolderAction,
-  trashFolderAction,
 } from "@/app/folders/actions";
+import { FolderRow } from "@/app/folders/folder-row";
 import { logoutAction } from "@/app/login/actions";
+import { createNoteAction } from "@/app/notes/actions";
+import { NoteEditor } from "@/app/notes/note-editor";
+import { ResizableVault } from "@/app/vault/resizable-vault";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
@@ -35,6 +34,7 @@ const tags = ["planning", "research", "images", "draft"];
 type HomeProps = {
   searchParams?: Promise<{
     folder?: string;
+    note?: string;
     view?: string;
   }>;
 };
@@ -82,6 +82,20 @@ export default async function Home({ searchParams }: HomeProps) {
   const selectedFolder =
     folders.find((folder) => folder.id === params?.folder) ?? folders[0] ?? null;
 
+  const notes = selectedFolder && !isTrashView
+    ? await prisma.note.findMany({
+        where: {
+          userId: session.user.id,
+          folderId: selectedFolder.id,
+          deletedAt: null,
+        },
+        orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
+      })
+    : [];
+
+  const selectedNote =
+    params?.note ? notes.find((note) => note.id === params.note) ?? null : null;
+
   const activeTitle = isTrashView
     ? "Trash"
     : selectedFolder?.name ?? "No folder selected";
@@ -115,7 +129,8 @@ export default async function Home({ searchParams }: HomeProps) {
           </div>
         </header>
 
-        <div className="grid flex-1 lg:grid-cols-[280px_minmax(320px,420px)_1fr]">
+        <ResizableVault
+          folders={
           <aside className="flex min-h-0 flex-col border-b border-r bg-white lg:border-b-0">
             <div className="space-y-3 border-b px-4 py-3">
               <div>
@@ -136,21 +151,16 @@ export default async function Home({ searchParams }: HomeProps) {
                   const isActive = !isTrashView && selectedFolder?.id === folder.id;
 
                   return (
-                    <Button
+                    <FolderRow
                       key={folder.id}
-                      asChild
-                      variant={isActive ? "secondary" : "ghost"}
-                      className={cn(
-                        "h-10 w-full justify-start px-3",
-                        isActive && "bg-teal-50 text-teal-950 hover:bg-teal-100",
-                      )}
-                    >
-                      <Link href={`/?folder=${folder.id}`}>
-                        {isActive ? <FolderOpen className="h-4 w-4" /> : <Folder className="h-4 w-4" />}
-                        <span className="min-w-0 flex-1 truncate text-left">{folder.name}</span>
-                        <span className="text-xs text-muted-foreground">{folder._count.notes}</span>
-                      </Link>
-                    </Button>
+                      folder={{
+                        id: folder.id,
+                        name: folder.name,
+                        count: folder._count.notes,
+                      }}
+                      href={`/?folder=${folder.id}`}
+                      isActive={isActive}
+                    />
                   );
                 })
               ) : (
@@ -177,7 +187,8 @@ export default async function Home({ searchParams }: HomeProps) {
               </Button>
             </div>
           </aside>
-
+          }
+          items={
           <section className="min-h-0 border-r bg-white">
             <div className="space-y-3 border-b px-4 py-3">
               <div className="flex items-center justify-between gap-3">
@@ -187,10 +198,13 @@ export default async function Home({ searchParams }: HomeProps) {
                     {isTrashView ? "Restore deleted folders" : "Notes and attachments"}
                   </p>
                 </div>
-                <Button aria-label="Create note" disabled={!selectedFolder || isTrashView}>
-                  <Plus className="h-4 w-4" />
-                  New note
-                </Button>
+                <form action={createNoteAction}>
+                  <input type="hidden" name="folderId" value={selectedFolder?.id ?? ""} />
+                  <Button aria-label="Create note" disabled={!selectedFolder || isTrashView} type="submit">
+                    <Plus className="h-4 w-4" />
+                    New note
+                  </Button>
+                </form>
               </div>
 
               <div className="relative">
@@ -238,142 +252,101 @@ export default async function Home({ searchParams }: HomeProps) {
                 )}
               </div>
             ) : (
-              <div className="px-4 py-10 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-slate-100 text-slate-700">
-                  <FileText className="h-5 w-5" />
-                </div>
-                <p className="mt-4 text-sm font-medium">
-                  {selectedFolder ? "No notes in this folder yet" : "No folder selected"}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {selectedFolder
-                    ? "The note workflow comes next. This folder is ready for Markdown notes."
-                    : "Create a folder to start building your vault."}
-                </p>
+              <div className="divide-y">
+                {notes.length > 0 ? (
+                  notes.map((note) => {
+                    const isActive = selectedNote?.id === note.id;
+
+                    return (
+                      <Link
+                        key={note.id}
+                        className={cn(
+                          "flex gap-3 px-4 py-4 text-left transition-colors hover:bg-slate-50",
+                          isActive && "bg-teal-50/70 hover:bg-teal-50",
+                        )}
+                        href={`/?folder=${selectedFolder?.id}&note=${note.id}`}
+                      >
+                        <div
+                          className={cn(
+                            "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md",
+                            isActive ? "bg-teal-100 text-teal-800" : "bg-slate-100 text-slate-700",
+                          )}
+                        >
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="truncate text-sm font-medium">{note.title}</p>
+                            <span className="shrink-0 text-xs text-muted-foreground">{formatDate(note.updatedAt)}</span>
+                          </div>
+                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                            {note.body.replaceAll("#", "").replaceAll("-", "").trim() || "Empty note"}
+                          </p>
+                        </div>
+                      </Link>
+                    );
+                  })
+                ) : (
+                  <div className="px-4 py-10 text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <p className="mt-4 text-sm font-medium">
+                      {selectedFolder ? "No notes in this folder yet" : "No folder selected"}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {selectedFolder
+                        ? "Create a Markdown note to start writing in this folder."
+                        : "Create a folder to start building your vault."}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </section>
-
+          }
+          detail={
           <section className="min-h-0 bg-slate-50">
-            <div className="flex min-h-full flex-col">
-              <div className="border-b bg-white px-5 py-4">
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                      <BookOpenText className="h-4 w-4" />
-                      <span>{isTrashView ? "Trash" : selectedFolder?.name ?? "Vault"}</span>
-                      <span>/</span>
-                      <span>{isTrashView ? "Deleted folders" : "Folder details"}</span>
-                    </div>
-                    <h2 className="mt-2 truncate text-2xl font-semibold tracking-normal">{activeTitle}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {selectedFolder && !isTrashView
-                        ? `Created ${formatDate(selectedFolder.createdAt)}`
-                        : "Folder-first organization for the personal vault"}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" disabled={!selectedFolder || isTrashView}>
-                      <ImagePlus className="h-4 w-4" />
-                      Insert image
-                    </Button>
-                    <Button variant="outline" size="icon" aria-label="More folder actions" disabled={!selectedFolder || isTrashView}>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                <div className="border-b bg-white lg:border-b-0 lg:border-r">
-                  <div className="flex h-11 items-center justify-between border-b px-5">
-                    <p className="text-sm font-medium">Folder</p>
-                    <span className="text-xs text-muted-foreground">Database-backed</span>
-                  </div>
-                  <div className="space-y-5 px-5 py-5">
-                    {selectedFolder && !isTrashView ? (
-                      <>
-                        <form action={renameFolderAction} className="space-y-2">
-                          <input type="hidden" name="folderId" value={selectedFolder.id} />
-                          <label className="text-sm font-medium" htmlFor="folder-name">
-                            Rename folder
-                          </label>
-                          <div className="flex gap-2">
-                            <Input id="folder-name" name="name" defaultValue={selectedFolder.name} required />
-                            <Button type="submit">Save</Button>
-                          </div>
-                        </form>
-
-                        <Separator />
-
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <div className="rounded-md border bg-slate-50 p-3">
-                            <p className="text-xs text-muted-foreground">Notes</p>
-                            <p className="mt-1 text-lg font-semibold">{selectedFolder._count.notes}</p>
-                          </div>
-                          <div className="rounded-md border bg-slate-50 p-3">
-                            <p className="text-xs text-muted-foreground">Updated</p>
-                            <p className="mt-1 text-sm font-medium">{formatDate(selectedFolder.updatedAt)}</p>
-                          </div>
-                        </div>
-
-                        <form action={trashFolderAction}>
-                          <input type="hidden" name="folderId" value={selectedFolder.id} />
-                          <Button variant="outline" type="submit">
-                            <Trash2 className="h-4 w-4" />
-                            Move to trash
-                          </Button>
-                        </form>
-                      </>
-                    ) : (
-                      <div className="rounded-md border border-dashed px-4 py-10 text-center">
-                        <p className="text-sm font-medium">
-                          {isTrashView ? "Restore a folder to edit it again" : "Create a folder"}
-                        </p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Folder actions are available once an active folder is selected.
-                        </p>
+            {selectedNote && !isTrashView ? (
+              <div className="flex min-h-full flex-col">
+                <div className="border-b bg-white px-5 py-4">
+                  <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                        <BookOpenText className="h-4 w-4" />
+                        <span>{selectedFolder?.name ?? "Vault"}</span>
+                        <span>/</span>
+                        <span>Markdown note</span>
                       </div>
-                    )}
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Updated {formatDate(selectedNote.updatedAt)}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline">
+                        <ImagePlus className="h-4 w-4" />
+                        Insert image
+                      </Button>
+                      <Button variant="outline" size="icon" aria-label="More note actions">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-
-                <div className="bg-slate-50">
-                  <div className="flex h-11 items-center justify-between border-b bg-white px-5">
-                    <p className="text-sm font-medium">Preview</p>
-                    <span className="text-xs text-muted-foreground">Next milestone</span>
-                  </div>
-                  <article className="mx-auto max-w-2xl px-5 py-6">
-                    <h1 className="text-3xl font-semibold tracking-normal">
-                      {selectedFolder && !isTrashView ? selectedFolder.name : "Markdown notes"}
-                    </h1>
-                    <p className="mt-4 text-sm leading-6 text-slate-700">
-                      The folder workflow now uses PostgreSQL records. Notes will be created inside the selected folder in the next implementation slice.
-                    </p>
-
-                    <Separator className="my-6" />
-
-                    <h2 className="text-lg font-semibold tracking-normal">Current slice</h2>
-                    <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
-                      <li>Create folders from the sidebar.</li>
-                      <li>Select a folder as the active navigation context.</li>
-                      <li>Rename folders and move them to trash.</li>
-                      <li>Restore deleted folders from Trash.</li>
-                    </ul>
-
-                    <h2 className="mt-8 text-lg font-semibold tracking-normal">Next slice</h2>
-                    <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
-                      <li>Create Markdown notes inside folders.</li>
-                      <li>Open new or selected notes immediately.</li>
-                      <li>Autosave note edits to PostgreSQL.</li>
-                    </ul>
-                  </article>
-                </div>
+                <NoteEditor
+                  key={selectedNote.id}
+                  note={{
+                    id: selectedNote.id,
+                    title: selectedNote.title,
+                    body: selectedNote.body,
+                  }}
+                />
               </div>
-            </div>
+            ) : null}
           </section>
-        </div>
+          }
+        />
       </div>
     </main>
   );

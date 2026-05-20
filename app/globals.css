@@ -35,4 +35,47 @@
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
       "Segoe UI", sans-serif;
   }
+
+  .filebucket-note-editor .cm-editor {
+    height: 100%;
+    background: #1f2128;
+  }
+
+  .filebucket-note-editor .cm-focused {
+    outline: none;
+  }
+
+  .filebucket-note-editor .cm-scroller {
+    line-height: 1.7;
+    overflow: auto;
+    padding: 24px 0;
+  }
+
+  .filebucket-note-editor .cm-content {
+    box-sizing: border-box;
+    max-width: 860px;
+    min-height: 100%;
+    margin: 0 auto;
+    padding: 0 32px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .filebucket-note-editor .cm-line {
+    padding: 0;
+  }
+
+  .filebucket-note-editor .cm-cursor {
+    border-left-color: #f2f4f8;
+  }
+
+  @media (max-width: 640px) {
+    .filebucket-note-editor .cm-scroller {
+      padding: 16px 0;
+    }
+
+    .filebucket-note-editor .cm-content {
+      padding: 0 18px;
+    }
+  }
 }

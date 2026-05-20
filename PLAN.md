@@ -61,6 +61,8 @@
 - Keep folder behavior personal and single-user for MVP.
 
 ## Milestone 4: Markdown Note Workflow
+- Status: note create, explicit note open, Obsidian-like single-pane Markdown editing, autosave, folder action menu, and resizable panes implemented; manual browser smoke test pending.
+- Later iteration: revisit the note editor for a closer Obsidian feel after the core MVP workflows are complete.
 - Create notes inside folders.
 - Open new or selected notes immediately.
 - Edit Markdown title and body.

@@ -23,7 +23,7 @@
 ## Tech Stack
 
 - Next.js App Router for UI, route handlers, and server actions.
-- TypeScript, Tailwind CSS, and shadcn-style UI primitives.
+- TypeScript, Tailwind CSS, shadcn-style UI primitives, and CodeMirror for Markdown editing.
 - Auth.js/NextAuth for authentication.
 - Prisma with PostgreSQL for relational data.
 - Supabase PostgreSQL is the intended hosted database.
@@ -36,6 +36,8 @@
 - `app/page.tsx`: current authenticated home/dashboard screen.
 - `app/folders/`: folder workflow server actions.
 - `app/login/`: custom login page and login/logout server actions.
+- `app/notes/`: note workflow server actions and editor components.
+- `app/vault/`: vault shell layout components such as resizable panes.
 - `app/api/auth/[...nextauth]/route.ts`: Auth.js route handler.
 - `components/ui/`: reusable shadcn-style UI primitives.
 - `lib/`: shared helpers such as auth/session wrappers, Prisma client, and utilities.
@@ -92,7 +94,9 @@
 
 ## Verification
 
-- For normal code changes, run `npm run lint`.
-- For auth, database, route, or build-sensitive changes, also run `npm run build`.
+- During active development, prefer `npm run lint` as the default check.
+- Run `npm run build` before merging a feature branch or after auth, database, route, config, or dependency changes.
+- Stop the dev server before running `npm run build`; build rewrites `.next` and can make the active dev server serve stale CSS.
+- After a build, restart `npm run dev` from a clean dev session before browser testing.
 - For Prisma schema changes, run `npm run prisma:generate`.
 - Run migrations and seed only when a real `DATABASE_URL` is configured.

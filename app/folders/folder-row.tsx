@@ -1,0 +1,129 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Folder, FolderOpen, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+
+import { renameFolderAction, trashFolderAction } from "@/app/folders/actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+
+type FolderRowProps = {
+  folder: {
+    id: string;
+    name: string;
+    count: number;
+  };
+  href: string;
+  isActive: boolean;
+};
+
+type MenuState = {
+  x: number;
+  y: number;
+  mode: "actions" | "rename";
+} | null;
+
+export function FolderRow({ folder, href, isActive }: FolderRowProps) {
+  const [menu, setMenu] = useState<MenuState>(null);
+
+  useEffect(() => {
+    if (!menu) {
+      return;
+    }
+
+    function close() {
+      setMenu(null);
+    }
+
+    window.addEventListener("click", close);
+
+    return () => {
+      window.removeEventListener("click", close);
+    };
+  }, [menu]);
+
+  function openMenu(x: number, y: number, mode: MenuState["mode"] = "actions") {
+    setMenu({
+      x: Math.min(x, window.innerWidth - 240),
+      y: Math.min(y, window.innerHeight - 180),
+      mode,
+    });
+  }
+
+  return (
+    <div
+      className={cn(
+        "group relative flex h-10 items-center rounded-md text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
+        isActive && "bg-teal-50 text-teal-950 hover:bg-teal-100",
+      )}
+    >
+      <Link className="flex min-w-0 flex-1 items-center gap-2 px-3" href={href}>
+        {isActive ? <FolderOpen className="h-4 w-4 shrink-0" /> : <Folder className="h-4 w-4 shrink-0" />}
+        <span className="min-w-0 flex-1 truncate text-left">{folder.name}</span>
+        <span className="text-xs text-muted-foreground">{folder.count}</span>
+      </Link>
+      <Button
+        aria-label={`Folder actions for ${folder.name}`}
+        className="mr-1 h-8 w-8 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+        onClick={(event) => {
+          event.stopPropagation();
+          const rect = event.currentTarget.getBoundingClientRect();
+          openMenu(rect.left, rect.bottom + 4);
+        }}
+        size="icon"
+        type="button"
+        variant="ghost"
+      >
+        <MoreHorizontal className="h-4 w-4" />
+      </Button>
+
+      {menu ? (
+        <div
+          className="fixed z-50 w-56 rounded-md border bg-white p-1 shadow-lg"
+          onClick={(event) => event.stopPropagation()}
+          style={{ left: menu.x, top: menu.y }}
+        >
+          {menu.mode === "rename" ? (
+            <form
+              action={renameFolderAction}
+              className="space-y-2 p-2"
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              <input type="hidden" name="folderId" value={folder.id} />
+              <Input autoFocus name="name" defaultValue={folder.name} required />
+              <div className="flex justify-end gap-2">
+                <Button onClick={() => setMenu(null)} size="sm" type="button" variant="ghost">
+                  Cancel
+                </Button>
+                <Button size="sm" type="submit">
+                  Save
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className="space-y-1">
+              <Button
+                className="h-9 w-full justify-start px-2"
+                onClick={() => setMenu((current) => current ? { ...current, mode: "rename" } : current)}
+                type="button"
+                variant="ghost"
+              >
+                <Pencil className="h-4 w-4" />
+                Rename
+              </Button>
+              <form action={trashFolderAction}>
+                <input type="hidden" name="folderId" value={folder.id} />
+                <Button className="h-9 w-full justify-start px-2" type="submit" variant="ghost">
+                  <Trash2 className="h-4 w-4" />
+                  Move to trash
+                </Button>
+              </form>
+            </div>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
