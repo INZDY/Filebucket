@@ -46,7 +46,7 @@
 - Validate with lint, build, Prisma generation, migration, seed, login, logout, and protected-route smoke tests.
 
 ## Milestone 2: Vault Locations And Nested Folders
-- Status: root-capable note placement, nested folder create/rename/move workflow, and same-parent folder collision checks implemented. Browser smoke test and later media placement still pending.
+- Status: root-capable note placement, nested folder create/rename/move workflow, and same-parent folder collision checks implemented. User-verified browser smoke test completed; later media placement still pending.
 - Treat the vault root as a first-class browsing and creation location.
 - New vaults start with an empty root; do not require a default Inbox folder.
 - Update data relationships so notes and media assets can live in the vault root or folders.
@@ -56,7 +56,7 @@
 - Keep folder behavior private to the current user.
 
 ## Milestone 3: Vault Browser And Content Shell
-- Status: needs revision. Existing panes are based on the earlier folder/list/editor layout.
+- Status: vault browser, main content pane, breadcrumbs, and note-outline shell implemented. Manual smoke test is pending; media preview/upload behavior remains in the media milestone.
 - Replace the earlier folder side panel plus center list layout with:
   - left vault browser for folders, nested folders, notes, and media assets
   - center main content pane for Markdown editing and media preview

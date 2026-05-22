@@ -6,13 +6,14 @@ import { Group, Panel, Separator } from "react-resizable-panels";
 import { cn } from "@/lib/utils";
 
 type ResizableVaultProps = {
-  folders: ReactNode;
-  items: ReactNode;
-  detail: ReactNode;
+  browser: ReactNode;
+  content: ReactNode;
+  outline?: ReactNode;
 };
 
-export function ResizableVault({ folders, items, detail }: ResizableVaultProps) {
+export function ResizableVault({ browser, content, outline }: ResizableVaultProps) {
   const [isNarrow, setIsNarrow] = useState(false);
+  const hasOutline = Boolean(outline);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 1023px)");
@@ -26,43 +27,52 @@ export function ResizableVault({ folders, items, detail }: ResizableVaultProps) 
 
   return (
     <Group
-      defaultLayout={{
-        folders: isNarrow ? 28 : 20,
-        items: isNarrow ? 34 : 28,
-        detail: isNarrow ? 38 : 52,
-      }}
+      defaultLayout={hasOutline
+        ? {
+            browser: isNarrow ? 32 : 25,
+            content: isNarrow ? 44 : 55,
+            outline: isNarrow ? 24 : 20,
+          }
+        : {
+            browser: isNarrow ? 38 : 28,
+            content: isNarrow ? 62 : 72,
+          }}
       id="filebucket-vault-panes"
       orientation={isNarrow ? "vertical" : "horizontal"}
       className="min-h-0 flex-1"
     >
       <Panel
         className="min-h-0 min-w-0"
-        defaultSize={isNarrow ? "28%" : "20%"}
-        id="folders"
-        minSize={isNarrow ? "180px" : "220px"}
-        maxSize={isNarrow ? "45%" : "360px"}
+        defaultSize={isNarrow ? "38%" : hasOutline ? "25%" : "28%"}
+        id="browser"
+        minSize={isNarrow ? "240px" : "280px"}
+        maxSize={isNarrow ? "55%" : "420px"}
       >
-        {folders}
+        {browser}
       </Panel>
       <ResizeHandle isNarrow={isNarrow} />
       <Panel
         className="min-h-0 min-w-0"
-        defaultSize={isNarrow ? "34%" : "30%"}
-        id="items"
-        minSize={isNarrow ? "260px" : "300px"}
-        maxSize={isNarrow ? "55%" : "520px"}
+        defaultSize={isNarrow ? "62%" : hasOutline ? "55%" : "72%"}
+        id="content"
+        minSize={isNarrow ? "360px" : "420px"}
       >
-        {items}
+        {content}
       </Panel>
-      <ResizeHandle isNarrow={isNarrow} />
-      <Panel
-        className="min-h-0 min-w-0"
-        defaultSize={isNarrow ? "38%" : "50%"}
-        id="detail"
-        minSize={isNarrow ? "320px" : "420px"}
-      >
-        {detail}
-      </Panel>
+      {outline ? (
+        <>
+          <ResizeHandle isNarrow={isNarrow} />
+          <Panel
+            className="min-h-0 min-w-0"
+            defaultSize={isNarrow ? "24%" : "20%"}
+            id="outline"
+            minSize={isNarrow ? "200px" : "220px"}
+            maxSize={isNarrow ? "36%" : "340px"}
+          >
+            {outline}
+          </Panel>
+        </>
+      ) : null}
     </Group>
   );
 }

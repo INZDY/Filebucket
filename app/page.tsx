@@ -5,6 +5,7 @@ import {
   Cloud,
   FileText,
   Folder,
+  HardDriveUpload,
   ImagePlus,
   PanelLeft,
   Plus,
@@ -41,19 +42,12 @@ type HomeProps = {
   searchParams?: Promise<{
     folder?: string;
     note?: string;
+    media?: string;
     view?: string;
     q?: string;
     tag?: string;
   }>;
 };
-
-function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(value);
-}
 
 type FolderListEntry = {
   id: string;
@@ -63,6 +57,14 @@ type FolderListEntry = {
     notes: number;
   };
 };
+
+function formatDate(value: Date) {
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(value);
+}
 
 function flattenFolders(folders: FolderListEntry[]) {
   const children = new Map<string | null, FolderListEntry[]>();
@@ -86,6 +88,38 @@ function flattenFolders(folders: FolderListEntry[]) {
   appendFolders(null, 0);
 
   return rows;
+}
+
+function getFolderTrail(folders: FolderListEntry[], selectedFolder: FolderListEntry | null) {
+  const foldersById = new Map(folders.map((folder) => [folder.id, folder]));
+  const trail: FolderListEntry[] = [];
+  let current = selectedFolder;
+
+  while (current) {
+    trail.unshift(current);
+    current = current.parentId ? foldersById.get(current.parentId) ?? null : null;
+  }
+
+  return trail;
+}
+
+function getNoteOutline(body: string) {
+  return body
+    .split("\n")
+    .map((line, index) => {
+      const heading = /^(#{1,6})\s+(.+?)\s*$/.exec(line.trim());
+
+      if (!heading) {
+        return null;
+      }
+
+      return {
+        id: `${index}-${heading[2]}`,
+        depth: heading[1].length,
+        title: heading[2].replace(/\s+#+$/, ""),
+      };
+    })
+    .filter((heading): heading is { id: string; depth: number; title: string } => Boolean(heading));
 }
 
 export default async function Home({ searchParams }: HomeProps) {
@@ -153,89 +187,138 @@ export default async function Home({ searchParams }: HomeProps) {
   const activeTag = activeTagSlug
     ? tags.find((tag) => tag.slug === activeTagSlug) ?? null
     : null;
-
   const selectedFolder =
     params?.folder ? folders.find((folder) => folder.id === params.folder) ?? null : null;
 
-  const notes = !isTrashView
-    ? await prisma.note.findMany({
-        where: {
-          userId: session.user.id,
-          deletedAt: null,
-          ...(isFilteredView
-            ? {
-                OR: [
-                  { folderId: null },
-                  {
-                    folder: {
-                      is: {
-                        deletedAt: null,
+  const [notes, mediaAssets] = !isTrashView
+    ? await Promise.all([
+        prisma.note.findMany({
+          where: {
+            userId: session.user.id,
+            deletedAt: null,
+            ...(isFilteredView
+              ? {
+                  OR: [
+                    { folderId: null },
+                    {
+                      folder: {
+                        is: {
+                          deletedAt: null,
+                        },
                       },
                     },
-                  },
-                ],
-              }
-            : selectedFolder
+                  ],
+                }
+              : selectedFolder
+                ? {
+                    folderId: selectedFolder.id,
+                  }
+                : {
+                    folderId: null,
+                  }),
+            ...(query
               ? {
-                folderId: selectedFolder?.id,
-              }
-              : {
-                  folderId: null,
-                }),
-          ...(query
-            ? {
-                title: {
-                  contains: query,
-                  mode: "insensitive",
-                },
-              }
-            : {}),
-          ...(activeTag
-            ? {
-                tags: {
-                  some: {
-                    tagId: activeTag.id,
+                  title: {
+                    contains: query,
+                    mode: "insensitive",
                   },
-                },
-              }
-            : {}),
-        },
-        orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
-        include: {
-          folder: {
-            select: {
-              id: true,
-              name: true,
-            },
+                }
+              : {}),
+            ...(activeTag
+              ? {
+                  tags: {
+                    some: {
+                      tagId: activeTag.id,
+                    },
+                  },
+                }
+              : {}),
           },
-          tags: {
-            include: {
-              tag: true,
+          orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
+          include: {
+            folder: {
+              select: {
+                id: true,
+                name: true,
+              },
             },
-            orderBy: {
-              tag: {
-                name: "asc",
+            tags: {
+              include: {
+                tag: true,
+              },
+              orderBy: {
+                tag: {
+                  name: "asc",
+                },
               },
             },
           },
-        },
-      })
-    : [];
+        }),
+        activeTag
+          ? Promise.resolve([])
+          : prisma.mediaAsset.findMany({
+              where: {
+                userId: session.user.id,
+                deletedAt: null,
+                ...(isFilteredView
+                  ? {
+                      OR: [
+                        { folderId: null },
+                        {
+                          folder: {
+                            is: {
+                              deletedAt: null,
+                            },
+                          },
+                        },
+                      ],
+                    }
+                  : selectedFolder
+                    ? {
+                        folderId: selectedFolder.id,
+                      }
+                    : {
+                        folderId: null,
+                      }),
+                ...(query
+                  ? {
+                      filename: {
+                        contains: query,
+                        mode: "insensitive",
+                      },
+                    }
+                  : {}),
+              },
+              orderBy: [{ updatedAt: "desc" }, { filename: "asc" }],
+              include: {
+                folder: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            }),
+      ])
+    : [[], []];
 
   const selectedNote =
     params?.note ? notes.find((note) => note.id === params.note) ?? null : null;
-
+  const selectedMedia =
+    params?.media ? mediaAssets.find((mediaAsset) => mediaAsset.id === params.media) ?? null : null;
   const matchingFolders = query
     ? folders.filter((folder) => folder.name.toLowerCase().includes(query.toLowerCase()))
     : [];
-
-  const activeTitle = isTrashView
+  const folderTrail = getFolderTrail(folders, selectedFolder);
+  const noteOutline = selectedNote ? getNoteOutline(selectedNote.body) : [];
+  const browserTitle = isTrashView
     ? "Trash"
     : activeTag
       ? `#${activeTag.name}`
       : query
         ? "Search results"
         : selectedFolder?.name ?? "Vault";
+  const hasVaultContent = folders.length > 0 || notes.length > 0 || mediaAssets.length > 0;
 
   const currentPathParams = new URLSearchParams();
 
@@ -245,6 +328,10 @@ export default async function Home({ searchParams }: HomeProps) {
 
   if (params?.note) {
     currentPathParams.set("note", params.note);
+  }
+
+  if (params?.media) {
+    currentPathParams.set("media", params.media);
   }
 
   if (query) {
@@ -268,7 +355,7 @@ export default async function Home({ searchParams }: HomeProps) {
       <div className="flex min-h-screen flex-col">
         <header className="flex min-h-16 flex-col gap-3 border-b bg-white px-4 py-3 md:flex-row md:items-center md:justify-between md:px-5">
           <div className="flex min-w-0 items-center gap-3">
-            <Button variant="outline" size="icon" className="lg:hidden" aria-label="Open folders">
+            <Button variant="outline" size="icon" className="lg:hidden" aria-label="Open vault browser">
               <PanelLeft className="h-4 w-4" />
             </Button>
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-soft">
@@ -293,399 +380,454 @@ export default async function Home({ searchParams }: HomeProps) {
         </header>
 
         <ResizableVault
-          folders={
-          <aside className="flex min-h-0 flex-col border-b border-r bg-white lg:border-b-0">
-            <div className="space-y-3 border-b px-4 py-3">
-              <div>
-                <p className="text-sm font-semibold">Folders</p>
-                <p className="text-xs text-muted-foreground">Primary organization</p>
-              </div>
-              <form action={createFolderAction} className="flex gap-2">
-                <input type="hidden" name="parentId" value={selectedFolder?.id ?? ""} />
-                <Input name="name" placeholder="New folder" required />
-                <Button size="icon" aria-label="Create folder">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </form>
-            </div>
-
-            <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-3">
-              <Button
-                asChild
-                variant={!isTrashView && !selectedFolder ? "secondary" : "ghost"}
-                className={cn(
-                  "h-10 w-full justify-start px-3",
-                  !isTrashView && !selectedFolder && "bg-teal-50 text-teal-950 hover:bg-teal-100",
-                )}
-              >
-                <Link href="/">
-                  <Folder className="h-4 w-4" />
-                  Vault
-                </Link>
-              </Button>
-              {folderRows.length > 0 ? (
-                folderRows.map(({ depth, folder }) => {
-                  const isActive = !isTrashView && selectedFolder?.id === folder.id;
-
-                  return (
-                    <FolderRow
-                      key={folder.id}
-                      folder={{
-                        id: folder.id,
-                        name: folder.name,
-                        count: folder._count.notes,
-                        parentId: folder.parentId,
-                      }}
-                      href={`/?folder=${folder.id}`}
-                      isActive={isActive}
-                      depth={depth}
-                      destinations={folderDestinations}
-                    />
-                  );
-                })
-              ) : (
-                <div className="rounded-md border border-dashed px-3 py-4 text-sm text-muted-foreground">
-                  Create a folder in Vault to start organizing notes.
-                </div>
-              )}
-            </nav>
-
-            <div className="border-t px-4 py-4">
-              <Button
-                asChild
-                variant={isTrashView ? "secondary" : "ghost"}
-                className={cn(
-                  "h-10 w-full justify-start px-3",
-                  isTrashView && "bg-teal-50 text-teal-950 hover:bg-teal-100",
-                )}
-              >
-                <Link href="/?view=trash">
-                  <ArchiveRestore className="h-4 w-4" />
-                  <span className="flex-1 text-left">Trash</span>
-                  <span className="text-xs text-muted-foreground">{trashCount}</span>
-                </Link>
-              </Button>
-            </div>
-          </aside>
-          }
-          items={
-          <section className="min-h-0 border-r bg-white">
-            <div className="space-y-3 border-b px-4 py-3">
-              <div className="flex items-center justify-between gap-3">
+          browser={
+            <aside className="flex min-h-0 flex-col border-b border-r bg-white lg:border-b-0">
+              <div className="space-y-3 border-b px-4 py-3">
                 <div className="min-w-0">
-                  <h2 className="truncate text-base font-semibold tracking-normal">{activeTitle}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {isTrashView ? "Restore deleted folders and notes" : "Notes and attachments"}
-                  </p>
+                  <p className="text-sm font-semibold">Vault Browser</p>
+                  <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1 text-xs text-muted-foreground">
+                    <Link className="hover:text-foreground" href="/">
+                      Vault
+                    </Link>
+                    {folderTrail.map((folder) => (
+                      <span key={folder.id} className="flex min-w-0 items-center gap-1">
+                        <span>/</span>
+                        <Link className="max-w-32 truncate hover:text-foreground" href={`/?folder=${folder.id}`}>
+                          {folder.name}
+                        </Link>
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <form action={createNoteAction}>
-                  <input type="hidden" name="folderId" value={selectedFolder?.id ?? ""} />
-                  <Button aria-label="Create note" disabled={isTrashView} type="submit">
-                    <Plus className="h-4 w-4" />
-                    New note
+
+                <div className="flex items-center gap-2">
+                  <form action={createNoteAction}>
+                    <input type="hidden" name="folderId" value={selectedFolder?.id ?? ""} />
+                    <Button aria-label="Create note" disabled={isTrashView} size="sm" type="submit">
+                      <Plus className="h-4 w-4" />
+                      New note
+                    </Button>
+                  </form>
+                  <Button
+                    aria-label="Upload media"
+                    disabled
+                    size="icon"
+                    title="Upload media"
+                    type="button"
+                    variant="outline"
+                  >
+                    <HardDriveUpload className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <form action={createFolderAction} className="flex gap-2">
+                  <input type="hidden" name="parentId" value={selectedFolder?.id ?? ""} />
+                  <Input name="name" placeholder="New folder" required disabled={isTrashView} />
+                  <Button size="icon" aria-label="Create folder" disabled={isTrashView}>
+                    <Folder className="h-4 w-4" />
                   </Button>
                 </form>
+
+                <form action="/" className="relative">
+                  {activeTagSlug ? <input type="hidden" name="tag" value={activeTagSlug} /> : null}
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    className="pl-9"
+                    defaultValue={query}
+                    name="q"
+                    placeholder="Search titles and folders"
+                    disabled={isTrashView}
+                  />
+                </form>
+
+                <div className="flex flex-wrap gap-2">
+                  {tags.length > 0 ? (
+                    tags.map((tag) => {
+                      const tagParams = new URLSearchParams();
+
+                      if (query) {
+                        tagParams.set("q", query);
+                      }
+
+                      if (activeTagSlug !== tag.slug) {
+                        tagParams.set("tag", tag.slug);
+                      }
+
+                      const href = tagParams.toString() ? `/?${tagParams.toString()}` : "/";
+
+                      return (
+                        <Link key={tag.id} href={href}>
+                          <Badge
+                            className="gap-1 hover:bg-primary hover:text-primary-foreground"
+                            variant={activeTagSlug === tag.slug ? "default" : "outline"}
+                          >
+                            <Tags className="h-3 w-3" />
+                            {tag.name}
+                            <span className="text-[10px] opacity-70">{tag._count.notes}</span>
+                          </Badge>
+                        </Link>
+                      );
+                    })
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No tags yet</p>
+                  )}
+                </div>
               </div>
 
-              <form action="/" className="relative">
-                {activeTagSlug ? <input type="hidden" name="tag" value={activeTagSlug} /> : null}
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  className="pl-9"
-                  defaultValue={query}
-                  name="q"
-                  placeholder="Search titles and folders"
-                  disabled={isTrashView}
-                />
-              </form>
-
-              <div className="flex flex-wrap gap-2">
-                {tags.length > 0 ? (
-                  tags.map((tag) => {
-                    const tagParams = new URLSearchParams();
-
-                    if (query) {
-                      tagParams.set("q", query);
-                    }
-
-                    if (activeTagSlug !== tag.slug) {
-                      tagParams.set("tag", tag.slug);
-                    }
-
-                    const href = tagParams.toString() ? `/?${tagParams.toString()}` : "/";
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-3 py-3">
+                <nav className="space-y-1">
+                  <Button
+                    asChild
+                    variant={!isTrashView && !selectedFolder ? "secondary" : "ghost"}
+                    className={cn(
+                      "h-10 w-full justify-start px-3",
+                      !isTrashView && !selectedFolder && "bg-teal-50 text-teal-950 hover:bg-teal-100",
+                    )}
+                  >
+                    <Link href="/">
+                      <Folder className="h-4 w-4" />
+                      Vault
+                    </Link>
+                  </Button>
+                  {folderRows.map(({ depth, folder }) => {
+                    const isActive = !isTrashView && selectedFolder?.id === folder.id;
 
                     return (
-                      <Link key={tag.id} href={href}>
-                        <Badge
-                          className="gap-1 hover:bg-primary hover:text-primary-foreground"
-                          variant={activeTagSlug === tag.slug ? "default" : "outline"}
-                        >
-                          <Tags className="h-3 w-3" />
-                          {tag.name}
-                          <span className="text-[10px] opacity-70">{tag._count.notes}</span>
-                        </Badge>
-                      </Link>
+                      <FolderRow
+                        key={folder.id}
+                        folder={{
+                          id: folder.id,
+                          name: folder.name,
+                          count: folder._count.notes,
+                          parentId: folder.parentId,
+                        }}
+                        href={`/?folder=${folder.id}`}
+                        isActive={isActive}
+                        depth={depth}
+                        destinations={folderDestinations}
+                      />
                     );
-                  })
-                ) : (
-                  <p className="text-xs text-muted-foreground">No tags yet</p>
-                )}
-              </div>
-            </div>
+                  })}
+                </nav>
 
-            {isTrashView ? (
-              <div className="divide-y">
-                {trashCount > 0 ? (
-                  <>
-                    {deletedFolders.map((folder) => (
-                      <div key={folder.id} className="flex items-center gap-3 px-4 py-4">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
-                          <Trash2 className="h-4 w-4" />
+                {!isTrashView ? (
+                  <section className="overflow-hidden rounded-md border">
+                    <div className="border-b bg-slate-50 px-3 py-2">
+                      <h2 className="truncate text-xs font-semibold uppercase text-muted-foreground">
+                        {browserTitle}
+                      </h2>
+                    </div>
+                    <div className="divide-y">
+                      {matchingFolders.map((folder) => (
+                        <Link
+                          key={folder.id}
+                          className="flex items-center gap-2 px-3 py-2.5 text-sm transition-colors hover:bg-slate-50"
+                          href={`/?folder=${folder.id}`}
+                        >
+                          <Folder className="h-4 w-4 shrink-0 text-slate-700" />
+                          <span className="min-w-0 flex-1 truncate">{folder.name}</span>
+                          <span className="text-xs text-muted-foreground">{folder._count.notes}</span>
+                        </Link>
+                      ))}
+                      {notes.map((note) => {
+                        const isActive = selectedNote?.id === note.id;
+                        const noteHref = `${note.folder ? `/?folder=${note.folder.id}` : "/?"}&note=${note.id}${
+                          query ? `&q=${encodeURIComponent(query)}` : ""
+                        }${activeTagSlug ? `&tag=${encodeURIComponent(activeTagSlug)}` : ""}`;
+
+                        return (
+                          <Link
+                            key={note.id}
+                            className={cn(
+                              "block px-3 py-2.5 text-sm transition-colors hover:bg-slate-50",
+                              isActive && "bg-teal-50/70 hover:bg-teal-50",
+                            )}
+                            href={noteHref}
+                          >
+                            <span className="flex min-w-0 items-center gap-2">
+                              <FileText className="h-4 w-4 shrink-0 text-slate-700" />
+                              <span className="min-w-0 flex-1 truncate font-medium">{note.title}</span>
+                            </span>
+                            {isFilteredView ? (
+                              <span className="mt-1 block truncate pl-6 text-xs text-muted-foreground">
+                                {note.folder?.name ?? "Vault"}
+                              </span>
+                            ) : null}
+                          </Link>
+                        );
+                      })}
+                      {mediaAssets.map((mediaAsset) => {
+                        const isActive = selectedMedia?.id === mediaAsset.id;
+                        const mediaHref = `${
+                          mediaAsset.folder ? `/?folder=${mediaAsset.folder.id}` : "/?"
+                        }&media=${mediaAsset.id}${query ? `&q=${encodeURIComponent(query)}` : ""}`;
+
+                        return (
+                          <Link
+                            key={mediaAsset.id}
+                            className={cn(
+                              "flex items-center gap-2 px-3 py-2.5 text-sm transition-colors hover:bg-slate-50",
+                              isActive && "bg-teal-50/70 hover:bg-teal-50",
+                            )}
+                            href={mediaHref}
+                          >
+                            <ImagePlus className="h-4 w-4 shrink-0 text-slate-700" />
+                            <span className="min-w-0 flex-1 truncate">{mediaAsset.filename}</span>
+                          </Link>
+                        );
+                      })}
+                      {matchingFolders.length === 0 && notes.length === 0 && mediaAssets.length === 0 ? (
+                        <div className="px-3 py-5 text-sm text-muted-foreground">
+                          {isFilteredView
+                            ? "No matching vault content"
+                            : !selectedFolder && !hasVaultContent
+                              ? "Your vault is empty"
+                              : "This location is empty"}
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">{folder.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Folder deleted {folder.deletedAt ? formatDate(folder.deletedAt) : "recently"}
-                          </p>
+                      ) : null}
+                    </div>
+                  </section>
+                ) : null}
+              </div>
+
+              <div className="border-t px-4 py-4">
+                <Button
+                  asChild
+                  variant={isTrashView ? "secondary" : "ghost"}
+                  className={cn(
+                    "h-10 w-full justify-start px-3",
+                    isTrashView && "bg-teal-50 text-teal-950 hover:bg-teal-100",
+                  )}
+                >
+                  <Link href="/?view=trash">
+                    <ArchiveRestore className="h-4 w-4" />
+                    <span className="flex-1 text-left">Trash</span>
+                    <span className="text-xs text-muted-foreground">{trashCount}</span>
+                  </Link>
+                </Button>
+              </div>
+            </aside>
+          }
+          content={
+            <section className="min-h-0 bg-slate-50">
+              {isTrashView ? (
+                <div className="min-h-full bg-white">
+                  <div className="border-b px-5 py-4">
+                    <h2 className="text-base font-semibold tracking-normal">Trash</h2>
+                    <p className="text-sm text-muted-foreground">Restore deleted folders and notes</p>
+                  </div>
+                  <div className="divide-y">
+                    {trashCount > 0 ? (
+                      <>
+                        {deletedFolders.map((folder) => (
+                          <div key={folder.id} className="flex items-center gap-3 px-4 py-4">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                              <Trash2 className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium">{folder.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Folder deleted {folder.deletedAt ? formatDate(folder.deletedAt) : "recently"}
+                              </p>
+                            </div>
+                            <form action={restoreFolderAction}>
+                              <input type="hidden" name="folderId" value={folder.id} />
+                              <Button variant="outline" size="sm" type="submit">
+                                Restore
+                              </Button>
+                            </form>
+                          </div>
+                        ))}
+                        {deletedNotes.map((note) => {
+                          const folderDeleted = Boolean(note.folder?.deletedAt);
+
+                          return (
+                            <div key={note.id} className="flex items-center gap-3 px-4 py-4">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                                <FileText className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium">{note.title}</p>
+                                <p className="truncate text-xs text-muted-foreground">
+                                  Note in {note.folder?.name ?? "Vault"}
+                                  {note.deletedAt ? ` deleted ${formatDate(note.deletedAt)}` : ""}
+                                </p>
+                                {folderDeleted ? (
+                                  <p className="mt-1 text-xs text-amber-700">
+                                    Restore the folder before restoring this note.
+                                  </p>
+                                ) : null}
+                              </div>
+                              <form action={restoreNoteAction}>
+                                <input type="hidden" name="noteId" value={note.id} />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  type="submit"
+                                  disabled={folderDeleted}
+                                >
+                                  Restore
+                                </Button>
+                              </form>
+                            </div>
+                          );
+                        })}
+                      </>
+                    ) : (
+                      <div className="px-4 py-10 text-center">
+                        <p className="text-sm font-medium">Trash is empty</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Deleted folders and notes will appear here.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : selectedNote ? (
+                <div className="flex min-h-full flex-col">
+                  <div className="border-b bg-white px-5 py-4">
+                    <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                          <BookOpenText className="h-4 w-4" />
+                          <Link className="hover:text-foreground" href="/">
+                            Vault
+                          </Link>
+                          {folderTrail.map((folder) => (
+                            <span key={folder.id} className="flex items-center gap-2">
+                              <span>/</span>
+                              <Link className="hover:text-foreground" href={`/?folder=${folder.id}`}>
+                                {folder.name}
+                              </Link>
+                            </span>
+                          ))}
+                          <span>/</span>
+                          <span className="max-w-56 truncate">{selectedNote.title}</span>
                         </div>
-                        <form action={restoreFolderAction}>
-                          <input type="hidden" name="folderId" value={folder.id} />
-                          <Button variant="outline" size="sm" type="submit">
-                            Restore
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Updated {formatDate(selectedNote.updatedAt)}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline">
+                          <ImagePlus className="h-4 w-4" />
+                          Insert image
+                        </Button>
+                        <form action={trashNoteAction}>
+                          <input type="hidden" name="noteId" value={selectedNote.id} />
+                          <input type="hidden" name="folderId" value={selectedNote.folder?.id ?? ""} />
+                          <Button variant="outline" type="submit">
+                            <Trash2 className="h-4 w-4" />
+                            Move to trash
                           </Button>
                         </form>
                       </div>
-                    ))}
-                    {deletedNotes.map((note) => {
-                      const folderDeleted = Boolean(note.folder?.deletedAt);
+                    </div>
 
-                      return (
-                        <div key={note.id} className="flex items-center gap-3 px-4 py-4">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
-                            <FileText className="h-4 w-4" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium">{note.title}</p>
-                            <p className="truncate text-xs text-muted-foreground">
-                              Note in {note.folder?.name ?? "Vault"}
-                              {note.deletedAt ? ` deleted ${formatDate(note.deletedAt)}` : ""}
-                            </p>
-                            {folderDeleted ? (
-                              <p className="mt-1 text-xs text-amber-700">
-                                Restore the folder before restoring this note.
-                              </p>
-                            ) : null}
-                          </div>
-                          <form action={restoreNoteAction}>
-                            <input type="hidden" name="noteId" value={note.id} />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              type="submit"
-                              disabled={folderDeleted}
-                            >
-                              Restore
-                            </Button>
-                          </form>
-                        </div>
-                      );
-                    })}
-                  </>
-                ) : (
-                  <div className="px-4 py-10 text-center">
-                    <p className="text-sm font-medium">Trash is empty</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Deleted folders and notes will appear here.</p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="divide-y">
-                {matchingFolders.length > 0 ? (
-                  matchingFolders.map((folder) => (
-                    <Link
-                      key={folder.id}
-                      className="flex gap-3 px-4 py-4 text-left transition-colors hover:bg-slate-50"
-                      href={`/?folder=${folder.id}`}
-                    >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
-                        <Folder className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-3">
-                          <p className="truncate text-sm font-medium">{folder.name}</p>
-                          <span className="shrink-0 text-xs text-muted-foreground">
-                            {folder._count.notes} notes
-                          </span>
-                        </div>
-                        <p className="mt-1 text-xs leading-5 text-muted-foreground">Folder</p>
-                      </div>
-                    </Link>
-                  ))
-                ) : null}
+                    <div className="mt-4 flex flex-col gap-3 border-t pt-4">
+                      <div className="flex flex-wrap gap-2">
+                        {tags.length > 0 ? (
+                          tags.map((tag) => {
+                            const isAssigned = selectedNote.tags.some((noteTag) => noteTag.tagId === tag.id);
 
-                {notes.length > 0 ? (
-                  notes.map((note) => {
-                    const isActive = selectedNote?.id === note.id;
-                    const noteHref = `${note.folder ? `/?folder=${note.folder.id}` : "/?"}&note=${note.id}${
-                      query ? `&q=${encodeURIComponent(query)}` : ""
-                    }${activeTagSlug ? `&tag=${encodeURIComponent(activeTagSlug)}` : ""}`;
-
-                    return (
-                      <Link
-                        key={note.id}
-                        className={cn(
-                          "flex gap-3 px-4 py-4 text-left transition-colors hover:bg-slate-50",
-                          isActive && "bg-teal-50/70 hover:bg-teal-50",
-                        )}
-                        href={noteHref}
-                      >
-                        <div
-                          className={cn(
-                            "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md",
-                            isActive ? "bg-teal-100 text-teal-800" : "bg-slate-100 text-slate-700",
-                          )}
-                        >
-                          <FileText className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-3">
-                            <p className="truncate text-sm font-medium">{note.title}</p>
-                            <span className="shrink-0 text-xs text-muted-foreground">{formatDate(note.updatedAt)}</span>
-                          </div>
-                          {isFilteredView ? (
-                            <p className="mt-1 truncate text-xs text-muted-foreground">
-                              {note.folder?.name ?? "Vault"}
-                            </p>
-                          ) : null}
-                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                            {note.body.replaceAll("#", "").replaceAll("-", "").trim() || "Empty note"}
-                          </p>
-                          {note.tags.length > 0 ? (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {note.tags.map(({ tag }) => (
-                                <Badge key={tag.id} variant="outline" className="px-1.5 py-0 text-[10px]">
+                            return (
+                              <form key={tag.id} action={toggleNoteTagAction}>
+                                <input type="hidden" name="noteId" value={selectedNote.id} />
+                                <input type="hidden" name="tagId" value={tag.id} />
+                                <input type="hidden" name="returnTo" value={returnTo} />
+                                <Button
+                                  type="submit"
+                                  size="sm"
+                                  variant={isAssigned ? "secondary" : "outline"}
+                                  className={cn(
+                                    "h-8 gap-1",
+                                    isAssigned && "bg-teal-50 text-teal-950 hover:bg-teal-100",
+                                  )}
+                                >
+                                  <Tags className="h-3 w-3" />
                                   {tag.name}
-                                </Badge>
-                              ))}
-                            </div>
-                          ) : null}
-                        </div>
-                      </Link>
-                    );
-                  })
-                ) : matchingFolders.length === 0 ? (
-                  <div className="px-4 py-10 text-center">
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-slate-100 text-slate-700">
-                      <FileText className="h-5 w-5" />
-                    </div>
-                    <p className="mt-4 text-sm font-medium">
-                      {isFilteredView
-                        ? "No matching notes or folders"
-                        : selectedFolder
-                          ? "No notes in this folder yet"
-                          : "No notes in Vault yet"}
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {isFilteredView
-                        ? "Try a different title search or tag filter."
-                        : selectedFolder
-                          ? "Create a Markdown note to start writing in this folder."
-                          : "Create a Markdown note or folder in Vault."}
-                    </p>
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </section>
-          }
-          detail={
-          <section className="min-h-0 bg-slate-50">
-            {selectedNote && !isTrashView ? (
-              <div className="flex min-h-full flex-col">
-                <div className="border-b bg-white px-5 py-4">
-                  <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                        <BookOpenText className="h-4 w-4" />
-                        <span>{selectedNote.folder?.name ?? "Vault"}</span>
-                        <span>/</span>
-                        <span>Markdown note</span>
+                                </Button>
+                              </form>
+                            );
+                          })
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Create a tag to classify this note.</p>
+                        )}
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Updated {formatDate(selectedNote.updatedAt)}
-                      </p>
-                    </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline">
-                        <ImagePlus className="h-4 w-4" />
-                        Insert image
-                      </Button>
-                      <form action={trashNoteAction}>
+                      <form action={createTagAction} className="flex max-w-md gap-2">
                         <input type="hidden" name="noteId" value={selectedNote.id} />
-                        <input type="hidden" name="folderId" value={selectedNote.folder?.id ?? ""} />
-                        <Button variant="outline" type="submit">
-                          <Trash2 className="h-4 w-4" />
-                          Move to trash
+                        <input type="hidden" name="returnTo" value={returnTo} />
+                        <Input name="name" placeholder="New tag" />
+                        <Button type="submit" variant="outline">
+                          <Plus className="h-4 w-4" />
+                          Add tag
                         </Button>
                       </form>
                     </div>
                   </div>
-
-                  <div className="mt-4 flex flex-col gap-3 border-t pt-4">
-                    <div className="flex flex-wrap gap-2">
-                      {tags.length > 0 ? (
-                        tags.map((tag) => {
-                          const isAssigned = selectedNote.tags.some((noteTag) => noteTag.tagId === tag.id);
-
-                          return (
-                            <form key={tag.id} action={toggleNoteTagAction}>
-                              <input type="hidden" name="noteId" value={selectedNote.id} />
-                              <input type="hidden" name="tagId" value={tag.id} />
-                              <input type="hidden" name="returnTo" value={returnTo} />
-                              <Button
-                                type="submit"
-                                size="sm"
-                                variant={isAssigned ? "secondary" : "outline"}
-                                className={cn(
-                                  "h-8 gap-1",
-                                  isAssigned && "bg-teal-50 text-teal-950 hover:bg-teal-100",
-                                )}
-                              >
-                                <Tags className="h-3 w-3" />
-                                {tag.name}
-                              </Button>
-                            </form>
-                          );
-                        })
-                      ) : (
-                        <p className="text-sm text-muted-foreground">Create a tag to classify this note.</p>
-                      )}
+                  <NoteEditor
+                    key={selectedNote.id}
+                    note={{
+                      id: selectedNote.id,
+                      title: selectedNote.title,
+                      body: selectedNote.body,
+                    }}
+                  />
+                </div>
+              ) : selectedMedia ? (
+                <div className="flex min-h-full items-center justify-center px-6 py-10">
+                  <div className="w-full max-w-xl rounded-md border bg-white p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                        <ImagePlus className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <h2 className="truncate text-lg font-semibold tracking-normal">{selectedMedia.filename}</h2>
+                        <p className="truncate text-sm text-muted-foreground">{selectedMedia.contentType}</p>
+                      </div>
                     </div>
-
-                    <form action={createTagAction} className="flex max-w-md gap-2">
-                      <input type="hidden" name="noteId" value={selectedNote.id} />
-                      <input type="hidden" name="returnTo" value={returnTo} />
-                      <Input name="name" placeholder="New tag" />
-                      <Button type="submit" variant="outline">
-                        <Plus className="h-4 w-4" />
-                        Add tag
-                      </Button>
-                    </form>
                   </div>
                 </div>
-                <NoteEditor
-                  key={selectedNote.id}
-                  note={{
-                    id: selectedNote.id,
-                    title: selectedNote.title,
-                    body: selectedNote.body,
-                  }}
-                />
-              </div>
-            ) : null}
-          </section>
+              ) : (
+                <div className="flex min-h-full items-center justify-center px-6 py-10">
+                  <div className="max-w-md text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-white text-slate-700 shadow-sm">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <h2 className="mt-4 text-base font-semibold tracking-normal">
+                      {!selectedFolder && !hasVaultContent ? "Your vault is empty" : browserTitle}
+                    </h2>
+                  </div>
+                </div>
+              )}
+            </section>
           }
+          outline={selectedNote && !isTrashView ? (
+            <aside className="flex min-h-0 flex-col border-l bg-white">
+              <div className="border-b px-4 py-4">
+                <h2 className="text-sm font-semibold">Note Outline</h2>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+                {noteOutline.length > 0 ? (
+                  <div className="space-y-1">
+                    {noteOutline.map((heading) => (
+                      <div
+                        key={heading.id}
+                        className="truncate rounded-md px-2 py-1.5 text-sm text-muted-foreground"
+                        style={{ paddingLeft: `${8 + (heading.depth - 1) * 12}px` }}
+                      >
+                        {heading.title}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="px-2 py-1.5 text-sm text-muted-foreground">No headings</p>
+                )}
+              </div>
+            </aside>
+          ) : undefined}
         />
       </div>
     </main>
