@@ -55,6 +55,39 @@ function formatDate(value: Date) {
   }).format(value);
 }
 
+type FolderListEntry = {
+  id: string;
+  name: string;
+  parentId: string | null;
+  _count: {
+    notes: number;
+  };
+};
+
+function flattenFolders(folders: FolderListEntry[]) {
+  const children = new Map<string | null, FolderListEntry[]>();
+
+  for (const folder of folders) {
+    const siblings = children.get(folder.parentId) ?? [];
+
+    siblings.push(folder);
+    children.set(folder.parentId, siblings);
+  }
+
+  const rows: { depth: number; folder: FolderListEntry }[] = [];
+
+  function appendFolders(parentId: string | null, depth: number) {
+    for (const folder of children.get(parentId) ?? []) {
+      rows.push({ depth, folder });
+      appendFolders(folder.id, depth + 1);
+    }
+  }
+
+  appendFolders(null, 0);
+
+  return rows;
+}
+
 export default async function Home({ searchParams }: HomeProps) {
   const session = await requireSession();
   const params = await searchParams;
@@ -122,21 +155,33 @@ export default async function Home({ searchParams }: HomeProps) {
     : null;
 
   const selectedFolder =
-    folders.find((folder) => folder.id === params?.folder) ?? folders[0] ?? null;
+    params?.folder ? folders.find((folder) => folder.id === params.folder) ?? null : null;
 
-  const notes = !isTrashView && (isFilteredView || selectedFolder)
+  const notes = !isTrashView
     ? await prisma.note.findMany({
         where: {
           userId: session.user.id,
           deletedAt: null,
-          folder: {
-            deletedAt: null,
-          },
           ...(isFilteredView
-            ? {}
-            : {
+            ? {
+                OR: [
+                  { folderId: null },
+                  {
+                    folder: {
+                      is: {
+                        deletedAt: null,
+                      },
+                    },
+                  },
+                ],
+              }
+            : selectedFolder
+              ? {
                 folderId: selectedFolder?.id,
-              }),
+              }
+              : {
+                  folderId: null,
+                }),
           ...(query
             ? {
                 title: {
@@ -190,7 +235,7 @@ export default async function Home({ searchParams }: HomeProps) {
       ? `#${activeTag.name}`
       : query
         ? "Search results"
-        : selectedFolder?.name ?? "No folder selected";
+        : selectedFolder?.name ?? "Vault";
 
   const currentPathParams = new URLSearchParams();
 
@@ -212,6 +257,11 @@ export default async function Home({ searchParams }: HomeProps) {
 
   const returnTo = `/${currentPathParams.toString() ? `?${currentPathParams.toString()}` : ""}`;
   const trashCount = deletedFolders.length + deletedNotes.length;
+  const folderRows = flattenFolders(folders);
+  const folderDestinations = folderRows.map(({ folder, depth }) => ({
+    id: folder.id,
+    name: `${"  ".repeat(depth)}${folder.name}`,
+  }));
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -251,6 +301,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 <p className="text-xs text-muted-foreground">Primary organization</p>
               </div>
               <form action={createFolderAction} className="flex gap-2">
+                <input type="hidden" name="parentId" value={selectedFolder?.id ?? ""} />
                 <Input name="name" placeholder="New folder" required />
                 <Button size="icon" aria-label="Create folder">
                   <Plus className="h-4 w-4" />
@@ -259,8 +310,21 @@ export default async function Home({ searchParams }: HomeProps) {
             </div>
 
             <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-3">
-              {folders.length > 0 ? (
-                folders.map((folder) => {
+              <Button
+                asChild
+                variant={!isTrashView && !selectedFolder ? "secondary" : "ghost"}
+                className={cn(
+                  "h-10 w-full justify-start px-3",
+                  !isTrashView && !selectedFolder && "bg-teal-50 text-teal-950 hover:bg-teal-100",
+                )}
+              >
+                <Link href="/">
+                  <Folder className="h-4 w-4" />
+                  Vault
+                </Link>
+              </Button>
+              {folderRows.length > 0 ? (
+                folderRows.map(({ depth, folder }) => {
                   const isActive = !isTrashView && selectedFolder?.id === folder.id;
 
                   return (
@@ -270,15 +334,18 @@ export default async function Home({ searchParams }: HomeProps) {
                         id: folder.id,
                         name: folder.name,
                         count: folder._count.notes,
+                        parentId: folder.parentId,
                       }}
                       href={`/?folder=${folder.id}`}
                       isActive={isActive}
+                      depth={depth}
+                      destinations={folderDestinations}
                     />
                   );
                 })
               ) : (
                 <div className="rounded-md border border-dashed px-3 py-4 text-sm text-muted-foreground">
-                  Create your first folder to start organizing notes.
+                  Create a folder in Vault to start organizing notes.
                 </div>
               )}
             </nav>
@@ -313,7 +380,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 </div>
                 <form action={createNoteAction}>
                   <input type="hidden" name="folderId" value={selectedFolder?.id ?? ""} />
-                  <Button aria-label="Create note" disabled={!selectedFolder || isTrashView} type="submit">
+                  <Button aria-label="Create note" disabled={isTrashView} type="submit">
                     <Plus className="h-4 w-4" />
                     New note
                   </Button>
@@ -390,7 +457,7 @@ export default async function Home({ searchParams }: HomeProps) {
                       </div>
                     ))}
                     {deletedNotes.map((note) => {
-                      const folderDeleted = Boolean(note.folder.deletedAt);
+                      const folderDeleted = Boolean(note.folder?.deletedAt);
 
                       return (
                         <div key={note.id} className="flex items-center gap-3 px-4 py-4">
@@ -400,7 +467,7 @@ export default async function Home({ searchParams }: HomeProps) {
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium">{note.title}</p>
                             <p className="truncate text-xs text-muted-foreground">
-                              Note in {note.folder.name}
+                              Note in {note.folder?.name ?? "Vault"}
                               {note.deletedAt ? ` deleted ${formatDate(note.deletedAt)}` : ""}
                             </p>
                             {folderDeleted ? (
@@ -459,7 +526,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 {notes.length > 0 ? (
                   notes.map((note) => {
                     const isActive = selectedNote?.id === note.id;
-                    const noteHref = `/?folder=${note.folder.id}&note=${note.id}${
+                    const noteHref = `${note.folder ? `/?folder=${note.folder.id}` : "/?"}&note=${note.id}${
                       query ? `&q=${encodeURIComponent(query)}` : ""
                     }${activeTagSlug ? `&tag=${encodeURIComponent(activeTagSlug)}` : ""}`;
 
@@ -487,7 +554,7 @@ export default async function Home({ searchParams }: HomeProps) {
                           </div>
                           {isFilteredView ? (
                             <p className="mt-1 truncate text-xs text-muted-foreground">
-                              {note.folder.name}
+                              {note.folder?.name ?? "Vault"}
                             </p>
                           ) : null}
                           <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
@@ -516,14 +583,14 @@ export default async function Home({ searchParams }: HomeProps) {
                         ? "No matching notes or folders"
                         : selectedFolder
                           ? "No notes in this folder yet"
-                          : "No folder selected"}
+                          : "No notes in Vault yet"}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {isFilteredView
                         ? "Try a different title search or tag filter."
                         : selectedFolder
                           ? "Create a Markdown note to start writing in this folder."
-                          : "Create a folder to start building your vault."}
+                          : "Create a Markdown note or folder in Vault."}
                     </p>
                   </div>
                 ) : null}
@@ -540,7 +607,7 @@ export default async function Home({ searchParams }: HomeProps) {
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                         <BookOpenText className="h-4 w-4" />
-                        <span>{selectedNote.folder.name}</span>
+                        <span>{selectedNote.folder?.name ?? "Vault"}</span>
                         <span>/</span>
                         <span>Markdown note</span>
                       </div>
@@ -556,7 +623,7 @@ export default async function Home({ searchParams }: HomeProps) {
                       </Button>
                       <form action={trashNoteAction}>
                         <input type="hidden" name="noteId" value={selectedNote.id} />
-                        <input type="hidden" name="folderId" value={selectedNote.folder.id} />
+                        <input type="hidden" name="folderId" value={selectedNote.folder?.id ?? ""} />
                         <Button variant="outline" type="submit">
                           <Trash2 className="h-4 w-4" />
                           Move to trash

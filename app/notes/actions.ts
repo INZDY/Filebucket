@@ -12,23 +12,19 @@ function readId(formData: FormData, key: string) {
 
 export async function createNoteAction(formData: FormData) {
   const session = await requireSession();
-  const folderId = readId(formData, "folderId");
+  const folderId = readId(formData, "folderId") || null;
+  const folder = folderId
+    ? await prisma.folder.findFirst({
+        where: {
+          id: folderId,
+          userId: session.user.id,
+          deletedAt: null,
+        },
+        select: { id: true },
+      })
+    : null;
 
-  if (!folderId) {
-    revalidatePath("/");
-    return;
-  }
-
-  const folder = await prisma.folder.findFirst({
-    where: {
-      id: folderId,
-      userId: session.user.id,
-      deletedAt: null,
-    },
-    select: { id: true },
-  });
-
-  if (!folder) {
+  if (folderId && !folder) {
     revalidatePath("/");
     return;
   }
@@ -37,13 +33,13 @@ export async function createNoteAction(formData: FormData) {
     data: {
       title: "Untitled note",
       body: "# Untitled note\n\nStart writing in Markdown.",
-      folderId: folder.id,
+      folderId: folder?.id,
       userId: session.user.id,
     },
   });
 
   revalidatePath("/");
-  redirect(`/?folder=${folder.id}&note=${note.id}`);
+  redirect(folder ? `/?folder=${folder.id}&note=${note.id}` : `/?note=${note.id}`);
 }
 
 export async function updateNoteAction(noteId: string, title: string, body: string) {
@@ -55,11 +51,16 @@ export async function updateNoteAction(noteId: string, title: string, body: stri
       id: noteId,
       userId: session.user.id,
       deletedAt: null,
-      folder: {
-        is: {
-          deletedAt: null,
+      OR: [
+        { folderId: null },
+        {
+          folder: {
+            is: {
+              deletedAt: null,
+            },
+          },
         },
-      },
+      ],
     },
     data: {
       title: nextTitle,
@@ -85,11 +86,16 @@ export async function trashNoteAction(formData: FormData) {
       id: noteId,
       userId: session.user.id,
       deletedAt: null,
-      folder: {
-        is: {
-          deletedAt: null,
+      OR: [
+        { folderId: null },
+        {
+          folder: {
+            is: {
+              deletedAt: null,
+            },
+          },
         },
-      },
+      ],
     },
     data: {
       deletedAt: new Date(),
@@ -114,11 +120,16 @@ export async function restoreNoteAction(formData: FormData) {
       id: noteId,
       userId: session.user.id,
       deletedAt: { not: null },
-      folder: {
-        is: {
-          deletedAt: null,
+      OR: [
+        { folderId: null },
+        {
+          folder: {
+            is: {
+              deletedAt: null,
+            },
+          },
         },
-      },
+      ],
     },
     select: {
       id: true,
@@ -141,5 +152,5 @@ export async function restoreNoteAction(formData: FormData) {
   });
 
   revalidatePath("/");
-  redirect(`/?folder=${note.folderId}&note=${note.id}`);
+  redirect(note.folderId ? `/?folder=${note.folderId}&note=${note.id}` : `/?note=${note.id}`);
 }

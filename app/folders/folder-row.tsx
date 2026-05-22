@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Folder, FolderOpen, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Folder, FolderOpen, MoreHorizontal, Move, Pencil, Trash2 } from "lucide-react";
 
-import { renameFolderAction, trashFolderAction } from "@/app/folders/actions";
+import {
+  moveFolderAction,
+  renameFolderAction,
+  trashFolderAction,
+} from "@/app/folders/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -14,18 +18,32 @@ type FolderRowProps = {
     id: string;
     name: string;
     count: number;
+    parentId: string | null;
   };
   href: string;
   isActive: boolean;
+  depth?: number;
+  destinations: {
+    id: string;
+    name: string;
+  }[];
 };
+
+type MenuMode = "actions" | "move" | "rename";
 
 type MenuState = {
   x: number;
   y: number;
-  mode: "actions" | "rename";
+  mode: MenuMode;
 } | null;
 
-export function FolderRow({ folder, href, isActive }: FolderRowProps) {
+export function FolderRow({
+  depth = 0,
+  destinations,
+  folder,
+  href,
+  isActive,
+}: FolderRowProps) {
   const [menu, setMenu] = useState<MenuState>(null);
 
   useEffect(() => {
@@ -44,7 +62,7 @@ export function FolderRow({ folder, href, isActive }: FolderRowProps) {
     };
   }, [menu]);
 
-  function openMenu(x: number, y: number, mode: MenuState["mode"] = "actions") {
+  function openMenu(x: number, y: number, mode: MenuMode = "actions") {
     setMenu({
       x: Math.min(x, window.innerWidth - 240),
       y: Math.min(y, window.innerHeight - 180),
@@ -59,7 +77,11 @@ export function FolderRow({ folder, href, isActive }: FolderRowProps) {
         isActive && "bg-teal-50 text-teal-950 hover:bg-teal-100",
       )}
     >
-      <Link className="flex min-w-0 flex-1 items-center gap-2 px-3" href={href}>
+      <Link
+        className="flex min-w-0 flex-1 items-center gap-2 pr-3"
+        href={href}
+        style={{ paddingLeft: `${12 + depth * 16}px` }}
+      >
         {isActive ? <FolderOpen className="h-4 w-4 shrink-0" /> : <Folder className="h-4 w-4 shrink-0" />}
         <span className="min-w-0 flex-1 truncate text-left">{folder.name}</span>
         <span className="text-xs text-muted-foreground">{folder.count}</span>
@@ -102,6 +124,36 @@ export function FolderRow({ folder, href, isActive }: FolderRowProps) {
                 </Button>
               </div>
             </form>
+          ) : menu.mode === "move" ? (
+            <form action={moveFolderAction} className="space-y-2 p-2">
+              <input type="hidden" name="folderId" value={folder.id} />
+              <label className="block space-y-1 text-xs font-medium text-muted-foreground">
+                Move to
+                <select
+                  autoFocus
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                  name="parentId"
+                  defaultValue={folder.parentId ?? ""}
+                >
+                  <option value="">Vault</option>
+                  {destinations
+                    .filter((destination) => destination.id !== folder.id)
+                    .map((destination) => (
+                      <option key={destination.id} value={destination.id}>
+                        {destination.name}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <div className="flex justify-end gap-2">
+                <Button onClick={() => setMenu(null)} size="sm" type="button" variant="ghost">
+                  Cancel
+                </Button>
+                <Button size="sm" type="submit">
+                  Move
+                </Button>
+              </div>
+            </form>
           ) : (
             <div className="space-y-1">
               <Button
@@ -112,6 +164,15 @@ export function FolderRow({ folder, href, isActive }: FolderRowProps) {
               >
                 <Pencil className="h-4 w-4" />
                 Rename
+              </Button>
+              <Button
+                className="h-9 w-full justify-start px-2"
+                onClick={() => setMenu((current) => current ? { ...current, mode: "move" } : current)}
+                type="button"
+                variant="ghost"
+              >
+                <Move className="h-4 w-4" />
+                Move
               </Button>
               <form action={trashFolderAction}>
                 <input type="hidden" name="folderId" value={folder.id} />
