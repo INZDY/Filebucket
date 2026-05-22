@@ -22,6 +22,8 @@ import { FolderRow } from "@/app/folders/folder-row";
 import { logoutAction } from "@/app/login/actions";
 import {
   createNoteAction,
+  importMarkdownNotesAction,
+  moveNoteAction,
   restoreNoteAction,
   trashNoteAction,
 } from "@/app/notes/actions";
@@ -420,6 +422,21 @@ export default async function Home({ searchParams }: HomeProps) {
                   </Button>
                 </div>
 
+                <form action={importMarkdownNotesAction} className="flex items-center gap-2">
+                  <input type="hidden" name="folderId" value={selectedFolder?.id ?? ""} />
+                  <Input
+                    accept=".md,text/markdown"
+                    className="h-9 px-2 py-1 text-xs file:mr-2 file:rounded file:border-0 file:bg-slate-100 file:px-2 file:py-1"
+                    disabled={isTrashView}
+                    multiple
+                    name="files"
+                    type="file"
+                  />
+                  <Button disabled={isTrashView} size="sm" type="submit" variant="outline">
+                    Import
+                  </Button>
+                </form>
+
                 <form action={createFolderAction} className="flex gap-2">
                   <input type="hidden" name="parentId" value={selectedFolder?.id ?? ""} />
                   <Input name="name" placeholder="New folder" required disabled={isTrashView} />
@@ -714,6 +731,25 @@ export default async function Home({ searchParams }: HomeProps) {
                           <ImagePlus className="h-4 w-4" />
                           Insert image
                         </Button>
+                        <form action={moveNoteAction} className="flex items-center gap-2">
+                          <input type="hidden" name="noteId" value={selectedNote.id} />
+                          <select
+                            aria-label="Move note destination"
+                            className="h-9 max-w-44 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                            defaultValue={selectedNote.folder?.id ?? ""}
+                            name="folderId"
+                          >
+                            <option value="">Vault</option>
+                            {folderDestinations.map((destination) => (
+                              <option key={destination.id} value={destination.id}>
+                                {destination.name}
+                              </option>
+                            ))}
+                          </select>
+                          <Button type="submit" variant="outline">
+                            Move
+                          </Button>
+                        </form>
                         <form action={trashNoteAction}>
                           <input type="hidden" name="noteId" value={selectedNote.id} />
                           <input type="hidden" name="folderId" value={selectedNote.folder?.id ?? ""} />

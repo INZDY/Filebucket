@@ -24,6 +24,7 @@ export function NoteEditor({ note }: NoteEditorProps) {
   const [body, setBody] = useState(note.body);
   const [lastSavedBody, setLastSavedBody] = useState(note.body);
   const [lastSavedTitle, setLastSavedTitle] = useState(note.title);
+  const [saveError, setSaveError] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const extensions = useMemo(() => [markdown()], []);
@@ -33,10 +34,21 @@ export function NoteEditor({ note }: NoteEditorProps) {
     const nextTitle = title.trim() || "Untitled note";
 
     startTransition(async () => {
-      await updateNoteAction(note.id, nextTitle, body);
-      setTitle(nextTitle);
-      setLastSavedTitle(nextTitle);
-      setLastSavedBody(body);
+      try {
+        const result = await updateNoteAction(note.id, nextTitle, body);
+
+        if (!result.ok) {
+          setSaveError(result.error ?? "Could not save changes.");
+          return;
+        }
+
+        setSaveError("");
+        setTitle(nextTitle);
+        setLastSavedTitle(nextTitle);
+        setLastSavedBody(body);
+      } catch {
+        setSaveError("Could not save changes.");
+      }
     });
   }, [body, note.id, title]);
 
@@ -45,7 +57,7 @@ export function NoteEditor({ note }: NoteEditorProps) {
       return;
     }
 
-    const timeout = window.setTimeout(save, 900);
+    const timeout = window.setTimeout(save, 1800);
 
     return () => window.clearTimeout(timeout);
   }, [hasChanges, save]);
@@ -62,8 +74,17 @@ export function NoteEditor({ note }: NoteEditorProps) {
           />
         </div>
         <div className="flex items-center justify-between gap-3 xl:justify-end">
-          <span className={cn("text-xs", hasChanges || isPending ? "text-amber-700" : "text-muted-foreground")}>
-            {isPending ? "Saving..." : hasChanges ? "Unsaved changes" : "Saved"}
+          <span
+            className={cn(
+              "text-xs",
+              saveError
+                ? "text-destructive"
+                : hasChanges || isPending
+                  ? "text-amber-700"
+                  : "text-muted-foreground",
+            )}
+          >
+            {saveError ? saveError : isPending ? "Saving..." : hasChanges ? "Unsaved changes" : "Saved"}
           </span>
           <Button onClick={save} type="button" disabled={isPending || !hasChanges} variant="outline">
             <Save className="h-4 w-4" />
