@@ -4,7 +4,9 @@ import CodeMirror from "@uiw/react-codemirror";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import { Save } from "lucide-react";
+import { Eye, PenLine, Save } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { updateNoteAction } from "@/app/notes/actions";
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,7 @@ export function NoteEditor({ note }: NoteEditorProps) {
   const [body, setBody] = useState(note.body);
   const [lastSavedBody, setLastSavedBody] = useState(note.body);
   const [lastSavedTitle, setLastSavedTitle] = useState(note.title);
+  const [mode, setMode] = useState<"write" | "preview">("write");
   const [saveError, setSaveError] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -74,6 +77,28 @@ export function NoteEditor({ note }: NoteEditorProps) {
           />
         </div>
         <div className="flex items-center justify-between gap-3 xl:justify-end">
+          <div className="flex items-center rounded-md border bg-background p-0.5">
+            <Button
+              aria-label="Write Markdown"
+              onClick={() => setMode("write")}
+              size="icon"
+              title="Write Markdown"
+              type="button"
+              variant={mode === "write" ? "secondary" : "ghost"}
+            >
+              <PenLine className="h-4 w-4" />
+            </Button>
+            <Button
+              aria-label="Preview Markdown"
+              onClick={() => setMode("preview")}
+              size="icon"
+              title="Preview Markdown"
+              type="button"
+              variant={mode === "preview" ? "secondary" : "ghost"}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          </div>
           <span
             className={cn(
               "text-xs",
@@ -93,21 +118,31 @@ export function NoteEditor({ note }: NoteEditorProps) {
         </div>
       </div>
 
-      <div className="filebucket-note-editor min-h-0 flex-1 overflow-hidden bg-[#1f2128]">
-        <CodeMirror
-          basicSetup={{
-            foldGutter: false,
-            highlightActiveLine: false,
-            lineNumbers: false,
-          }}
-          className="h-full text-base"
-          extensions={extensions}
-          height="100%"
-          onChange={setBody}
-          theme={oneDark}
-          value={body}
-        />
-      </div>
+      {mode === "write" ? (
+        <div className="filebucket-note-editor min-h-0 flex-1 overflow-hidden bg-[#1f2128]">
+          <CodeMirror
+            basicSetup={{
+              foldGutter: false,
+              highlightActiveLine: false,
+              lineNumbers: false,
+            }}
+            className="h-full text-base"
+            extensions={extensions}
+            height="100%"
+            onChange={setBody}
+            theme={oneDark}
+            value={body}
+          />
+        </div>
+      ) : (
+        <div className="min-h-0 flex-1 overflow-y-auto bg-white">
+          <div className="mx-auto max-w-[860px] space-y-4 px-5 py-6 text-base leading-7 text-slate-900 [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:pl-4 [&_blockquote]:text-muted-foreground [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_h1]:text-3xl [&_h1]:font-semibold [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:text-xl [&_h3]:font-semibold [&_hr]:my-6 [&_li]:ml-5 [&_ol]:list-decimal [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-50 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:px-2 [&_th]:py-1 [&_ul]:list-disc">
+            <ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml>
+            {body}
+            </ReactMarkdown>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

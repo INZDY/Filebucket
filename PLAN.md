@@ -69,7 +69,7 @@
 - Keep authenticated user display and sign out.
 
 ## Milestone 4: Markdown Notes
-- Status: note naming collisions, Markdown import, note move, rename collision rejection, and autosave failure behavior revised. Safe Markdown rendering and manual smoke testing remain pending.
+- Status: Markdown note create/import/move/edit/autosave and safe preview rendering revised for the vault browser shell. Manual smoke testing remains pending.
 - Create notes inside folders or the vault root with readable collision suffixes for default names.
 - Import uploaded `.md` files as notes in the selected vault browser location, using the filename without `.md` as the default title and the file contents as the Markdown body.
 - Support importing multiple `.md` files at once, creating one note per file with collision suffixes as needed.
