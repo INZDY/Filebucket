@@ -87,7 +87,7 @@
 - Store note title and Markdown body in PostgreSQL; export writes notes out as `.md` files.
 
 ## Milestone 5: Search And Tags In The Vault Browser
-- Status: needs revision. Existing search/tag code is partial and tied to the earlier layout.
+- Status: vault-browser filename/title search, tag filtering, note tagging, tag rename, and tag delete revised for the new shell. Manual smoke testing remains pending.
 - Implement whole-vault filename/title search across active folders, notes, and media assets.
 - Show search results in the vault browser, not the main content pane.
 - Defer full-text note-body search unless requested later.

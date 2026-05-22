@@ -149,3 +149,72 @@ export async function toggleNoteTagAction(formData: FormData) {
   revalidatePath("/");
   redirect(returnTo);
 }
+
+export async function renameTagAction(formData: FormData) {
+  const session = await requireSession();
+  const tagId = readValue(formData, "tagId");
+  const returnTo = readReturnTo(formData);
+  const name = readValue(formData, "name").slice(0, 80);
+  const slug = slugifyTag(name);
+
+  if (!tagId || !name || !slug) {
+    revalidatePath("/");
+    redirect(returnTo);
+  }
+
+  const [tag, collision] = await Promise.all([
+    prisma.tag.findFirst({
+      where: {
+        id: tagId,
+        userId: session.user.id,
+      },
+      select: { id: true },
+    }),
+    prisma.tag.findFirst({
+      where: {
+        userId: session.user.id,
+        slug,
+        id: {
+          not: tagId,
+        },
+      },
+      select: { id: true },
+    }),
+  ]);
+
+  if (!tag || collision) {
+    revalidatePath("/");
+    redirect(returnTo);
+  }
+
+  await prisma.tag.update({
+    where: { id: tag.id },
+    data: {
+      name,
+      slug,
+    },
+  });
+
+  revalidatePath("/");
+  redirect(`/?tag=${slug}`);
+}
+
+export async function deleteTagAction(formData: FormData) {
+  const session = await requireSession();
+  const tagId = readValue(formData, "tagId");
+
+  if (!tagId) {
+    revalidatePath("/");
+    redirect("/");
+  }
+
+  await prisma.tag.deleteMany({
+    where: {
+      id: tagId,
+      userId: session.user.id,
+    },
+  });
+
+  revalidatePath("/");
+  redirect("/");
+}

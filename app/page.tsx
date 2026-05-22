@@ -30,6 +30,8 @@ import {
 import { NoteEditor } from "@/app/notes/note-editor";
 import {
   createTagAction,
+  deleteTagAction,
+  renameTagAction,
   toggleNoteTagAction,
 } from "@/app/tags/actions";
 import { ResizableVault } from "@/app/vault/resizable-vault";
@@ -308,7 +310,7 @@ export default async function Home({ searchParams }: HomeProps) {
     params?.note ? notes.find((note) => note.id === params.note) ?? null : null;
   const selectedMedia =
     params?.media ? mediaAssets.find((mediaAsset) => mediaAsset.id === params.media) ?? null : null;
-  const matchingFolders = query
+  const matchingFolders = query && !activeTag
     ? folders.filter((folder) => folder.name.toLowerCase().includes(query.toLowerCase()))
     : [];
   const folderTrail = getFolderTrail(folders, selectedFolder);
@@ -489,6 +491,25 @@ export default async function Home({ searchParams }: HomeProps) {
                     <p className="text-xs text-muted-foreground">No tags yet</p>
                   )}
                 </div>
+
+                {activeTag ? (
+                  <div className="flex flex-col gap-2 rounded-md border bg-slate-50 p-2">
+                    <form action={renameTagAction} className="flex gap-2">
+                      <input type="hidden" name="tagId" value={activeTag.id} />
+                      <input type="hidden" name="returnTo" value={returnTo} />
+                      <Input aria-label="Rename tag" defaultValue={activeTag.name} name="name" required />
+                      <Button size="sm" type="submit" variant="outline">
+                        Rename
+                      </Button>
+                    </form>
+                    <form action={deleteTagAction}>
+                      <input type="hidden" name="tagId" value={activeTag.id} />
+                      <Button className="w-full" size="sm" type="submit" variant="outline">
+                        Delete tag
+                      </Button>
+                    </form>
+                  </div>
+                ) : null}
               </div>
 
               <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-3 py-3">
