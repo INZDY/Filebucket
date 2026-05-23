@@ -161,6 +161,7 @@
 - Make the Note Outline follow the active note tab only and keep it collapsible.
 
 ### Slice 3: Rendered Markdown Editor
+- Status: complete. Crepe/Milkdown rendered editor, 20-second post-change autosave, built-in block/menu controls, checklist/table interactions, lint, build, and manual smoke testing passed.
 - Replace separate raw Markdown write/preview modes with one rendered Markdown editing surface.
 - Accept Markdown formatting normalization on save; export writes the stored Markdown body as Filebucket saved it.
 - Cover practical note Markdown: headings, paragraphs, emphasis, lists, task checkboxes, links, blockquotes, inline code, code blocks, tables, and acceptable frontmatter handling.

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import "@milkdown/crepe/theme/common/style.css";
+import "@milkdown/crepe/theme/frame-dark.css";
 import "./globals.css";
 
 export const metadata: Metadata = {

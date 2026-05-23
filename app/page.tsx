@@ -530,7 +530,10 @@ export default async function Home({ searchParams }: HomeProps) {
 
         <ResizableVault
           browser={
-            <aside className="flex h-full min-h-0 flex-col border-b border-r border-slate-800 bg-[#171a20] text-slate-100 lg:border-b-0">
+            <aside
+              key="vault-browser-pane"
+              className="flex h-full min-h-0 flex-col border-b border-r border-slate-800 bg-[#171a20] text-slate-100 lg:border-b-0"
+            >
               <div className="space-y-3 border-b border-slate-800 px-4 py-3">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-slate-100">Vault Browser</p>
@@ -810,7 +813,10 @@ export default async function Home({ searchParams }: HomeProps) {
             </aside>
           }
           content={
-            <section className="h-full min-h-0 overflow-hidden bg-[#111318] text-slate-100">
+            <section
+              key="vault-content-pane"
+              className="h-full min-h-0 overflow-hidden bg-[#111318] text-slate-100"
+            >
               <MainContentTabs activeTab={activeContentTab} fallbackHref={contentFallbackHref}>
               {isTrashView ? (
                 <div className="h-full overflow-y-auto bg-[#191c22]">
@@ -1187,7 +1193,10 @@ export default async function Home({ searchParams }: HomeProps) {
             </section>
           }
           outline={selectedNote && !isTrashView ? (
-            <aside className="flex h-full min-h-0 flex-col border-l border-slate-800 bg-[#171a20] text-slate-100">
+            <aside
+              key={`note-outline-${selectedNote.id}`}
+              className="flex h-full min-h-0 flex-col border-l border-slate-800 bg-[#171a20] text-slate-100"
+            >
               <div className="border-b border-slate-800 px-4 py-4">
                 <h2 className="text-sm font-semibold text-slate-100">Note Outline</h2>
               </div>

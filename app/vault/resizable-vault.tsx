@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, PanelLeft, X } from "lucide-react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 
@@ -92,6 +92,7 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
       className="relative min-h-0 flex-1 bg-[#111318]"
     >
       <Panel
+        key="browser-panel"
         className="min-h-0 min-w-0"
         defaultSize={hasOutline ? "25%" : "28%"}
         id="browser"
@@ -100,8 +101,9 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
       >
         {browser}
       </Panel>
-      <ResizeHandle />
+      <ResizeHandle key="browser-content-resize" />
       <Panel
+        key="content-panel"
         className="min-h-0 min-w-0"
         defaultSize={hasOutline ? "55%" : "72%"}
         id="content"
@@ -111,6 +113,7 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
       </Panel>
       {outline && !isOutlineOpen ? (
         <Button
+          key="show-outline-button"
           aria-label="Show note outline"
           className="absolute right-3 top-3 z-30 border-slate-700 bg-[#191c22]/95 text-slate-200 shadow-lg hover:bg-slate-800"
           onClick={() => setIsOutlineOpen(true)}
@@ -122,28 +125,31 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
         </Button>
       ) : null}
       {outline && isOutlineOpen ? (
-        <>
-          <ResizeHandle />
+        <Fragment key="outline-pane-group">
+          <ResizeHandle key="content-outline-resize" />
           <Panel
+            key="outline-panel"
             className="relative min-h-0 min-w-0"
             defaultSize="20%"
             id="outline"
             minSize="220px"
             maxSize="340px"
           >
-            <Button
-              aria-label="Hide note outline"
-              className="absolute right-2 top-2 z-10 h-8 w-8 text-slate-400 hover:bg-slate-800 hover:text-slate-50"
-              onClick={() => setIsOutlineOpen(false)}
-              size="icon"
-              type="button"
-              variant="ghost"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            {outline}
+            <div className="relative h-full min-h-0" key="outline-panel-content">
+              <Button
+                aria-label="Hide note outline"
+                className="absolute right-2 top-2 z-10 h-8 w-8 text-slate-400 hover:bg-slate-800 hover:text-slate-50"
+                onClick={() => setIsOutlineOpen(false)}
+                size="icon"
+                type="button"
+                variant="ghost"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              {outline}
+            </div>
           </Panel>
-        </>
+        </Fragment>
       ) : null}
     </Group>
   );
