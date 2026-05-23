@@ -7,7 +7,6 @@ import {
   Folder,
   HardDriveUpload,
   ImagePlus,
-  PanelLeft,
   Plus,
   Search,
   Tags,
@@ -432,28 +431,29 @@ export default async function Home({ searchParams }: HomeProps) {
     : null;
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-950">
-      <div className="flex min-h-screen flex-col">
-        <header className="flex min-h-16 flex-col gap-3 border-b bg-white px-4 py-3 md:flex-row md:items-center md:justify-between md:px-5">
+    <main className="h-screen overflow-hidden bg-[#111318] text-slate-100">
+      <div className="flex h-screen flex-col overflow-hidden">
+        <header className="flex min-h-14 flex-col gap-3 border-b border-slate-800 bg-[#151820] px-4 py-2.5 md:flex-row md:items-center md:justify-between md:px-5">
           <div className="flex min-w-0 items-center gap-3">
-            <Button variant="outline" size="icon" className="lg:hidden" aria-label="Open vault browser">
-              <PanelLeft className="h-4 w-4" />
-            </Button>
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-soft">
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-teal-500 text-slate-950 shadow-soft">
               <Cloud className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="truncate text-lg font-semibold tracking-normal">Filebucket</h1>
-              <p className="truncate text-sm text-muted-foreground">Personal note and file vault</p>
+              <h1 className="truncate text-base font-semibold tracking-normal text-slate-50">Filebucket</h1>
+              <p className="truncate text-xs text-slate-400">Personal note and file vault</p>
             </div>
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="hidden min-w-0 rounded-md border bg-slate-50 px-3 py-2 text-sm text-muted-foreground md:block">
+            <div className="hidden min-w-0 rounded-md border border-slate-700 bg-[#1b1f27] px-3 py-1.5 text-sm text-slate-400 md:block">
               <span className="block max-w-[220px] truncate">{session.email}</span>
             </div>
             <form action={logoutAction}>
-              <Button variant="outline" type="submit" className="w-full sm:w-auto">
+              <Button
+                variant="outline"
+                type="submit"
+                className="w-full border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800 sm:w-auto"
+              >
                 Sign out
               </Button>
             </form>
@@ -462,18 +462,18 @@ export default async function Home({ searchParams }: HomeProps) {
 
         <ResizableVault
           browser={
-            <aside className="flex min-h-0 flex-col border-b border-r bg-white lg:border-b-0">
-              <div className="space-y-3 border-b px-4 py-3">
+            <aside className="flex h-full min-h-0 flex-col border-b border-r border-slate-800 bg-[#171a20] text-slate-100 lg:border-b-0">
+              <div className="space-y-3 border-b border-slate-800 px-4 py-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold">Vault Browser</p>
-                  <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1 text-xs text-muted-foreground">
-                    <Link className="hover:text-foreground" href="/">
+                  <p className="text-sm font-semibold text-slate-100">Vault Browser</p>
+                  <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1 text-xs text-slate-400">
+                    <Link className="hover:text-slate-100" href="/">
                       Vault
                     </Link>
                     {folderTrail.map((folder) => (
                       <span key={folder.id} className="flex min-w-0 items-center gap-1">
                         <span>/</span>
-                        <Link className="max-w-32 truncate hover:text-foreground" href={`/?folder=${folder.id}`}>
+                        <Link className="max-w-32 truncate hover:text-slate-100" href={`/?folder=${folder.id}`}>
                           {folder.name}
                         </Link>
                       </span>
@@ -491,6 +491,7 @@ export default async function Home({ searchParams }: HomeProps) {
                   </form>
                   <Button
                     aria-label="Upload media"
+                    className="border-slate-700 bg-[#1f242c] text-slate-300 hover:bg-slate-800 hover:text-slate-50"
                     disabled
                     size="icon"
                     title="Upload media"
@@ -505,20 +506,32 @@ export default async function Home({ searchParams }: HomeProps) {
                   <input type="hidden" name="folderId" value={selectedFolder?.id ?? ""} />
                   <Input
                     accept=".md,text/markdown"
-                    className="h-9 px-2 py-1 text-xs file:mr-2 file:rounded file:border-0 file:bg-slate-100 file:px-2 file:py-1"
+                    className="h-9 border-slate-700 bg-[#111318] px-2 py-1 text-xs text-slate-100 file:mr-2 file:rounded file:border-0 file:bg-slate-800 file:px-2 file:py-1 file:text-slate-100"
                     disabled={isTrashView}
                     multiple
                     name="files"
                     type="file"
                   />
-                  <Button disabled={isTrashView} size="sm" type="submit" variant="outline">
+                  <Button
+                    className="border-slate-700 bg-[#1f242c] text-slate-200 hover:bg-slate-800"
+                    disabled={isTrashView}
+                    size="sm"
+                    type="submit"
+                    variant="outline"
+                  >
                     Import
                   </Button>
                 </form>
 
                 <form action={createFolderAction} className="flex gap-2">
                   <input type="hidden" name="parentId" value={selectedFolder?.id ?? ""} />
-                  <Input name="name" placeholder="New folder" required disabled={isTrashView} />
+                  <Input
+                    className="border-slate-700 bg-[#111318] text-slate-100 placeholder:text-slate-500"
+                    name="name"
+                    placeholder="New folder"
+                    required
+                    disabled={isTrashView}
+                  />
                   <Button size="icon" aria-label="Create folder" disabled={isTrashView}>
                     <Folder className="h-4 w-4" />
                   </Button>
@@ -526,9 +539,9 @@ export default async function Home({ searchParams }: HomeProps) {
 
                 <form action="/" className="relative">
                   {activeTagSlug ? <input type="hidden" name="tag" value={activeTagSlug} /> : null}
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                   <Input
-                    className="pl-9"
+                    className="border-slate-700 bg-[#111318] pl-9 text-slate-100 placeholder:text-slate-500"
                     defaultValue={query}
                     name="q"
                     placeholder="Search titles and folders"
@@ -565,12 +578,12 @@ export default async function Home({ searchParams }: HomeProps) {
                       );
                     })
                   ) : (
-                    <p className="text-xs text-muted-foreground">No tags yet</p>
+                    <p className="text-xs text-slate-500">No tags yet</p>
                   )}
                 </div>
 
                 {activeTag ? (
-                  <div className="flex flex-col gap-2 rounded-md border bg-slate-50 p-2">
+                  <div className="flex flex-col gap-2 rounded-md border border-slate-700 bg-[#111318] p-2">
                     <form action={renameTagAction} className="flex gap-2">
                       <input type="hidden" name="tagId" value={activeTag.id} />
                       <input type="hidden" name="returnTo" value={returnTo} />
@@ -596,7 +609,7 @@ export default async function Home({ searchParams }: HomeProps) {
                     variant={!isTrashView && !selectedFolder ? "secondary" : "ghost"}
                     className={cn(
                       "h-10 w-full justify-start px-3",
-                      !isTrashView && !selectedFolder && "bg-teal-50 text-teal-950 hover:bg-teal-100",
+                      !isTrashView && !selectedFolder && "bg-teal-500/15 text-teal-100 hover:bg-teal-500/20",
                     )}
                   >
                     <Link href="/">
@@ -626,22 +639,22 @@ export default async function Home({ searchParams }: HomeProps) {
                 </nav>
 
                 {!isTrashView ? (
-                  <section className="overflow-hidden rounded-md border">
-                    <div className="border-b bg-slate-50 px-3 py-2">
-                      <h2 className="truncate text-xs font-semibold uppercase text-muted-foreground">
+                  <section className="overflow-hidden rounded-md border border-slate-800 bg-[#141820]">
+                    <div className="border-b border-slate-800 bg-[#1b1f27] px-3 py-2">
+                      <h2 className="truncate text-xs font-semibold uppercase text-slate-400">
                         {browserTitle}
                       </h2>
                     </div>
-                    <div className="divide-y">
+                    <div className="divide-y divide-slate-800">
                       {matchingFolders.map((folder) => (
                         <Link
                           key={folder.id}
-                          className="flex items-center gap-2 px-3 py-2.5 text-sm transition-colors hover:bg-slate-50"
+                          className="flex items-center gap-2 px-3 py-2.5 text-sm transition-colors hover:bg-slate-800/70"
                           href={`/?folder=${folder.id}`}
                         >
-                          <Folder className="h-4 w-4 shrink-0 text-slate-700" />
+                          <Folder className="h-4 w-4 shrink-0 text-slate-400" />
                           <span className="min-w-0 flex-1 truncate">{folder.name}</span>
-                          <span className="text-xs text-muted-foreground">{folder._count.notes}</span>
+                          <span className="text-xs text-slate-500">{folder._count.notes}</span>
                         </Link>
                       ))}
                       {notes.map((note) => {
@@ -654,17 +667,17 @@ export default async function Home({ searchParams }: HomeProps) {
                           <Link
                             key={note.id}
                             className={cn(
-                              "block px-3 py-2.5 text-sm transition-colors hover:bg-slate-50",
-                              isActive && "bg-teal-50/70 hover:bg-teal-50",
+                              "block px-3 py-2.5 text-sm transition-colors hover:bg-slate-800/70",
+                              isActive && "bg-teal-500/15 hover:bg-teal-500/20",
                             )}
                             href={noteHref}
                           >
                             <span className="flex min-w-0 items-center gap-2">
-                              <FileText className="h-4 w-4 shrink-0 text-slate-700" />
+                              <FileText className="h-4 w-4 shrink-0 text-slate-400" />
                               <span className="min-w-0 flex-1 truncate font-medium">{note.title}</span>
                             </span>
                             {isFilteredView ? (
-                              <span className="mt-1 block truncate pl-6 text-xs text-muted-foreground">
+                              <span className="mt-1 block truncate pl-6 text-xs text-slate-500">
                                 {note.folder?.name ?? "Vault"}
                               </span>
                             ) : null}
@@ -681,18 +694,18 @@ export default async function Home({ searchParams }: HomeProps) {
                           <Link
                             key={mediaAsset.id}
                             className={cn(
-                              "flex items-center gap-2 px-3 py-2.5 text-sm transition-colors hover:bg-slate-50",
-                              isActive && "bg-teal-50/70 hover:bg-teal-50",
+                              "flex items-center gap-2 px-3 py-2.5 text-sm transition-colors hover:bg-slate-800/70",
+                              isActive && "bg-teal-500/15 hover:bg-teal-500/20",
                             )}
                             href={mediaHref}
                           >
-                            <ImagePlus className="h-4 w-4 shrink-0 text-slate-700" />
+                            <ImagePlus className="h-4 w-4 shrink-0 text-slate-400" />
                             <span className="min-w-0 flex-1 truncate">{mediaAsset.filename}</span>
                           </Link>
                         );
                       })}
                       {matchingFolders.length === 0 && notes.length === 0 && mediaAssets.length === 0 ? (
-                        <div className="px-3 py-5 text-sm text-muted-foreground">
+                        <div className="px-3 py-5 text-sm text-slate-500">
                           {isFilteredView
                             ? "No matching vault content"
                             : !selectedFolder && !hasVaultContent
@@ -705,13 +718,13 @@ export default async function Home({ searchParams }: HomeProps) {
                 ) : null}
               </div>
 
-              <div className="border-t px-4 py-4">
+              <div className="border-t border-slate-800 px-4 py-4">
                 <Button
                   asChild
                   variant={isTrashView ? "secondary" : "ghost"}
                   className={cn(
                     "h-10 w-full justify-start px-3",
-                    isTrashView && "bg-teal-50 text-teal-950 hover:bg-teal-100",
+                    isTrashView && "bg-teal-500/15 text-teal-100 hover:bg-teal-500/20",
                   )}
                 >
                   <Link href="/?view=trash">
@@ -724,14 +737,14 @@ export default async function Home({ searchParams }: HomeProps) {
             </aside>
           }
           content={
-            <section className="min-h-0 bg-slate-50">
+            <section className="h-full min-h-0 overflow-hidden bg-[#111318] text-slate-100">
               {isTrashView ? (
-                <div className="min-h-full bg-white">
-                  <div className="border-b px-5 py-4">
-                    <h2 className="text-base font-semibold tracking-normal">Trash</h2>
-                    <p className="text-sm text-muted-foreground">Restore deleted folders and notes</p>
+                <div className="h-full overflow-y-auto bg-[#191c22]">
+                  <div className="border-b border-slate-800 px-5 py-4">
+                    <h2 className="text-base font-semibold tracking-normal text-slate-50">Trash</h2>
+                    <p className="text-sm text-slate-400">Restore deleted folders and notes</p>
                   </div>
-                  <div className="divide-y">
+                  <div className="divide-y divide-slate-800">
                     {trashCount > 0 ? (
                       <>
                         {deletedFolders.map((folder) => {
@@ -739,7 +752,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
                           return (
                             <div key={folder.id} className="flex items-center gap-3 px-4 py-4">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-800 text-slate-300">
                                 <Trash2 className="h-4 w-4" />
                               </div>
                               <div className="min-w-0 flex-1">
@@ -749,7 +762,7 @@ export default async function Home({ searchParams }: HomeProps) {
                                 >
                                   {folder.name}
                                 </Link>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-slate-400">
                                   Folder deleted {folder.deletedAt ? formatDate(folder.deletedAt) : "recently"}
                                 </p>
                                 {parentDeleted ? (
@@ -772,7 +785,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
                           return (
                             <div key={note.id} className="flex items-center gap-3 px-4 py-4">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-800 text-slate-300">
                                 <FileText className="h-4 w-4" />
                               </div>
                               <div className="min-w-0 flex-1">
@@ -782,7 +795,7 @@ export default async function Home({ searchParams }: HomeProps) {
                                 >
                                   {note.title}
                                 </Link>
-                                <p className="truncate text-xs text-muted-foreground">
+                                <p className="truncate text-xs text-slate-400">
                                   Note in {note.folder?.name ?? "Vault"}
                                   {note.deletedAt ? ` deleted ${formatDate(note.deletedAt)}` : ""}
                                 </p>
@@ -811,7 +824,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
                           return (
                             <div key={mediaAsset.id} className="flex items-center gap-3 px-4 py-4">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-800 text-slate-300">
                                 <ImagePlus className="h-4 w-4" />
                               </div>
                               <div className="min-w-0 flex-1">
@@ -821,7 +834,7 @@ export default async function Home({ searchParams }: HomeProps) {
                                 >
                                   {mediaAsset.filename}
                                 </Link>
-                                <p className="truncate text-xs text-muted-foreground">
+                                <p className="truncate text-xs text-slate-400">
                                   Media in {mediaAsset.folder?.name ?? "Vault"}
                                   {mediaAsset.deletedAt ? ` deleted ${formatDate(mediaAsset.deletedAt)}` : ""}
                                 </p>
@@ -849,14 +862,14 @@ export default async function Home({ searchParams }: HomeProps) {
                     ) : (
                       <div className="px-4 py-10 text-center">
                         <p className="text-sm font-medium">Trash is empty</p>
-                        <p className="mt-1 text-sm text-muted-foreground">
+                        <p className="mt-1 text-sm text-slate-400">
                           Deleted folders, notes, and media will appear here.
                         </p>
                       </div>
                     )}
                   </div>
                   {selectedDeletedFolder && deletedFolderContents ? (
-                    <div className="border-t px-5 py-5">
+                    <div className="border-t border-slate-800 px-5 py-5">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                           <p className="text-xs font-semibold uppercase text-muted-foreground">Read-only folder</p>
@@ -902,7 +915,7 @@ export default async function Home({ searchParams }: HomeProps) {
                       </div>
                     </div>
                   ) : selectedDeletedNote ? (
-                    <div className="border-t px-5 py-5">
+                    <div className="border-t border-slate-800 px-5 py-5">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                           <p className="text-xs font-semibold uppercase text-muted-foreground">Read-only note</p>
@@ -922,7 +935,7 @@ export default async function Home({ searchParams }: HomeProps) {
                       </div>
                     </div>
                   ) : selectedDeletedMedia ? (
-                    <div className="border-t px-5 py-5">
+                    <div className="border-t border-slate-800 px-5 py-5">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                           <p className="text-xs font-semibold uppercase text-muted-foreground">Read-only media</p>
@@ -947,19 +960,19 @@ export default async function Home({ searchParams }: HomeProps) {
                   ) : null}
                 </div>
               ) : selectedNote ? (
-                <div className="flex min-h-full flex-col">
-                  <div className="border-b bg-white px-5 py-4">
+                <div className="flex h-full min-h-0 flex-col">
+                  <div className="border-b border-slate-800 bg-[#191c22] px-5 py-4">
                     <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                       <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
                           <BookOpenText className="h-4 w-4" />
-                          <Link className="hover:text-foreground" href="/">
+                          <Link className="hover:text-slate-100" href="/">
                             Vault
                           </Link>
                           {folderTrail.map((folder) => (
                             <span key={folder.id} className="flex items-center gap-2">
                               <span>/</span>
-                              <Link className="hover:text-foreground" href={`/?folder=${folder.id}`}>
+                              <Link className="hover:text-slate-100" href={`/?folder=${folder.id}`}>
                                 {folder.name}
                               </Link>
                             </span>
@@ -967,7 +980,7 @@ export default async function Home({ searchParams }: HomeProps) {
                           <span>/</span>
                           <span className="max-w-56 truncate">{selectedNote.title}</span>
                         </div>
-                        <p className="mt-1 text-sm text-muted-foreground">
+                        <p className="mt-1 text-sm text-slate-400">
                           Updated {formatDate(selectedNote.updatedAt)}
                         </p>
                       </div>
@@ -1007,7 +1020,7 @@ export default async function Home({ searchParams }: HomeProps) {
                       </div>
                     </div>
 
-                    <div className="mt-4 flex flex-col gap-3 border-t pt-4">
+                    <div className="mt-4 flex flex-col gap-3 border-t border-slate-800 pt-4">
                       <div className="flex flex-wrap gap-2">
                         {tags.length > 0 ? (
                           tags.map((tag) => {
@@ -1024,7 +1037,7 @@ export default async function Home({ searchParams }: HomeProps) {
                                   variant={isAssigned ? "secondary" : "outline"}
                                   className={cn(
                                     "h-8 gap-1",
-                                    isAssigned && "bg-teal-50 text-teal-950 hover:bg-teal-100",
+                                    isAssigned && "bg-teal-500/15 text-teal-100 hover:bg-teal-500/20",
                                   )}
                                 >
                                   <Tags className="h-3 w-3" />
@@ -1034,7 +1047,7 @@ export default async function Home({ searchParams }: HomeProps) {
                             );
                           })
                         ) : (
-                          <p className="text-sm text-muted-foreground">Create a tag to classify this note.</p>
+                          <p className="text-sm text-slate-400">Create a tag to classify this note.</p>
                         )}
                       </div>
 
@@ -1059,19 +1072,21 @@ export default async function Home({ searchParams }: HomeProps) {
                   />
                 </div>
               ) : selectedMedia ? (
-                <div className="flex min-h-full items-center justify-center px-6 py-10">
-                  <div className="w-full max-w-xl rounded-md border bg-white p-6">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-md bg-slate-100 text-slate-700">
-                        <ImagePlus className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <h2 className="truncate text-lg font-semibold tracking-normal">{selectedMedia.filename}</h2>
-                        <p className="truncate text-sm text-muted-foreground">{selectedMedia.contentType}</p>
+                <div className="flex h-full min-h-0 flex-col">
+                  <div className="flex flex-1 items-center justify-center px-6 py-10">
+                    <div className="w-full max-w-xl rounded-md border border-slate-800 bg-[#191c22] p-6">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-md bg-slate-800 text-slate-300">
+                          <ImagePlus className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <h2 className="truncate text-lg font-semibold tracking-normal">{selectedMedia.filename}</h2>
+                          <p className="truncate text-sm text-slate-400">{selectedMedia.contentType}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="border-t bg-white px-5 py-4">
+                  <div className="border-t border-slate-800 bg-[#191c22] px-5 py-4">
                     <form action={trashMediaAssetAction} className="flex justify-end">
                       <input type="hidden" name="mediaAssetId" value={selectedMedia.id} />
                       <input type="hidden" name="folderId" value={selectedMedia.folder?.id ?? ""} />
@@ -1085,7 +1100,7 @@ export default async function Home({ searchParams }: HomeProps) {
               ) : (
                 <div className="flex min-h-full items-center justify-center px-6 py-10">
                   <div className="max-w-md text-center">
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-white text-slate-700 shadow-sm">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-[#191c22] text-slate-300 shadow-sm">
                       <FileText className="h-5 w-5" />
                     </div>
                     <h2 className="mt-4 text-base font-semibold tracking-normal">
@@ -1097,9 +1112,9 @@ export default async function Home({ searchParams }: HomeProps) {
             </section>
           }
           outline={selectedNote && !isTrashView ? (
-            <aside className="flex min-h-0 flex-col border-l bg-white">
-              <div className="border-b px-4 py-4">
-                <h2 className="text-sm font-semibold">Note Outline</h2>
+            <aside className="flex h-full min-h-0 flex-col border-l border-slate-800 bg-[#171a20] text-slate-100">
+              <div className="border-b border-slate-800 px-4 py-4">
+                <h2 className="text-sm font-semibold text-slate-100">Note Outline</h2>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
                 {noteOutline.length > 0 ? (
@@ -1107,7 +1122,7 @@ export default async function Home({ searchParams }: HomeProps) {
                     {noteOutline.map((heading) => (
                       <div
                         key={heading.id}
-                        className="truncate rounded-md px-2 py-1.5 text-sm text-muted-foreground"
+                        className="truncate rounded-md px-2 py-1.5 text-sm text-slate-400"
                         style={{ paddingLeft: `${8 + (heading.depth - 1) * 12}px` }}
                       >
                         {heading.title}
@@ -1115,7 +1130,7 @@ export default async function Home({ searchParams }: HomeProps) {
                     ))}
                   </div>
                 ) : (
-                  <p className="px-2 py-1.5 text-sm text-muted-foreground">No headings</p>
+                  <p className="px-2 py-1.5 text-sm text-slate-500">No headings</p>
                 )}
               </div>
             </aside>

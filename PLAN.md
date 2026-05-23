@@ -144,6 +144,7 @@
 - Status: planned from grill-with-docs UI design session; implement as scoped slices instead of one large rewrite. Complete these slices before Milestone 7 media/R2 work because upload, inline image, media preview, and asset-placement flows depend on the redesigned workspace.
 
 ### Slice 1: Workspace Shell
+- Status: complete. Dark workspace shell, compact browser controls, responsive drawer, constrained pane scrolling, lint, build, and manual smoke testing passed.
 - Use one coherent dark, Obsidian-adjacent workbench style with Filebucket-specific vault and media cues.
 - Replace the current split browser/list behavior with a mixed vault tree containing folders, notes, and media assets.
 - Keep compact browser controls fixed while tree/results rows scroll beneath them.

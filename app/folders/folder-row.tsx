@@ -73,8 +73,8 @@ export function FolderRow({
   return (
     <div
       className={cn(
-        "group relative flex h-10 items-center rounded-md text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-        isActive && "bg-teal-50 text-teal-950 hover:bg-teal-100",
+        "group relative flex h-10 items-center rounded-md text-sm text-slate-200 transition-colors hover:bg-slate-800/80 hover:text-slate-50",
+        isActive && "bg-teal-500/15 text-teal-100 hover:bg-teal-500/20",
       )}
     >
       <Link
@@ -84,11 +84,11 @@ export function FolderRow({
       >
         {isActive ? <FolderOpen className="h-4 w-4 shrink-0" /> : <Folder className="h-4 w-4 shrink-0" />}
         <span className="min-w-0 flex-1 truncate text-left">{folder.name}</span>
-        <span className="text-xs text-muted-foreground">{folder.count}</span>
+        <span className="text-xs text-slate-500">{folder.count}</span>
       </Link>
       <Button
         aria-label={`Folder actions for ${folder.name}`}
-        className="mr-1 h-8 w-8 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+        className="mr-1 h-8 w-8 text-slate-400 opacity-100 hover:bg-slate-700 hover:text-slate-100 lg:opacity-0 lg:group-hover:opacity-100"
         onClick={(event) => {
           event.stopPropagation();
           const rect = event.currentTarget.getBoundingClientRect();
@@ -103,7 +103,7 @@ export function FolderRow({
 
       {menu ? (
         <div
-          className="fixed z-50 w-56 rounded-md border bg-white p-1 shadow-lg"
+          className="fixed z-50 w-56 rounded-md border border-slate-700 bg-[#1b1f27] p-1 text-slate-100 shadow-lg"
           onClick={(event) => event.stopPropagation()}
           style={{ left: menu.x, top: menu.y }}
         >

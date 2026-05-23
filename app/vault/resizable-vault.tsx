@@ -1,8 +1,10 @@
 "use client";
 
 import { type ReactNode, useEffect, useState } from "react";
+import { PanelLeft, X } from "lucide-react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type ResizableVaultProps = {
@@ -13,6 +15,7 @@ type ResizableVaultProps = {
 
 export function ResizableVault({ browser, content, outline }: ResizableVaultProps) {
   const [isNarrow, setIsNarrow] = useState(false);
+  const [isBrowserOpen, setIsBrowserOpen] = useState(false);
   const hasOutline = Boolean(outline);
 
   useEffect(() => {
@@ -24,6 +27,52 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
 
     return () => media.removeEventListener("change", update);
   }, []);
+
+  useEffect(() => {
+    if (!isNarrow) {
+      setIsBrowserOpen(false);
+    }
+  }, [isNarrow]);
+
+  if (isNarrow) {
+    return (
+      <div className="relative min-h-0 flex-1 overflow-hidden bg-[#111318]">
+        <div className="min-h-0 h-full">{content}</div>
+        <Button
+          aria-label="Open vault browser"
+          className="fixed left-3 top-20 z-40 border-slate-700 bg-[#191c22]/95 text-slate-100 shadow-lg hover:bg-[#242832]"
+          onClick={() => setIsBrowserOpen(true)}
+          size="icon"
+          type="button"
+          variant="outline"
+        >
+          <PanelLeft className="h-4 w-4" />
+        </Button>
+        {isBrowserOpen ? (
+          <div className="fixed inset-0 z-50 bg-black/55" onClick={() => setIsBrowserOpen(false)}>
+            <div
+              className="h-full w-[min(360px,88vw)] border-r border-slate-800 bg-[#171a20] shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex h-12 items-center justify-end border-b border-slate-800 px-3">
+                <Button
+                  aria-label="Close vault browser"
+                  className="text-slate-300 hover:bg-slate-800 hover:text-slate-50"
+                  onClick={() => setIsBrowserOpen(false)}
+                  size="icon"
+                  type="button"
+                  variant="ghost"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="h-[calc(100%-3rem)] min-h-0">{browser}</div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <Group
@@ -38,36 +87,36 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
             content: isNarrow ? 62 : 72,
           }}
       id="filebucket-vault-panes"
-      orientation={isNarrow ? "vertical" : "horizontal"}
-      className="min-h-0 flex-1"
+      orientation="horizontal"
+      className="min-h-0 flex-1 bg-[#111318]"
     >
       <Panel
         className="min-h-0 min-w-0"
-        defaultSize={isNarrow ? "38%" : hasOutline ? "25%" : "28%"}
+        defaultSize={hasOutline ? "25%" : "28%"}
         id="browser"
-        minSize={isNarrow ? "240px" : "280px"}
-        maxSize={isNarrow ? "55%" : "420px"}
+        minSize="280px"
+        maxSize="420px"
       >
         {browser}
       </Panel>
-      <ResizeHandle isNarrow={isNarrow} />
+      <ResizeHandle />
       <Panel
         className="min-h-0 min-w-0"
-        defaultSize={isNarrow ? "62%" : hasOutline ? "55%" : "72%"}
+        defaultSize={hasOutline ? "55%" : "72%"}
         id="content"
-        minSize={isNarrow ? "360px" : "420px"}
+        minSize="420px"
       >
         {content}
       </Panel>
       {outline ? (
         <>
-          <ResizeHandle isNarrow={isNarrow} />
+          <ResizeHandle />
           <Panel
             className="min-h-0 min-w-0"
-            defaultSize={isNarrow ? "24%" : "20%"}
+            defaultSize="20%"
             id="outline"
-            minSize={isNarrow ? "200px" : "220px"}
-            maxSize={isNarrow ? "36%" : "340px"}
+            minSize="220px"
+            maxSize="340px"
           >
             {outline}
           </Panel>
@@ -77,20 +126,15 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
   );
 }
 
-function ResizeHandle({ isNarrow }: { isNarrow: boolean }) {
+function ResizeHandle() {
   return (
     <Separator
-      className={cn(
-        "group relative bg-border transition-colors hover:bg-teal-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        isNarrow ? "h-px" : "w-px",
-      )}
+      className="group relative w-px bg-slate-800 transition-colors hover:bg-teal-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <span
         className={cn(
-          "absolute rounded-full bg-slate-300 transition-colors group-hover:bg-teal-600",
-          isNarrow
-            ? "left-1/2 top-1/2 h-1 w-10 -translate-x-1/2 -translate-y-1/2"
-            : "left-1/2 top-1/2 h-10 w-1 -translate-x-1/2 -translate-y-1/2",
+          "absolute left-1/2 top-1/2 h-10 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full",
+          "bg-slate-600 transition-colors group-hover:bg-teal-400",
         )}
       />
     </Separator>
