@@ -20,6 +20,7 @@ import {
 } from "@/app/folders/actions";
 import { FolderRow } from "@/app/folders/folder-row";
 import { logoutAction } from "@/app/login/actions";
+import { restoreMediaAssetAction, trashMediaAssetAction } from "@/app/media/actions";
 import {
   createNoteAction,
   importMarkdownNotesAction,
@@ -41,6 +42,8 @@ import { Input } from "@/components/ui/input";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type HomeProps = {
   searchParams?: Promise<{
@@ -134,7 +137,7 @@ export default async function Home({ searchParams }: HomeProps) {
   const activeTagSlug = String(params?.tag ?? "").trim();
   const isFilteredView = !isTrashView && Boolean(query || activeTagSlug);
 
-  const [folders, deletedFolders, deletedNotes, tags] = await Promise.all([
+  const [folders, deletedFolders, deletedNotes, deletedMediaAssets, tags] = await Promise.all([
     prisma.folder.findMany({
       where: {
         userId: session.user.id,
@@ -157,6 +160,11 @@ export default async function Home({ searchParams }: HomeProps) {
         _count: {
           select: { notes: true },
         },
+        parent: {
+          select: {
+            deletedAt: true,
+          },
+        },
       },
     }),
     prisma.note.findMany({
@@ -165,6 +173,22 @@ export default async function Home({ searchParams }: HomeProps) {
         deletedAt: { not: null },
       },
       orderBy: [{ deletedAt: "desc" }, { title: "asc" }],
+      include: {
+        folder: {
+          select: {
+            id: true,
+            name: true,
+            deletedAt: true,
+          },
+        },
+      },
+    }),
+    prisma.mediaAsset.findMany({
+      where: {
+        userId: session.user.id,
+        deletedAt: { not: null },
+      },
+      orderBy: [{ deletedAt: "desc" }, { filename: "asc" }],
       include: {
         folder: {
           select: {
@@ -310,6 +334,18 @@ export default async function Home({ searchParams }: HomeProps) {
     params?.note ? notes.find((note) => note.id === params.note) ?? null : null;
   const selectedMedia =
     params?.media ? mediaAssets.find((mediaAsset) => mediaAsset.id === params.media) ?? null : null;
+  const selectedDeletedFolder =
+    isTrashView && params?.folder
+      ? deletedFolders.find((folder) => folder.id === params.folder) ?? null
+      : null;
+  const selectedDeletedNote =
+    isTrashView && params?.note
+      ? deletedNotes.find((note) => note.id === params.note) ?? null
+      : null;
+  const selectedDeletedMedia =
+    isTrashView && params?.media
+      ? deletedMediaAssets.find((mediaAsset) => mediaAsset.id === params.media) ?? null
+      : null;
   const matchingFolders = query && !activeTag
     ? folders.filter((folder) => folder.name.toLowerCase().includes(query.toLowerCase()))
     : [];
@@ -347,12 +383,53 @@ export default async function Home({ searchParams }: HomeProps) {
   }
 
   const returnTo = `/${currentPathParams.toString() ? `?${currentPathParams.toString()}` : ""}`;
-  const trashCount = deletedFolders.length + deletedNotes.length;
+  const trashCount = deletedFolders.length + deletedNotes.length + deletedMediaAssets.length;
   const folderRows = flattenFolders(folders);
   const folderDestinations = folderRows.map(({ folder, depth }) => ({
     id: folder.id,
     name: `${"  ".repeat(depth)}${folder.name}`,
   }));
+  const deletedFolderContents = selectedDeletedFolder
+    ? await Promise.all([
+        prisma.folder.findMany({
+          where: {
+            userId: session.user.id,
+            parentId: selectedDeletedFolder.id,
+          },
+          orderBy: { name: "asc" },
+          select: {
+            id: true,
+            name: true,
+            deletedAt: true,
+          },
+        }),
+        prisma.note.findMany({
+          where: {
+            userId: session.user.id,
+            folderId: selectedDeletedFolder.id,
+          },
+          orderBy: { title: "asc" },
+          select: {
+            id: true,
+            title: true,
+            deletedAt: true,
+          },
+        }),
+        prisma.mediaAsset.findMany({
+          where: {
+            userId: session.user.id,
+            folderId: selectedDeletedFolder.id,
+          },
+          orderBy: { filename: "asc" },
+          select: {
+            id: true,
+            filename: true,
+            contentType: true,
+            deletedAt: true,
+          },
+        }),
+      ])
+    : null;
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -657,25 +734,39 @@ export default async function Home({ searchParams }: HomeProps) {
                   <div className="divide-y">
                     {trashCount > 0 ? (
                       <>
-                        {deletedFolders.map((folder) => (
-                          <div key={folder.id} className="flex items-center gap-3 px-4 py-4">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
-                              <Trash2 className="h-4 w-4" />
+                        {deletedFolders.map((folder) => {
+                          const parentDeleted = Boolean(folder.parent?.deletedAt);
+
+                          return (
+                            <div key={folder.id} className="flex items-center gap-3 px-4 py-4">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                                <Trash2 className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <Link
+                                  className="block truncate text-sm font-medium hover:text-primary"
+                                  href={`/?view=trash&folder=${folder.id}`}
+                                >
+                                  {folder.name}
+                                </Link>
+                                <p className="text-xs text-muted-foreground">
+                                  Folder deleted {folder.deletedAt ? formatDate(folder.deletedAt) : "recently"}
+                                </p>
+                                {parentDeleted ? (
+                                  <p className="mt-1 text-xs text-amber-700">
+                                    Restore the parent folder before restoring this folder.
+                                  </p>
+                                ) : null}
+                              </div>
+                              <form action={restoreFolderAction}>
+                                <input type="hidden" name="folderId" value={folder.id} />
+                                <Button variant="outline" size="sm" type="submit" disabled={parentDeleted}>
+                                  Restore
+                                </Button>
+                              </form>
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium">{folder.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                Folder deleted {folder.deletedAt ? formatDate(folder.deletedAt) : "recently"}
-                              </p>
-                            </div>
-                            <form action={restoreFolderAction}>
-                              <input type="hidden" name="folderId" value={folder.id} />
-                              <Button variant="outline" size="sm" type="submit">
-                                Restore
-                              </Button>
-                            </form>
-                          </div>
-                        ))}
+                          );
+                        })}
                         {deletedNotes.map((note) => {
                           const folderDeleted = Boolean(note.folder?.deletedAt);
 
@@ -685,7 +776,12 @@ export default async function Home({ searchParams }: HomeProps) {
                                 <FileText className="h-4 w-4" />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-medium">{note.title}</p>
+                                <Link
+                                  className="block truncate text-sm font-medium hover:text-primary"
+                                  href={`/?view=trash&note=${note.id}`}
+                                >
+                                  {note.title}
+                                </Link>
                                 <p className="truncate text-xs text-muted-foreground">
                                   Note in {note.folder?.name ?? "Vault"}
                                   {note.deletedAt ? ` deleted ${formatDate(note.deletedAt)}` : ""}
@@ -710,16 +806,145 @@ export default async function Home({ searchParams }: HomeProps) {
                             </div>
                           );
                         })}
+                        {deletedMediaAssets.map((mediaAsset) => {
+                          const folderDeleted = Boolean(mediaAsset.folder?.deletedAt);
+
+                          return (
+                            <div key={mediaAsset.id} className="flex items-center gap-3 px-4 py-4">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-700">
+                                <ImagePlus className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <Link
+                                  className="block truncate text-sm font-medium hover:text-primary"
+                                  href={`/?view=trash&media=${mediaAsset.id}`}
+                                >
+                                  {mediaAsset.filename}
+                                </Link>
+                                <p className="truncate text-xs text-muted-foreground">
+                                  Media in {mediaAsset.folder?.name ?? "Vault"}
+                                  {mediaAsset.deletedAt ? ` deleted ${formatDate(mediaAsset.deletedAt)}` : ""}
+                                </p>
+                                {folderDeleted ? (
+                                  <p className="mt-1 text-xs text-amber-700">
+                                    Restore the folder before restoring this media asset.
+                                  </p>
+                                ) : null}
+                              </div>
+                              <form action={restoreMediaAssetAction}>
+                                <input type="hidden" name="mediaAssetId" value={mediaAsset.id} />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  type="submit"
+                                  disabled={folderDeleted}
+                                >
+                                  Restore
+                                </Button>
+                              </form>
+                            </div>
+                          );
+                        })}
                       </>
                     ) : (
                       <div className="px-4 py-10 text-center">
                         <p className="text-sm font-medium">Trash is empty</p>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          Deleted folders and notes will appear here.
+                          Deleted folders, notes, and media will appear here.
                         </p>
                       </div>
                     )}
                   </div>
+                  {selectedDeletedFolder && deletedFolderContents ? (
+                    <div className="border-t px-5 py-5">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold uppercase text-muted-foreground">Read-only folder</p>
+                          <h3 className="mt-1 truncate text-lg font-semibold">{selectedDeletedFolder.name}</h3>
+                        </div>
+                        <form action={restoreFolderAction}>
+                          <input type="hidden" name="folderId" value={selectedDeletedFolder.id} />
+                          <Button
+                            variant="outline"
+                            type="submit"
+                            disabled={Boolean(selectedDeletedFolder.parent?.deletedAt)}
+                          >
+                            Restore folder
+                          </Button>
+                        </form>
+                      </div>
+                      <div className="mt-4 divide-y rounded-md border">
+                        {deletedFolderContents[0].map((folder) => (
+                          <div key={folder.id} className="flex items-center gap-2 px-3 py-2 text-sm">
+                            <Folder className="h-4 w-4 text-slate-700" />
+                            <span className="min-w-0 flex-1 truncate">{folder.name}</span>
+                            {folder.deletedAt ? <Badge variant="outline">Trashed</Badge> : null}
+                          </div>
+                        ))}
+                        {deletedFolderContents[1].map((note) => (
+                          <div key={note.id} className="flex items-center gap-2 px-3 py-2 text-sm">
+                            <FileText className="h-4 w-4 text-slate-700" />
+                            <span className="min-w-0 flex-1 truncate">{note.title}</span>
+                            {note.deletedAt ? <Badge variant="outline">Trashed</Badge> : null}
+                          </div>
+                        ))}
+                        {deletedFolderContents[2].map((mediaAsset) => (
+                          <div key={mediaAsset.id} className="flex items-center gap-2 px-3 py-2 text-sm">
+                            <ImagePlus className="h-4 w-4 text-slate-700" />
+                            <span className="min-w-0 flex-1 truncate">{mediaAsset.filename}</span>
+                            <span className="text-xs text-muted-foreground">{mediaAsset.contentType}</span>
+                            {mediaAsset.deletedAt ? <Badge variant="outline">Trashed</Badge> : null}
+                          </div>
+                        ))}
+                        {deletedFolderContents.every((rows) => rows.length === 0) ? (
+                          <div className="px-3 py-5 text-sm text-muted-foreground">This trashed folder is empty.</div>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : selectedDeletedNote ? (
+                    <div className="border-t px-5 py-5">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold uppercase text-muted-foreground">Read-only note</p>
+                          <h3 className="mt-1 truncate text-lg font-semibold">{selectedDeletedNote.title}</h3>
+                        </div>
+                        <form action={restoreNoteAction}>
+                          <input type="hidden" name="noteId" value={selectedDeletedNote.id} />
+                          <Button variant="outline" type="submit" disabled={Boolean(selectedDeletedNote.folder?.deletedAt)}>
+                            Restore note
+                          </Button>
+                        </form>
+                      </div>
+                      <div className="prose prose-slate mt-4 max-w-none rounded-md border bg-white px-4 py-4 text-sm leading-7 [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:pl-4 [&_blockquote]:text-muted-foreground [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_ol]:list-decimal [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-50 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:px-2 [&_th]:py-1 [&_ul]:list-disc">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml>
+                          {selectedDeletedNote.body}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  ) : selectedDeletedMedia ? (
+                    <div className="border-t px-5 py-5">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold uppercase text-muted-foreground">Read-only media</p>
+                          <h3 className="mt-1 truncate text-lg font-semibold">{selectedDeletedMedia.filename}</h3>
+                          <p className="text-sm text-muted-foreground">{selectedDeletedMedia.contentType}</p>
+                        </div>
+                        <form action={restoreMediaAssetAction}>
+                          <input type="hidden" name="mediaAssetId" value={selectedDeletedMedia.id} />
+                          <Button
+                            variant="outline"
+                            type="submit"
+                            disabled={Boolean(selectedDeletedMedia.folder?.deletedAt)}
+                          >
+                            Restore media
+                          </Button>
+                        </form>
+                      </div>
+                      <div className="mt-4 rounded-md border bg-slate-50 px-4 py-8 text-center text-sm text-muted-foreground">
+                        Media preview will be available after the upload and preview milestone wires R2 URLs.
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               ) : selectedNote ? (
                 <div className="flex min-h-full flex-col">
@@ -845,6 +1070,16 @@ export default async function Home({ searchParams }: HomeProps) {
                         <p className="truncate text-sm text-muted-foreground">{selectedMedia.contentType}</p>
                       </div>
                     </div>
+                  </div>
+                  <div className="border-t bg-white px-5 py-4">
+                    <form action={trashMediaAssetAction} className="flex justify-end">
+                      <input type="hidden" name="mediaAssetId" value={selectedMedia.id} />
+                      <input type="hidden" name="folderId" value={selectedMedia.folder?.id ?? ""} />
+                      <Button variant="outline" type="submit">
+                        <Trash2 className="h-4 w-4" />
+                        Move to trash
+                      </Button>
+                    </form>
                   </div>
                 </div>
               ) : (
