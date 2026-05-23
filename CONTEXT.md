@@ -1,6 +1,6 @@
 # Filebucket
 
-Filebucket is a personal hosted file-and-note vault. It is Obsidian-inspired in its Markdown-first vault experience, but MVP does not include backlinks, graph view, plugins, themes, or local-folder sync. This glossary defines the product language used when discussing the domain.
+Filebucket is a personal hosted file-and-note vault. It is Obsidian-inspired in its Markdown-first vault experience and quiet workbench feel, while keeping Filebucket-specific vault, media, and hosted-app cues; the first redesigned workspace can use one coherent dark mode before broader theme support. MVP does not include backlinks, graph view, plugins, themes, or local-folder sync. This glossary defines the product language used when discussing the domain.
 
 ## Language
 
@@ -9,7 +9,7 @@ One user's private Filebucket space. For MVP, each user has exactly one vault, a
 _Avoid_: Workspace, drive, library, team space
 
 **Vault Browser**:
-The navigation surface for browsing folders, nested folders, notes, and media assets in a vault. The vault root should appear as `Vault` in the vault browser, and UI breadcrumbs should use labels such as `Vault / Projects / Plan`. Search and tag filtering filter or replace the vault browser contents, while selected content opens in the main content pane. The vault browser is UI language, not a separate domain entity.
+The navigation surface for browsing folders, nested folders, notes, and media assets in a vault as one mixed tree with terse explorer-style rows. Its compact creation, search, filter, and grouped upload/import controls stay reachable while the tree or result rows scroll beneath them; grouped upload/import opens a small choice before the selected file flow. The vault root should appear as `Vault` in the vault browser, while compact location breadcrumbs belong where context matters, such as active content headers or result rows, using labels such as `Vault / Projects / Plan`. Search and tag filtering filter or replace the vault browser contents, while selecting a folder sets the active creation location without replacing already opened note or media content in the main content pane. Within a location, folders sort before note and media rows, which then sort alphabetically by visible name. An opened note or media asset should read as the strong selection state; the active creation folder may use a quieter marker. Detailed inputs show only when needed, and row actions can live in a compact overflow menu with matching context-menu actions as a secondary path. Folder expansion state may persist locally when practical; the initial tree can show the expanded vault root with top-level folders collapsed unless opened content needs its ancestor path revealed. An empty tree area should stay neutral while toolbar creation remains available. On narrow layouts, it may move behind a browser toggle so opened content remains primary; on desktop, its pane may be resized. The surrounding app chrome should stay slim, with account actions in a compact menu, so the vault workspace remains primary. The vault browser is UI language, not a separate domain entity.
 _Avoid_: File tree, folder sidebar, explorer
 
 **User**:
@@ -17,19 +17,19 @@ The authenticated person who owns one private vault. Users are isolated from eac
 _Avoid_: Admin, member, account, owner
 
 **Folder**:
-A user-created container inside a vault for organizing notes and media. Folders may contain other folders, and MVP workflows support creating folders in the vault root or inside any folder. A folder should not normally contain two child folders with the same case-insensitive name, or two visible notes or media assets with the same exported filename; a note title maps to a Markdown filename for this rule, so `Plan` and `Plan.md` collide. New folder creation should use a readable suffix such as `New folder 2` when the default name would collide. Folder names use a separate namespace from notes and media assets, so a folder named `Plan` and a note titled `Plan` can coexist as `Plan/` and `Plan.md`. Exported filename uniqueness is case-insensitive, so `Plan`, `plan`, and `PLAN` collide.
+A user-created container inside a vault for organizing notes and media. Folders may contain other folders, and MVP workflows support creating folders in the vault root or inside any folder. A folder should not normally contain two child folders with the same case-insensitive name, or two visible notes or media assets with the same exported filename; a note title maps to a Markdown filename for this rule, so `Plan` and `Plan.md` collide. New folder creation should use a readable suffix such as `New folder 2` when the default name would collide, then allow immediate inline Rename. Folder names use a separate namespace from notes and media assets, so a folder named `Plan` and a note titled `Plan` can coexist as `Plan/` and `Plan.md`. Exported filename uniqueness is case-insensitive, so `Plan`, `plan`, and `PLAN` collide.
 _Avoid_: Directory, collection, project
 
 **Note**:
-A Markdown document owned by a user and stored in a folder or the vault root. Notes are the primary content in Filebucket; every note is Markdown content and should not be described as a plain text upload. A note has a separate title; the first Markdown heading is content, not the note's identity. A note title normally becomes its exported Markdown filename, but users do not need to type the `.md` extension. New note creation should use a readable suffix such as `Untitled 2` when the default title would collide. Importing a `.md` file creates a note whose title defaults to the imported filename without `.md`, using a readable suffix on collision, and whose body is the imported Markdown content. MVP import does not parse frontmatter; frontmatter remains in the note body. Regular Markdown links and wiki-style links are allowed as text, but MVP does not resolve note-to-note links, autocomplete wiki-style links, maintain backlinks, or show graph relationships. Raw HTML should not execute or render unsafely in MVP. Markdown task checkboxes should render for MVP; interactive toggling is a follow-up, and checkboxes are not a separate task system.
+A Markdown document owned by a user and stored in a folder or the vault root. Notes are the primary content in Filebucket; every note is Markdown content and should not be described as a plain text upload. A note has a separate title; the first Markdown heading is content, not the note's identity. Active note context may show a compact vault location near the title. Note editing should use one rendered Markdown editing surface rather than separate raw Markdown write and preview modes for the first redesign, and Markdown formatting may normalize when saved. The rendered editor should cover practical note Markdown such as headings, paragraphs, emphasis, lists, task checkboxes, links, blockquotes, inline code, code blocks, and tables. Formatting controls may start as a minimal toolbar and should be removable if they distract from writing; first-class controls should focus on heading level, bold, italic, link, unordered list, ordered list, task list, and code block. A note title normally becomes its exported Markdown filename, but users do not need to type the `.md` extension. New note creation should use a readable suffix such as `Untitled 2` when the default title would collide, then immediately open the note and focus the title. Importing a `.md` file creates a note whose title defaults to the imported filename without `.md`, using a readable suffix on collision, and whose body is the imported Markdown content. MVP import does not parse frontmatter; frontmatter remains in the note body and the rendered editor must handle it acceptably. Regular Markdown links and wiki-style links are allowed as text, but MVP does not resolve note-to-note links, autocomplete wiki-style links, maintain backlinks, or show graph relationships. Raw HTML should not execute or render unsafely in MVP. Markdown task checkboxes should render for MVP; interactive toggling is a follow-up, and checkboxes are not a separate task system.
 _Avoid_: Page, document, file note
 
 **Media Asset**:
-An uploaded item in the vault, such as an image, audio clip, video, PDF, TXT file, or other attachment. Media assets are first-class vault content: they can appear in folders or the vault root, be opened directly for media preview when supported, and optionally be referenced from notes. Media asset names include their file extensions as visible filenames. A media asset must be placed in a folder or the vault root; note references are usage only, never placement. If upload would collide with an existing visible exported filename, Filebucket should suggest or use a readable suffix such as `photo 2.png`.
+An uploaded item in the vault, such as an image, audio clip, video, PDF, TXT file, or other attachment. Media assets are first-class vault content: they can appear in folders or the vault root, be opened directly for media preview when supported, and optionally be referenced from notes. Active media context may show a compact vault location near the filename. Media asset names include their file extensions as visible filenames. A media asset must be placed in a folder or the vault root; note references are usage only, never placement. Images uploaded inline from the note editor default to a visible vault-level `Assets` folder created when needed; an existing root folder with the same case-insensitive name is reused with its visible capitalization preserved. `Assets` remains an ordinary visible folder even when Filebucket uses it as that default target. Upload progress should stay lightweight and local to the initiating surface, and failed uploads should remain visible with retry rather than disappearing silently. If upload would collide with an existing visible exported filename, Filebucket should suggest or use a readable suffix such as `photo 2.png`.
 _Avoid_: File, blob, upload
 
 **Media Reference**:
-A note's use of an existing first-class media asset from its Markdown body, such as Markdown image syntax that points to a Filebucket media asset. For MVP, images can be referenced inline from notes; audio and video are previewed when opened as media assets, but are not embedded inside Markdown notes. A media reference is usage, not placement or ownership; the same media asset may be referenced by multiple notes, and removing one reference does not delete the media asset.
+A note's use of an existing first-class media asset from its Markdown body, such as Markdown image syntax that points to a Filebucket media asset. For MVP, the rendered note editor can upload new image media assets or choose existing image media assets through a focused image picker and show their references inline; audio and video are previewed when opened as media assets, but are not embedded inside Markdown notes. A media reference is usage, not placement or ownership; the same media asset may be referenced by multiple notes, and removing one reference does not delete the media asset.
 _Avoid_: Embedded file, attachment ownership, copied media
 
 **Trashed Media Reference**:
@@ -37,15 +37,15 @@ A media reference whose media asset is in Trash or hidden by a trashed folder. T
 _Avoid_: Deleted embed, removed attachment, broken note
 
 **Media Preview**:
-Behavior where a user views or plays a media asset directly in Filebucket without downloading it first. MVP media preview covers images, audio, and video; PDF and TXT preview are later media preview features.
+Behavior where a user views or plays a media asset directly in Filebucket without downloading it first. MVP media preview covers simple fit-to-pane images plus audio and video with browser playback controls; PDF and TXT preview are later media preview features and their media tabs may show an unsupported-preview state first.
 _Avoid_: Download, external viewer, attachment only
 
 **Main Content Pane**:
-The primary work area where a selected note is edited as Markdown or a selected media asset is previewed. The main content pane is UI language, not a separate domain entity.
+The primary work area where opened notes are edited as Markdown or opened media assets are previewed in lightweight tabs on a single scrollable tab row. Selecting a note or media asset opens a tab or focuses its existing tab; folder selection does not replace already opened content or create a tab. The active opened content should be restorable, while the wider open tab set may stay temporary for MVP. Note tabs protect unsaved editor state on close, while media tabs can close immediately. Before any note or media is opened, the main content pane may stay a quiet blank work surface. A broader keyboard shortcut system is a later interaction layer, not required to define MVP tab behavior. The main content pane is UI language, not a separate domain entity.
 _Avoid_: Middle panel, item list, viewer
 
 **Note Outline**:
-A note-specific navigation aid generated from the selected note's Markdown headings. The note outline appears only when a note is selected and does not include tags, links, tasks, or media references for MVP. The note outline is navigation only; editing happens in the Markdown content.
+A collapsible note-specific navigation aid generated from the active note tab's Markdown headings. The note outline appears only when a note tab is active and does not include tags, links, tasks, or media references for MVP. On narrow layouts, it can stay behind an outline toggle or start collapsed so opened content remains primary; on desktop, its pane may be resized when open. The note outline is navigation only; editing happens in the Markdown content.
 _Avoid_: Right panel, table of contents, document map
 
 **Item**:
@@ -53,7 +53,7 @@ A UI umbrella term for rows in lists or search results. Item is not a domain ent
 _Avoid_: Object, resource, entry
 
 **Trash**:
-A view of soft-deleted folders, notes, and media assets in a vault. Trash is not a folder; moving content to Trash keeps it restorable and preserves its original folder relationship. Trashing a note preserves its tags. Trash shows folders, notes, and media assets that were individually moved to Trash; descendants hidden only because a parent folder is trashed should not appear as separate Trash rows. Users may inspect trashed folder contents read-only, but edits, moves, and renames require restoring first.
+A browser utility view of soft-deleted folders, notes, and media assets in a vault. Trash is not a folder or a row in the active vault tree, and entering Trash changes browser mode without clearing already opened main content tabs. Moving content to Trash keeps it restorable and preserves its original folder relationship. Trashing a note preserves its tags. Trash shows folders, notes, and media assets that were individually moved to Trash; descendants hidden only because a parent folder is trashed should not appear as separate Trash rows. Users may inspect trashed note and media content in clearly read-only main content tabs and trashed folder contents read-only, but edits, moves, and renames require restoring first.
 _Avoid_: Archive, recycle bin, deleted folder
 
 **Restore**:
@@ -65,7 +65,7 @@ Future behavior that irreversibly removes trashed content from the vault. MVP st
 _Avoid_: Trash, archive, remove
 
 **Move**:
-Behavior that changes the parent location of a folder, note, or media asset inside the same vault, including moving content into the vault root. Moving preserves the content's identity, tags, media references, and trash state. A folder cannot be moved into itself or any descendant folder. Move must respect destination name uniqueness and should not silently auto-rename.
+Behavior that changes the parent location of a folder, note, or media asset inside the same vault, including moving content into the vault root. Moving preserves the content's identity, tags, media references, and trash state. A folder cannot be moved into itself or any descendant folder. The mixed vault browser should support drag-and-drop move onto folders or the vault root, with menu-based Move as a fallback. Invalid or colliding drops should be rejected clearly, leave content in place, and not silently auto-rename.
 _Avoid_: Copy, duplicate, relocate
 
 **Rename**:
@@ -77,15 +77,15 @@ Behavior where trashing a folder hides its descendant folders, notes, and media 
 _Avoid_: Recursive delete, permanent delete, orphan cleanup
 
 **Tag**:
-A user-defined label applied to notes for secondary filtering. Tags are optional: a note can have zero, one, or many tags. For MVP, tags do not apply to folders or media assets; tag filtering shows matching notes in the vault browser, with folders or media assets appearing only as needed context. Tag names are case-insensitively unique within a user's vault, while preserving the user's display capitalization. Renaming a tag changes its display name everywhere without changing which notes have the tag. Deleting a tag removes it from all active and trashed notes but does not delete those notes, and should require confirmation when the tag is attached to notes.
+A user-defined label applied to notes for secondary filtering. Tags are optional: a note can have zero, one, or many tags. For MVP, tags do not apply to folders or media assets; tag filtering uses a compact vault browser filter near search and shows matching notes in the same compact browser results mode as Search, while tag assignment uses a compact active-note header control. Tag names are case-insensitively unique within a user's vault, while preserving the user's display capitalization. Renaming a tag changes its display name everywhere without changing which notes have the tag. Deleting a tag removes it from all active and trashed notes but does not delete those notes, and should require confirmation when the tag is attached to notes.
 _Avoid_: Label, category, keyword
 
 **Search**:
-Whole-vault title and name matching across active folders, notes, and media assets. Searching inside note bodies is a later enhancement and should be called Full-Text Search when discussed.
+Whole-vault title and name matching across active folders, notes, and media assets. Search results replace the vault browser tree with compact matching rows that show visible names with location context while leaving opened main content tabs intact; searching inside note bodies is a later enhancement and should be called Full-Text Search when discussed.
 _Avoid_: Full-text search, global search
 
 **Export**:
-A user-initiated download of active vault content in a portable format. MVP Export produces one downloadable ZIP archive that preserves folder structure, writes notes as Markdown files, keeps media assets as files in their vault folder locations, rewrites Filebucket image references in Markdown notes to relative exported paths when possible, and includes a metadata manifest for extra Filebucket details such as tags, media references, media asset IDs, and original names if sanitized; it does not include Trash by default. The MVP metadata manifest is useful export metadata, not yet a stable ZIP re-import or restore contract. Export must preserve note body content as written, without injecting the note title as a heading. Export must avoid duplicate filenames inside each exported folder for notes and media assets, using readable automatic suffixes when needed, and may sanitize unsafe filename characters while preserving visible titles as closely as possible.
+A user-initiated download of active vault content in a portable format. MVP Export is a vault-level action suitable for the compact account or app menu rather than the vault browser toolbar. It produces one downloadable ZIP archive that preserves folder structure, writes notes as Markdown files, keeps media assets as files in their vault folder locations, rewrites Filebucket image references in Markdown notes to relative exported paths when possible, and includes a metadata manifest for extra Filebucket details such as tags, media references, media asset IDs, and original names if sanitized; it does not include Trash by default. The MVP metadata manifest is useful export metadata, not yet a stable ZIP re-import or restore contract. Export must write the stored Markdown body as Filebucket saved it, without injecting the note title as a heading. Export must avoid duplicate filenames inside each exported folder for notes and media assets, using readable automatic suffixes when needed, and may sanitize unsafe filename characters while preserving visible titles as closely as possible.
 _Avoid_: Backup, sync, archive
 
 **Backup**:
@@ -93,7 +93,7 @@ An automated or recurring preservation process for vault content. Backup is a la
 _Avoid_: Export, download, sync
 
 **Autosave**:
-Editing behavior where note title and body changes are saved automatically without requiring a manual save command. Autosave should save after the user pauses typing for about 1500-2000ms. Autosave is not a domain entity.
+Editing behavior where note title and body changes are saved automatically without requiring a prominent manual save command. Autosave should save after the user pauses typing for about 1500-2000ms, keep save status subtle unless a save needs attention, let affected note tabs signal unsaved or failed-save state without labeling every saved tab, and protect pending or failed saves when closing a note tab. Autosave is not a domain entity.
 _Avoid_: Manual save, draft mode
 
 ## Example Dialogue
@@ -108,16 +108,49 @@ Dev: Can the vault root contain note `Plan` and media asset `Plan.md`?
 Domain expert: No. The vault root follows the same visible-name uniqueness rules as folders.
 
 Dev: Where does a user browse notes and media assets?
-Domain expert: In the vault browser. Opening a note or media asset uses the main content pane.
+Domain expert: In the vault browser mixed tree. Opening a note or media asset uses the main content pane.
+
+Dev: What happens when a user selects a folder in the vault browser?
+Domain expert: The folder is the active creation location while the main content pane keeps already opened note or media content visible.
+
+Dev: Where does new content go after the user selects a folder?
+Domain expert: Into that active folder; if no folder is active, create it in the vault root.
+
+Dev: What if the user selects a folder before opening any note or media?
+Domain expert: The main content pane may stay empty because folders are browsing locations, not opened content.
+
+Dev: Does selecting a folder open a main content tab?
+Domain expert: No. Main content tabs are for opened notes and media assets.
+
+Dev: What happens when the user selects a note that is already open?
+Domain expert: Focus its existing main content tab instead of opening a duplicate tab.
+
+Dev: Should the whole open tab set survive refresh in MVP?
+Domain expert: No. Restore the active opened content, but the wider tab set may stay temporary.
+
+Dev: Should the active creation folder look the same as the opened note?
+Domain expert: No. Opened note or media content is the strong selection state; the active folder can use a quieter marker.
+
+Dev: Should the vault browser always show creation forms?
+Domain expert: No. Keep core creation commands compact and show detailed inputs only when needed.
+
+Dev: Should every row in the vault browser show tags and dates?
+Domain expert: No. Keep the mixed tree terse so folders, notes, and media stay easy to scan.
+
+Dev: Where do browse-time rename, move, and trash actions live?
+Domain expert: In a compact row overflow menu so the mixed tree stays terse.
 
 Dev: Where should search results appear?
-Domain expert: In the vault browser, so the main content pane stays focused on the selected note or media asset.
+Domain expert: In the vault browser as compact result rows with location context, so the main content pane stays focused on the selected note or media asset.
 
 Dev: Should the UI show `/Projects/Plan` as a breadcrumb?
 Domain expert: No. Use `Vault / Projects / Plan` in the UI; filesystem-like paths are for export or technical references.
 
 Dev: Where should tag filtering appear?
-Domain expert: In the vault browser as matching notes, with folders or media only as context.
+Domain expert: Near search as a compact vault browser filter that shows matching notes in browser results, with folders or media only as context.
+
+Dev: Where does the user assign tags to a note?
+Domain expert: In a compact header control for the active note, not in every vault browser row or the note outline.
 
 Dev: Should the seeded account see admin controls?
 Domain expert: No. Admin is bootstrap language only; in the product, they are just the user of their vault.
@@ -146,8 +179,17 @@ Domain expert: Yes. They export differently as `Plan/` and `Plan.md`.
 Dev: Is `Trip plan.md` a file or a note?
 Domain expert: It is a note. Uploaded binaries like images or audio are the supporting media.
 
+Dev: Does the note editor need separate raw Markdown and preview modes?
+Domain expert: No. Notes use one rendered Markdown editing surface, and saved Markdown formatting may normalize.
+
 Dev: Does the first Markdown heading have to match the note title?
 Domain expert: No. The note title and Markdown headings are separate, even if users often make them match.
+
+Dev: How can the user tell where an open note lives after browsing elsewhere?
+Domain expert: The active note can show a compact vault location near its title.
+
+Dev: Should open media show where it lives too?
+Domain expert: Yes. Active media can show a compact vault location near its filename.
 
 Dev: Does a note title have to be a perfect filesystem filename?
 Domain expert: No. Filebucket can display the original title while Export sanitizes unsafe filename characters.
@@ -180,7 +222,7 @@ Dev: If a receipt PDF is uploaded into a folder and later inserted into a note, 
 Domain expert: It is one media asset with folder and note associations.
 
 Dev: Does inserting an image into a note create hidden note-owned media?
-Domain expert: No. It creates or uses a first-class media asset, then the note references it.
+Domain expert: No. It creates or uses a first-class media asset, then the note references it. Inline editor uploads default to the visible vault-level `Assets` folder.
 
 Dev: Can a media asset exist without a folder or note?
 Domain expert: No. It must live in the vault root or a folder. A note can reference it, but does not contain or place it.
@@ -227,6 +269,9 @@ Domain expert: No. PDFs and TXT files can be stored as media assets now; their p
 Dev: What should the right side show when a video is selected?
 Domain expert: Nothing note-specific. The note outline only appears when a note is selected.
 
+Dev: What happens to the note outline when a media tab becomes active?
+Domain expert: It disappears because the outline follows the active note tab only.
+
 Dev: Should checklist items appear in the note outline?
 Domain expert: No. The MVP note outline is generated from Markdown headings only.
 
@@ -235,6 +280,15 @@ Domain expert: Not in the MVP. The outline navigates; headings are edited in the
 
 Dev: Should the restore rule say restore items?
 Domain expert: Only in UI copy. Domain rules should name the affected things, such as notes and folders.
+
+Dev: Is Trash a folder in the mixed vault tree?
+Domain expert: No. Trash is a browser utility destination outside the active vault tree.
+
+Dev: Does entering Trash close open note or media tabs?
+Domain expert: No. Trash changes the browser mode without clearing already opened main content tabs.
+
+Dev: How does a trashed note open for inspection?
+Domain expert: In a clearly read-only main content tab with restore-focused actions.
 
 Dev: If a note from `Projects` is moved to Trash and restored, where does it go?
 Domain expert: Back to `Projects`, because Trash did not change the note's original folder relationship.
@@ -324,7 +378,7 @@ Dev: What happens to Filebucket image references during Export?
 Domain expert: Rewrite them to relative paths pointing to the exported media files when possible.
 
 Dev: Should Export add `# Trip Plan` to a note body?
-Domain expert: No. Export preserves the Markdown body as written; the note title becomes the filename.
+Domain expert: No. Export writes the Markdown body as Filebucket saved it; the note title becomes the filename.
 
 Dev: What if two exported things would have the same filename in one folder?
 Domain expert: Export should keep names readable and add automatic suffixes, such as `Plan.md` and `Plan 2.md`.

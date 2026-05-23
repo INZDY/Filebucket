@@ -140,6 +140,47 @@
 - Cover backup/export.
 - Run `npm run lint` and `npm run build` after every implementation slice.
 
+## UI Redesign Slices
+- Status: planned from grill-with-docs UI design session; implement as scoped slices instead of one large rewrite. Complete these slices before Milestone 7 media/R2 work because upload, inline image, media preview, and asset-placement flows depend on the redesigned workspace.
+
+### Slice 1: Workspace Shell
+- Use one coherent dark, Obsidian-adjacent workbench style with Filebucket-specific vault and media cues.
+- Replace the current split browser/list behavior with a mixed vault tree containing folders, notes, and media assets.
+- Keep compact browser controls fixed while tree/results rows scroll beneath them.
+- Use a slim app bar with account actions in a compact menu.
+- Put the Vault Browser behind a drawer/toggle on narrow screens while keeping opened content primary.
+- Keep desktop panes resizable.
+
+### Slice 2: Main Content Tabs
+- Add lightweight main-pane tabs for opened notes and media assets.
+- Selecting a note or media asset opens or focuses its existing tab.
+- Restore only the active opened content after refresh; the wider tab set can remain temporary for MVP.
+- Keep folder selection as active creation location without opening a content tab.
+- Make the Note Outline follow the active note tab only and keep it collapsible.
+
+### Slice 3: Rendered Markdown Editor
+- Replace separate raw Markdown write/preview modes with one rendered Markdown editing surface.
+- Accept Markdown formatting normalization on save; export writes the stored Markdown body as Filebucket saved it.
+- Cover practical note Markdown: headings, paragraphs, emphasis, lists, task checkboxes, links, blockquotes, inline code, code blocks, tables, and acceptable frontmatter handling.
+- Start with a minimal toolbar for heading level, bold, italic, link, unordered list, ordered list, task list, and code block; remove it later if distracting.
+- Keep autosave subtle, show unsaved/error state in note tabs, and protect pending or failed saves when closing note tabs.
+
+### Slice 4: Media Integration
+- Add media tabs with compact filename/location headers and 3-dot action menus.
+- Preview images with simple fit-to-pane behavior; use browser playback controls for audio and video.
+- Show unsupported-preview states for PDF and TXT media tabs until in-app preview exists.
+- Support inline image insertion from the editor by uploading new images or choosing existing image media assets.
+- Default inline image uploads to a visible root-level `Assets` folder, reusing an existing case-insensitive match while preserving its capitalization.
+- Keep upload progress and failure/retry states lightweight and local to the initiating surface.
+
+### Slice 5: Explorer Interactions And Polish
+- Add 3-dot overflow menus and matching context-menu actions for tree rows.
+- Add drag-and-drop move onto folders or the vault root, with invalid or colliding drops rejected clearly.
+- Persist folder expansion state locally when practical.
+- Sort folders first, then notes and media alphabetically by visible name inside each location.
+- Show search and tag filters as compact browser results with location context while leaving open tabs intact.
+- Keep Trash as a browser utility destination outside the active vault tree; opening Trash does not clear tabs.
+
 ## Required Env Vars
 - `DATABASE_URL`
 - `AUTH_SECRET`
