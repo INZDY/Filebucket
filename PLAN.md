@@ -98,7 +98,7 @@
 - Show tag-filtered notes in the vault browser, with folders or media assets only as needed context.
 
 ## Milestone 6: Trash And Restore
-- Status: revised folder/note/media Trash behavior implemented. Lint and build passed; manual smoke testing remains pending.
+- Status: complete. Revised folder/note/media Trash behavior implemented; lint, build, and manual smoke testing passed.
 - Add a Trash view for individually trashed folders, notes, and media assets.
 - Soft-delete and restore folders, notes, and media assets.
 - Keep folder-trash descendants hidden by the trashed folder instead of listing them as separate Trash rows unless individually trashed.
