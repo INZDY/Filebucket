@@ -34,6 +34,7 @@ import {
   renameTagAction,
   toggleNoteTagAction,
 } from "@/app/tags/actions";
+import { MainContentTabs } from "@/app/vault/main-content-tabs";
 import { ResizableVault } from "@/app/vault/resizable-vault";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -126,6 +127,44 @@ function getNoteOutline(body: string) {
       };
     })
     .filter((heading): heading is { id: string; depth: number; title: string } => Boolean(heading));
+}
+
+function getContentHref({
+  folderId,
+  mediaId,
+  noteId,
+  query,
+  tagSlug,
+}: {
+  folderId?: string | null;
+  mediaId?: string;
+  noteId?: string;
+  query?: string;
+  tagSlug?: string;
+}) {
+  const hrefParams = new URLSearchParams();
+
+  if (folderId) {
+    hrefParams.set("folder", folderId);
+  }
+
+  if (noteId) {
+    hrefParams.set("note", noteId);
+  }
+
+  if (mediaId) {
+    hrefParams.set("media", mediaId);
+  }
+
+  if (query) {
+    hrefParams.set("q", query);
+  }
+
+  if (tagSlug && !mediaId) {
+    hrefParams.set("tag", tagSlug);
+  }
+
+  return `/${hrefParams.toString() ? `?${hrefParams.toString()}` : ""}`;
 }
 
 export default async function Home({ searchParams }: HomeProps) {
@@ -382,6 +421,35 @@ export default async function Home({ searchParams }: HomeProps) {
   }
 
   const returnTo = `/${currentPathParams.toString() ? `?${currentPathParams.toString()}` : ""}`;
+  const activeContentTab = selectedNote
+    ? {
+        id: selectedNote.id,
+        type: "note" as const,
+        title: selectedNote.title,
+        href: getContentHref({
+          folderId: selectedNote.folder?.id ?? null,
+          noteId: selectedNote.id,
+          query,
+          tagSlug: activeTagSlug,
+        }),
+      }
+    : selectedMedia
+      ? {
+          id: selectedMedia.id,
+          type: "media" as const,
+          title: selectedMedia.filename,
+          href: getContentHref({
+            folderId: selectedMedia.folder?.id ?? null,
+            mediaId: selectedMedia.id,
+            query,
+          }),
+        }
+      : undefined;
+  const contentFallbackHref = getContentHref({
+    folderId: selectedNote?.folder?.id ?? selectedMedia?.folder?.id ?? selectedFolder?.id ?? null,
+    query,
+    tagSlug: activeTagSlug,
+  });
   const trashCount = deletedFolders.length + deletedNotes.length + deletedMediaAssets.length;
   const folderRows = flattenFolders(folders);
   const folderDestinations = folderRows.map(({ folder, depth }) => ({
@@ -659,9 +727,12 @@ export default async function Home({ searchParams }: HomeProps) {
                       ))}
                       {notes.map((note) => {
                         const isActive = selectedNote?.id === note.id;
-                        const noteHref = `${note.folder ? `/?folder=${note.folder.id}` : "/?"}&note=${note.id}${
-                          query ? `&q=${encodeURIComponent(query)}` : ""
-                        }${activeTagSlug ? `&tag=${encodeURIComponent(activeTagSlug)}` : ""}`;
+                        const noteHref = getContentHref({
+                          folderId: note.folder?.id ?? null,
+                          noteId: note.id,
+                          query,
+                          tagSlug: activeTagSlug,
+                        });
 
                         return (
                           <Link
@@ -686,9 +757,11 @@ export default async function Home({ searchParams }: HomeProps) {
                       })}
                       {mediaAssets.map((mediaAsset) => {
                         const isActive = selectedMedia?.id === mediaAsset.id;
-                        const mediaHref = `${
-                          mediaAsset.folder ? `/?folder=${mediaAsset.folder.id}` : "/?"
-                        }&media=${mediaAsset.id}${query ? `&q=${encodeURIComponent(query)}` : ""}`;
+                        const mediaHref = getContentHref({
+                          folderId: mediaAsset.folder?.id ?? null,
+                          mediaId: mediaAsset.id,
+                          query,
+                        });
 
                         return (
                           <Link
@@ -738,6 +811,7 @@ export default async function Home({ searchParams }: HomeProps) {
           }
           content={
             <section className="h-full min-h-0 overflow-hidden bg-[#111318] text-slate-100">
+              <MainContentTabs activeTab={activeContentTab} fallbackHref={contentFallbackHref}>
               {isTrashView ? (
                 <div className="h-full overflow-y-auto bg-[#191c22]">
                   <div className="border-b border-slate-800 px-5 py-4">
@@ -1109,6 +1183,7 @@ export default async function Home({ searchParams }: HomeProps) {
                   </div>
                 </div>
               )}
+              </MainContentTabs>
             </section>
           }
           outline={selectedNote && !isTrashView ? (

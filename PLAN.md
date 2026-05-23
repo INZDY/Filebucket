@@ -153,6 +153,7 @@
 - Keep desktop panes resizable.
 
 ### Slice 2: Main Content Tabs
+- Status: complete. Lightweight note/media tabs, active-tab URL restore, folder-as-location behavior, collapsible note outline, lint, build, and manual smoke testing passed.
 - Add lightweight main-pane tabs for opened notes and media assets.
 - Selecting a note or media asset opens or focuses its existing tab.
 - Restore only the active opened content after refresh; the wider tab set can remain temporary for MVP.

@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect, useState } from "react";
-import { PanelLeft, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, PanelLeft, X } from "lucide-react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ type ResizableVaultProps = {
 export function ResizableVault({ browser, content, outline }: ResizableVaultProps) {
   const [isNarrow, setIsNarrow] = useState(false);
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
+  const [isOutlineOpen, setIsOutlineOpen] = useState(true);
   const hasOutline = Boolean(outline);
 
   useEffect(() => {
@@ -88,7 +89,7 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
           }}
       id="filebucket-vault-panes"
       orientation="horizontal"
-      className="min-h-0 flex-1 bg-[#111318]"
+      className="relative min-h-0 flex-1 bg-[#111318]"
     >
       <Panel
         className="min-h-0 min-w-0"
@@ -108,16 +109,38 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
       >
         {content}
       </Panel>
-      {outline ? (
+      {outline && !isOutlineOpen ? (
+        <Button
+          aria-label="Show note outline"
+          className="absolute right-3 top-3 z-30 border-slate-700 bg-[#191c22]/95 text-slate-200 shadow-lg hover:bg-slate-800"
+          onClick={() => setIsOutlineOpen(true)}
+          size="icon"
+          type="button"
+          variant="outline"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+      ) : null}
+      {outline && isOutlineOpen ? (
         <>
           <ResizeHandle />
           <Panel
-            className="min-h-0 min-w-0"
+            className="relative min-h-0 min-w-0"
             defaultSize="20%"
             id="outline"
             minSize="220px"
             maxSize="340px"
           >
+            <Button
+              aria-label="Hide note outline"
+              className="absolute right-2 top-2 z-10 h-8 w-8 text-slate-400 hover:bg-slate-800 hover:text-slate-50"
+              onClick={() => setIsOutlineOpen(false)}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
             {outline}
           </Panel>
         </>
