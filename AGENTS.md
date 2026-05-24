@@ -11,23 +11,22 @@
 ## Milestone Execution Workflow
 
 - Use `PLAN.md` as the source of truth for milestone order, scope, and status.
-- At the start of each implementation cycle, read `PLAN.md`, this file, `git status --short`, and the current branch.
+- Start each implementation cycle by reading `PLAN.md`, `CONTEXT.md`, this file, `git status --short`, the current branch, and the latest commit.
 - If the current milestone has uncommitted changes, verify and commit them before starting another milestone.
 - When starting a new milestone, create a dedicated `feature/<milestone-name>` branch unless already on the correct feature branch.
 - Implement only the next incomplete milestone from `PLAN.md`; keep edits scoped to that milestone.
 - Update the milestone status in `PLAN.md` after implementation.
-- During active development, verify with `npm run lint`.
-- Run `npm run build` before merge readiness or after risky changes such as dependencies, config, schema, auth, route handlers, or database code.
+- Verify according to the Verification section below.
 - Commit each verified milestone with a concise milestone message.
 - Continue to the next milestone after a successful commit unless a stop condition applies.
-- Stop and ask for action if required secrets/config are missing, verification fails without a clear fix, browser/manual smoke testing is required, a destructive or data-risking operation is needed, or the implementation would expand MVP scope beyond `PLAN.md` or this file.
+- Stop and ask for action if secrets/config are missing, verification fails without a clear fix, browser/manual smoke testing is required, destructive or data-risking work is needed, or scope would expand beyond `PLAN.md` or this file.
 
 ## Product Scope
 
 - Personal-first hosted file-and-note vault.
 - Login required; no public signup for MVP.
 - Markdown notes are the primary content.
-- Files are supporting media and attachments, especially images/audio/video.
+- Media assets are first-class vault content and note references. Avoid generic "file" language when behavior depends on Folder, Note, or Media Asset.
 - Folders are the main organization model; tags are secondary filters.
 - Opening an item should immediately show its content.
 - Use soft delete with trash/restore.
@@ -37,7 +36,7 @@
 ## Tech Stack
 
 - Next.js App Router for UI, route handlers, and server actions.
-- TypeScript, Tailwind CSS, shadcn-style UI primitives, and CodeMirror for Markdown editing.
+- TypeScript, Tailwind CSS, shadcn-style UI primitives, and Milkdown/Crepe for rendered Markdown editing.
 - Auth.js/NextAuth for authentication.
 - Prisma with PostgreSQL for relational data.
 - Supabase PostgreSQL is the intended hosted database.
@@ -50,7 +49,9 @@
 - `app/page.tsx`: current authenticated home/dashboard screen.
 - `app/folders/`: folder workflow server actions.
 - `app/login/`: custom login page and login/logout server actions.
+- `app/media/`: media asset workflow server actions.
 - `app/notes/`: note workflow server actions and editor components.
+- `app/tags/`: tag workflow server actions.
 - `app/vault/`: vault shell layout components such as resizable panes.
 - `app/api/auth/[...nextauth]/route.ts`: Auth.js route handler.
 - `components/ui/`: reusable shadcn-style UI primitives.
@@ -80,7 +81,7 @@
   - `AUTH_URL`
   - `FILEBUCKET_ADMIN_EMAIL`
   - `FILEBUCKET_ADMIN_PASSWORD`
-- Future R2 variables should stay out of scope until media upload work starts:
+- R2 variables stay out of scope until real media upload work. UI-only media integration can proceed without them; presigned uploads must stop if R2 config is missing:
   - `R2_ACCOUNT_ID`
   - `R2_ACCESS_KEY_ID`
   - `R2_SECRET_ACCESS_KEY`
@@ -112,5 +113,6 @@
 - Run `npm run build` before merging a feature branch or after auth, database, route, config, or dependency changes.
 - Stop the dev server before running `npm run build`; build rewrites `.next` and can make the active dev server serve stale CSS.
 - After a build, restart `npm run dev` from a clean dev session before browser testing.
+- After frontend workspace changes, verify with the in-app browser when a local dev server is available. If manual verification is required from the user, provide a concise smoke-test checklist.
 - For Prisma schema changes, run `npm run prisma:generate`.
 - Run migrations and seed only when a real `DATABASE_URL` is configured.
