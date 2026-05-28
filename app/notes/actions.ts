@@ -345,3 +345,48 @@ export async function restoreNoteAction(formData: FormData) {
   revalidatePath("/");
   redirect(note.folderId ? `/?folder=${note.folderId}&note=${note.id}` : `/?note=${note.id}`);
 }
+
+export async function renameNoteAction(formData: FormData) {
+  const session = await requireSession();
+  const noteId = readId(formData, "noteId");
+  const newTitle = readId(formData, "name");
+
+  if (!noteId || !newTitle) {
+    revalidatePath("/");
+    return;
+  }
+
+  const note = await prisma.note.findFirst({
+    where: {
+      id: noteId,
+      userId: session.user.id,
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+      folderId: true,
+      title: true,
+    },
+  });
+
+  if (!note) {
+    revalidatePath("/");
+    return;
+  }
+
+  if (await hasTitleCollision(session.user.id, note.folderId, newTitle, note.id)) {
+    revalidatePath("/");
+    return;
+  }
+
+  await prisma.note.update({
+    where: { id: note.id },
+    data: {
+      title: newTitle,
+    },
+  });
+
+  revalidatePath("/");
+  redirect(note.folderId ? `/?folder=${note.folderId}&note=${note.id}` : `/?note=${note.id}`);
+}
+

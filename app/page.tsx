@@ -3,23 +3,27 @@ import {
   ArchiveRestore,
   BookOpenText,
   Cloud,
+  FileQuestion,
   FileText,
   Folder,
-  HardDriveUpload,
   ImagePlus,
+  Music,
   Plus,
   Search,
   Tags,
   Trash2,
+  Video,
 } from "lucide-react";
 
 import {
   createFolderAction,
   restoreFolderAction,
 } from "@/app/folders/actions";
-import { FolderRow } from "@/app/folders/folder-row";
+import { BrowserTree } from "@/app/vault/browser-tree";
 import { logoutAction } from "@/app/login/actions";
-import { restoreMediaAssetAction, trashMediaAssetAction } from "@/app/media/actions";
+import { restoreMediaAssetAction } from "@/app/media/actions";
+import { MediaActionsMenu } from "@/app/media/media-actions-menu";
+import { MediaUploadControl } from "@/app/media/media-upload-control";
 import {
   createNoteAction,
   importMarkdownNotesAction,
@@ -61,6 +65,8 @@ type FolderListEntry = {
   name: string;
   parentId: string | null;
   _count: {
+    children: number;
+    mediaAssets: number;
     notes: number;
   };
 };
@@ -96,6 +102,7 @@ function flattenFolders(folders: FolderListEntry[]) {
 
   return rows;
 }
+
 
 function getFolderTrail(folders: FolderListEntry[], selectedFolder: FolderListEntry | null) {
   const foldersById = new Map(folders.map((folder) => [folder.id, folder]));
@@ -167,6 +174,32 @@ function getContentHref({
   return `/${hrefParams.toString() ? `?${hrefParams.toString()}` : ""}`;
 }
 
+function getMediaAssetUrl(r2Key: string) {
+  const baseUrl = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, "");
+
+  if (!baseUrl) {
+    return null;
+  }
+
+  return `${baseUrl}/${r2Key.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+function getMediaPreviewKind(contentType: string) {
+  if (contentType.startsWith("image/")) {
+    return "image";
+  }
+
+  if (contentType.startsWith("audio/")) {
+    return "audio";
+  }
+
+  if (contentType.startsWith("video/")) {
+    return "video";
+  }
+
+  return "unsupported";
+}
+
 export default async function Home({ searchParams }: HomeProps) {
   const session = await requireSession();
   const params = await searchParams;
@@ -184,7 +217,7 @@ export default async function Home({ searchParams }: HomeProps) {
       orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
       include: {
         _count: {
-          select: { notes: true },
+          select: { children: true, mediaAssets: true, notes: true },
         },
       },
     }),
@@ -275,13 +308,18 @@ export default async function Home({ searchParams }: HomeProps) {
                     },
                   ],
                 }
-              : selectedFolder
-                ? {
-                    folderId: selectedFolder.id,
-                  }
-                : {
-                    folderId: null,
-                  }),
+              : {
+                  OR: [
+                    { folderId: null },
+                    {
+                      folder: {
+                        is: {
+                          deletedAt: null,
+                        },
+                      },
+                    },
+                  ],
+                }),
             ...(query
               ? {
                   title: {
@@ -300,7 +338,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 }
               : {}),
           },
-          orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
+          orderBy: [{ title: "asc" }],
           include: {
             folder: {
               select: {
@@ -339,13 +377,18 @@ export default async function Home({ searchParams }: HomeProps) {
                         },
                       ],
                     }
-                  : selectedFolder
-                    ? {
-                        folderId: selectedFolder.id,
-                      }
-                    : {
-                        folderId: null,
-                      }),
+                  : {
+                      OR: [
+                        { folderId: null },
+                        {
+                          folder: {
+                            is: {
+                              deletedAt: null,
+                            },
+                          },
+                        },
+                      ],
+                    }),
                 ...(query
                   ? {
                       filename: {
@@ -355,7 +398,7 @@ export default async function Home({ searchParams }: HomeProps) {
                     }
                   : {}),
               },
-              orderBy: [{ updatedAt: "desc" }, { filename: "asc" }],
+              orderBy: [{ filename: "asc" }],
               include: {
                 folder: {
                   select: {
@@ -456,6 +499,38 @@ export default async function Home({ searchParams }: HomeProps) {
     id: folder.id,
     name: `${"  ".repeat(depth)}${folder.name}`,
   }));
+  const isVaultRootActive = !isTrashView && !selectedFolder && !selectedNote && !selectedMedia;
+
+
+  const imageMediaAssets = !isTrashView
+    ? await prisma.mediaAsset.findMany({
+        where: {
+          userId: session.user.id,
+          deletedAt: null,
+          contentType: {
+            startsWith: "image/",
+          },
+          OR: [
+            { folderId: null },
+            {
+              folder: {
+                is: {
+                  deletedAt: null,
+                },
+              },
+            },
+          ],
+        },
+        orderBy: { filename: "asc" },
+        include: {
+          folder: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      })
+    : [];
   const deletedFolderContents = selectedDeletedFolder
     ? await Promise.all([
         prisma.folder.findMany({
@@ -560,17 +635,7 @@ export default async function Home({ searchParams }: HomeProps) {
                       New note
                     </Button>
                   </form>
-                  <Button
-                    aria-label="Upload media"
-                    className="border-slate-700 bg-[#1f242c] text-slate-300 hover:bg-slate-800 hover:text-slate-50"
-                    disabled
-                    size="icon"
-                    title="Upload media"
-                    type="button"
-                    variant="outline"
-                  >
-                    <HardDriveUpload className="h-4 w-4" />
-                  </Button>
+                  <MediaUploadControl disabled={isTrashView} folderId={selectedFolder?.id ?? null} />
                 </div>
 
                 <form action={importMarkdownNotesAction} className="flex items-center gap-2">
@@ -673,124 +738,87 @@ export default async function Home({ searchParams }: HomeProps) {
                 ) : null}
               </div>
 
-              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-3 py-3">
-                <nav className="space-y-1">
-                  <Button
-                    asChild
-                    variant={!isTrashView && !selectedFolder ? "secondary" : "ghost"}
-                    className={cn(
-                      "h-10 w-full justify-start px-3",
-                      !isTrashView && !selectedFolder && "bg-teal-500/15 text-teal-100 hover:bg-teal-500/20",
-                    )}
-                  >
-                    <Link href="/">
-                      <Folder className="h-4 w-4" />
-                      Vault
-                    </Link>
-                  </Button>
-                  {folderRows.map(({ depth, folder }) => {
-                    const isActive = !isTrashView && selectedFolder?.id === folder.id;
-
-                    return (
-                      <FolderRow
-                        key={folder.id}
-                        folder={{
-                          id: folder.id,
-                          name: folder.name,
-                          count: folder._count.notes,
-                          parentId: folder.parentId,
-                        }}
-                        href={`/?folder=${folder.id}`}
-                        isActive={isActive}
-                        depth={depth}
-                        destinations={folderDestinations}
-                      />
-                    );
-                  })}
-                </nav>
-
+              <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
                 {!isTrashView ? (
-                  <section className="overflow-hidden rounded-md border border-slate-800 bg-[#141820]">
-                    <div className="border-b border-slate-800 bg-[#1b1f27] px-3 py-2">
-                      <h2 className="truncate text-xs font-semibold uppercase text-slate-400">
+                  isFilteredView ? (
+                    <nav className="space-y-1" aria-label={browserTitle}>
+                      <p className="px-3 py-1 text-xs font-semibold uppercase text-slate-500">
                         {browserTitle}
-                      </h2>
-                    </div>
-                    <div className="divide-y divide-slate-800">
+                      </p>
                       {matchingFolders.map((folder) => (
                         <Link
-                          key={folder.id}
-                          className="flex items-center gap-2 px-3 py-2.5 text-sm transition-colors hover:bg-slate-800/70"
+                          key={`folder-result:${folder.id}`}
+                          className="flex h-9 min-w-0 items-center gap-2 rounded-md px-3 text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50"
                           href={`/?folder=${folder.id}`}
                         >
                           <Folder className="h-4 w-4 shrink-0 text-slate-400" />
                           <span className="min-w-0 flex-1 truncate">{folder.name}</span>
-                          <span className="text-xs text-slate-500">{folder._count.notes}</span>
+                          <span className="text-xs text-slate-500">
+                            {folder._count ? folder._count.children + folder._count.notes + folder._count.mediaAssets : 0}
+                          </span>
                         </Link>
                       ))}
-                      {notes.map((note) => {
-                        const isActive = selectedNote?.id === note.id;
-                        const noteHref = getContentHref({
-                          folderId: note.folder?.id ?? null,
-                          noteId: note.id,
-                          query,
-                          tagSlug: activeTagSlug,
-                        });
-
-                        return (
-                          <Link
-                            key={note.id}
-                            className={cn(
-                              "block px-3 py-2.5 text-sm transition-colors hover:bg-slate-800/70",
-                              isActive && "bg-teal-500/15 hover:bg-teal-500/20",
-                            )}
-                            href={noteHref}
-                          >
-                            <span className="flex min-w-0 items-center gap-2">
-                              <FileText className="h-4 w-4 shrink-0 text-slate-400" />
-                              <span className="min-w-0 flex-1 truncate font-medium">{note.title}</span>
-                            </span>
-                            {isFilteredView ? (
-                              <span className="mt-1 block truncate pl-6 text-xs text-slate-500">
-                                {note.folder?.name ?? "Vault"}
-                              </span>
-                            ) : null}
-                          </Link>
-                        );
-                      })}
-                      {mediaAssets.map((mediaAsset) => {
-                        const isActive = selectedMedia?.id === mediaAsset.id;
-                        const mediaHref = getContentHref({
-                          folderId: mediaAsset.folder?.id ?? null,
-                          mediaId: mediaAsset.id,
-                          query,
-                        });
-
-                        return (
-                          <Link
-                            key={mediaAsset.id}
-                            className={cn(
-                              "flex items-center gap-2 px-3 py-2.5 text-sm transition-colors hover:bg-slate-800/70",
-                              isActive && "bg-teal-500/15 hover:bg-teal-500/20",
-                            )}
-                            href={mediaHref}
-                          >
+                      {notes.map((note) => (
+                        <Link
+                          key={`note-result:${note.id}`}
+                          className={cn(
+                            "block rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50",
+                            selectedNote?.id === note.id && "bg-teal-500/15 text-teal-100 hover:bg-teal-500/20",
+                          )}
+                          href={getContentHref({
+                            folderId: note.folder?.id ?? null,
+                            noteId: note.id,
+                            query,
+                            tagSlug: activeTagSlug,
+                          })}
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
+                            <FileText className="h-4 w-4 shrink-0 text-slate-400" />
+                            <span className="min-w-0 flex-1 truncate">{note.title}</span>
+                          </span>
+                          <span className="mt-1 block truncate pl-6 text-xs text-slate-500">
+                            {note.folder?.name ?? "Vault"}
+                          </span>
+                        </Link>
+                      ))}
+                      {mediaAssets.map((mediaAsset) => (
+                        <Link
+                          key={`media-result:${mediaAsset.id}`}
+                          className={cn(
+                            "block rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50",
+                            selectedMedia?.id === mediaAsset.id && "bg-teal-500/15 text-teal-100 hover:bg-teal-500/20",
+                          )}
+                          href={getContentHref({
+                            folderId: mediaAsset.folder?.id ?? null,
+                            mediaId: mediaAsset.id,
+                            query,
+                          })}
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
                             <ImagePlus className="h-4 w-4 shrink-0 text-slate-400" />
                             <span className="min-w-0 flex-1 truncate">{mediaAsset.filename}</span>
-                          </Link>
-                        );
-                      })}
+                          </span>
+                          <span className="mt-1 block truncate pl-6 text-xs text-slate-500">
+                            {mediaAsset.folder?.name ?? "Vault"}
+                          </span>
+                        </Link>
+                      ))}
                       {matchingFolders.length === 0 && notes.length === 0 && mediaAssets.length === 0 ? (
-                        <div className="px-3 py-5 text-sm text-slate-500">
-                          {isFilteredView
-                            ? "No matching vault content"
-                            : !selectedFolder && !hasVaultContent
-                              ? "Your vault is empty"
-                              : "This location is empty"}
-                        </div>
+                        <div className="px-3 py-5 text-sm text-slate-500">No matching vault content</div>
                       ) : null}
-                    </div>
-                  </section>
+                    </nav>
+                  ) : (
+                    <BrowserTree
+                      folders={folders}
+                      notes={notes}
+                      mediaAssets={mediaAssets}
+                      selectedFolderId={selectedFolder?.id ?? null}
+                      selectedNoteId={selectedNote?.id ?? null}
+                      selectedMediaId={selectedMedia?.id ?? null}
+                      folderDestinations={folderDestinations}
+                      isVaultRootActive={isVaultRootActive}
+                    />
+                  )
                 ) : null}
               </div>
 
@@ -1066,10 +1094,6 @@ export default async function Home({ searchParams }: HomeProps) {
                       </div>
 
                       <div className="flex flex-wrap gap-2">
-                        <Button variant="outline">
-                          <ImagePlus className="h-4 w-4" />
-                          Insert image
-                        </Button>
                         <form action={moveNoteAction} className="flex items-center gap-2">
                           <input type="hidden" name="noteId" value={selectedNote.id} />
                           <select
@@ -1144,6 +1168,11 @@ export default async function Home({ searchParams }: HomeProps) {
                   </div>
                   <NoteEditor
                     key={selectedNote.id}
+                    imageMediaAssets={imageMediaAssets.map((mediaAsset) => ({
+                      id: mediaAsset.id,
+                      filename: mediaAsset.filename,
+                      location: mediaAsset.folder?.name ?? "Vault",
+                    }))}
                     note={{
                       id: selectedNote.id,
                       title: selectedNote.title,
@@ -1153,28 +1182,98 @@ export default async function Home({ searchParams }: HomeProps) {
                 </div>
               ) : selectedMedia ? (
                 <div className="flex h-full min-h-0 flex-col">
-                  <div className="flex flex-1 items-center justify-center px-6 py-10">
-                    <div className="w-full max-w-xl rounded-md border border-slate-800 bg-[#191c22] p-6">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-md bg-slate-800 text-slate-300">
-                          <ImagePlus className="h-5 w-5" />
+                  <div className="border-b border-slate-800 bg-[#191c22] px-5 py-4">
+                    <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
+                          <ImagePlus className="h-4 w-4" />
+                          <Link className="hover:text-slate-100" href="/">
+                            Vault
+                          </Link>
+                          {folderTrail.map((folder) => (
+                            <span key={folder.id} className="flex items-center gap-2">
+                              <span>/</span>
+                              <Link className="hover:text-slate-100" href={`/?folder=${folder.id}`}>
+                                {folder.name}
+                              </Link>
+                            </span>
+                          ))}
+                          <span>/</span>
+                          <span className="max-w-56 truncate">{selectedMedia.filename}</span>
                         </div>
-                        <div className="min-w-0">
-                          <h2 className="truncate text-lg font-semibold tracking-normal">{selectedMedia.filename}</h2>
-                          <p className="truncate text-sm text-slate-400">{selectedMedia.contentType}</p>
-                        </div>
+                        <h2 className="mt-1 truncate text-lg font-semibold tracking-normal">{selectedMedia.filename}</h2>
+                        <p className="truncate text-sm text-slate-400">
+                          {selectedMedia.contentType} · {Math.max(1, Math.round(selectedMedia.sizeBytes / 1024))} KB
+                        </p>
                       </div>
+                      <MediaActionsMenu
+                        destinations={folderDestinations}
+                        mediaAsset={{
+                          id: selectedMedia.id,
+                          filename: selectedMedia.filename,
+                          folderId: selectedMedia.folder?.id ?? null,
+                        }}
+                      />
                     </div>
                   </div>
-                  <div className="border-t border-slate-800 bg-[#191c22] px-5 py-4">
-                    <form action={trashMediaAssetAction} className="flex justify-end">
-                      <input type="hidden" name="mediaAssetId" value={selectedMedia.id} />
-                      <input type="hidden" name="folderId" value={selectedMedia.folder?.id ?? ""} />
-                      <Button variant="outline" type="submit">
-                        <Trash2 className="h-4 w-4" />
-                        Move to trash
-                      </Button>
-                    </form>
+                  <div className="min-h-0 flex-1 overflow-y-auto bg-[#101217] px-6 py-6">
+                    <div className="flex min-h-full items-center justify-center">
+                      {(() => {
+                        const previewUrl = getMediaAssetUrl(selectedMedia.r2Key);
+                        const previewKind = getMediaPreviewKind(selectedMedia.contentType);
+
+                        if (previewKind === "image" && previewUrl) {
+                          return (
+                            <img
+                              alt={selectedMedia.filename}
+                              className="max-h-[calc(100vh-220px)] max-w-full object-contain"
+                              src={previewUrl}
+                            />
+                          );
+                        }
+
+                        if (previewKind === "audio" && previewUrl) {
+                          return (
+                            <div className="w-full max-w-2xl rounded-md border border-slate-800 bg-[#191c22] p-5">
+                              <div className="mb-4 flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-800 text-slate-300">
+                                  <Music className="h-5 w-5" />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-medium text-slate-100">{selectedMedia.filename}</p>
+                                  <p className="truncate text-xs text-slate-500">{selectedMedia.contentType}</p>
+                                </div>
+                              </div>
+                              <audio className="w-full" controls src={previewUrl} />
+                            </div>
+                          );
+                        }
+
+                        if (previewKind === "video" && previewUrl) {
+                          return (
+                            <video
+                              className="max-h-[calc(100vh-220px)] max-w-full rounded-md bg-black"
+                              controls
+                              src={previewUrl}
+                            />
+                          );
+                        }
+
+                        const EmptyIcon = previewKind === "image" ? ImagePlus : previewKind === "audio" ? Music : previewKind === "video" ? Video : FileQuestion;
+
+                        return (
+                          <div className="w-full max-w-md rounded-md border border-slate-800 bg-[#191c22] p-6 text-center">
+                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-slate-800 text-slate-300">
+                              <EmptyIcon className="h-5 w-5" />
+                            </div>
+                            <p className="mt-4 text-sm font-medium text-slate-100">{selectedMedia.filename}</p>
+                            <p className="mt-1 text-sm text-slate-400">
+                              {previewKind === "unsupported" ? "Preview unavailable" : "Media URL unavailable"}
+                            </p>
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -1218,7 +1317,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 )}
               </div>
             </aside>
-          ) : undefined}
+          ) : null}
         />
       </div>
     </main>

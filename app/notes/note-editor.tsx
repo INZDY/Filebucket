@@ -2,10 +2,11 @@
 
 import { Crepe, CrepeFeature } from "@milkdown/crepe";
 import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react";
-import { Save } from "lucide-react";
+import { ImagePlus, Save } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 import { updateNoteAction } from "@/app/notes/actions";
+import { getPresignedUploadUrlAction, createMediaAssetAction } from "@/app/media/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -16,24 +17,32 @@ type NoteEditorProps = {
     title: string;
     body: string;
   };
+  imageMediaAssets: {
+    id: string;
+    filename: string;
+    location: string;
+  }[];
 };
 
 const AUTOSAVE_DELAY_MS = 20_000;
 
-export function NoteEditor({ note }: NoteEditorProps) {
+export function NoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
   return (
     <MilkdownProvider>
-      <MilkdownNoteEditor note={note} />
+      <MilkdownNoteEditor imageMediaAssets={imageMediaAssets} note={note} />
     </MilkdownProvider>
   );
 }
 
-function MilkdownNoteEditor({ note }: NoteEditorProps) {
+function MilkdownNoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
   const [title, setTitle] = useState(note.title);
   const [body, setBody] = useState(note.body);
   const [lastSavedBody, setLastSavedBody] = useState(note.body);
   const [lastSavedTitle, setLastSavedTitle] = useState(note.title);
   const [saveError, setSaveError] = useState("");
+  const [showImagePicker, setShowImagePicker] = useState(false);
+  const [editorInitialMarkdown, setEditorInitialMarkdown] = useState(note.body);
+  const [editorRevision, setEditorRevision] = useState(0);
   const [isPending, startTransition] = useTransition();
   const titleRef = useRef(note.title);
   const bodyRef = useRef(note.body);
@@ -78,6 +87,8 @@ function MilkdownNoteEditor({ note }: NoteEditorProps) {
     setLastSavedTitle(note.title);
     setLastSavedBody(note.body);
     setSaveError("");
+    setShowImagePicker(false);
+    setEditorInitialMarkdown(note.body);
     titleRef.current = note.title;
     bodyRef.current = note.body;
     savedTitleRef.current = note.title;
@@ -94,6 +105,75 @@ function MilkdownNoteEditor({ note }: NoteEditorProps) {
     bodyRef.current = nextBody;
     setBody(nextBody);
   }, []);
+
+  function insertImageReference(mediaAsset: NoteEditorProps["imageMediaAssets"][number]) {
+    const trimmedBody = bodyRef.current.trimEnd();
+    const imageMarkdown = `![${mediaAsset.filename}](filebucket-media:${mediaAsset.id})`;
+    const nextBody = trimmedBody ? `${trimmedBody}\n\n${imageMarkdown}\n` : `${imageMarkdown}\n`;
+
+    updateBody(nextBody);
+    setEditorInitialMarkdown(nextBody);
+    setEditorRevision((currentRevision) => currentRevision + 1);
+    setShowImagePicker(false);
+  }
+
+  async function handleInlineImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setSaveError("Only images are supported for inline insertion.");
+      return;
+    }
+
+    if (file.size > 100 * 1024 * 1024) {
+      setSaveError("Image file exceeds 100 MB limit.");
+      return;
+    }
+
+    setSaveError("Uploading image...");
+
+    try {
+      const { uploadUrl, r2Key } = await getPresignedUploadUrlAction(file.name, file.type);
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", uploadUrl);
+        xhr.setRequestHeader("Content-Type", file.type);
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error(`Upload failed (${xhr.status})`));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("Network connection error"));
+        xhr.send(file);
+      });
+
+      const result = await createMediaAssetAction({
+        filename: file.name,
+        contentType: file.type,
+        sizeBytes: file.size,
+        r2Key,
+        folderId: null,
+        useAssetsFolder: true,
+      });
+
+      insertImageReference({
+        id: result.id,
+        filename: result.filename,
+        location: "Assets",
+      });
+
+      setSaveError("");
+    } catch (err: unknown) {
+      console.error(err);
+      setSaveError(err instanceof Error ? err.message : "Failed to upload image");
+    }
+  }
 
   useEffect(() => {
     if (!hasChanges) {
@@ -116,7 +196,50 @@ function MilkdownNoteEditor({ note }: NoteEditorProps) {
             value={title}
           />
         </div>
-        <div className="flex items-center justify-between gap-3 xl:justify-end">
+        <div className="relative flex items-center justify-between gap-3 xl:justify-end">
+          <Button
+            aria-expanded={showImagePicker}
+            aria-haspopup="menu"
+            onClick={() => setShowImagePicker((current) => !current)}
+            type="button"
+            variant="outline"
+          >
+            <ImagePlus className="h-4 w-4" />
+            Insert image
+          </Button>
+          {showImagePicker ? (
+            <div className="absolute right-0 top-11 z-40 w-72 rounded-md border border-slate-700 bg-[#1b1f27] p-2 text-slate-100 shadow-lg">
+              <div className="max-h-64 space-y-1 overflow-y-auto">
+                {imageMediaAssets.length > 0 ? (
+                  imageMediaAssets.map((mediaAsset) => (
+                    <Button
+                      key={mediaAsset.id}
+                      className="h-auto w-full justify-start px-2 py-2 text-left"
+                      onClick={() => insertImageReference(mediaAsset)}
+                      type="button"
+                      variant="ghost"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm">{mediaAsset.filename}</span>
+                        <span className="block truncate text-xs text-slate-500">{mediaAsset.location}</span>
+                      </span>
+                    </Button>
+                  ))
+                ) : (
+                  <p className="px-2 py-4 text-sm text-slate-500">No image media assets</p>
+                )}
+              </div>
+              <label className="mt-2 block rounded-md border border-dashed border-slate-700 px-3 py-2 text-center text-xs text-slate-400">
+                Upload new image
+                <input
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={handleInlineImageUpload}
+                  type="file"
+                />
+              </label>
+            </div>
+          ) : null}
           <span
             className={cn(
               "text-xs",
@@ -138,7 +261,11 @@ function MilkdownNoteEditor({ note }: NoteEditorProps) {
         </div>
       </div>
 
-      <CrepeEditor key={note.id} markdown={note.body} onMarkdownChange={updateBody} />
+      <CrepeEditor
+        key={`${note.id}:${editorRevision}`}
+        markdown={editorInitialMarkdown}
+        onMarkdownChange={updateBody}
+      />
     </div>
   );
 }

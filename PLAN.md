@@ -169,6 +169,7 @@
 - Keep autosave subtle, show unsaved/error state in note tabs, and protect pending or failed saves when closing note tabs.
 
 ### Slice 4: Media Integration
+- Status: completed; lint and build passed. Manual smoke testing checklist provided.
 - Add media tabs with compact filename/location headers and 3-dot action menus.
 - Preview images with simple fit-to-pane behavior; use browser playback controls for audio and video.
 - Show unsupported-preview states for PDF and TXT media tabs until in-app preview exists.
@@ -177,6 +178,8 @@
 - Keep upload progress and failure/retry states lightweight and local to the initiating surface.
 
 ### Slice 5: Explorer Interactions And Polish
+- Status: completed; lint and build passed. Manual smoke testing checklist provided.
+- Finish the Vault Browser consolidation by removing the separate folder-content section and showing folders, notes, and media assets in one mixed tree.
 - Add 3-dot overflow menus and matching context-menu actions for tree rows.
 - Add drag-and-drop move onto folders or the vault root, with invalid or colliding drops rejected clearly.
 - Persist folder expansion state locally when practical.
