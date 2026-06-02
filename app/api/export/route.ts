@@ -189,11 +189,19 @@ export async function GET() {
       const notePath = notePaths.get(note.id)!;
       const body = note.body;
 
-      // Rewrite filebucket-media:mediaId to relative path inside the ZIP
-      const rewrittenBody = body.replace(/filebucket-media:([a-zA-Z0-9]+)/g, (match, mediaId) => {
+      // Rewrite media references:
+      // If it is an image: ![scale](filebucket-media:mediaId) -> ![unique_filename](relative_path)
+      // If it is a link: [text](filebucket-media:mediaId) -> [text](relative_path)
+      const rewrittenBody = body.replace(/(!?)\[([^\]]*)\]\(filebucket-media:([a-zA-Z0-9]+)\)/g, (match, isImage, label, mediaId) => {
         const mediaAssetPath = mediaPaths.get(mediaId);
         if (mediaAssetPath) {
-          return getRelativePath(notePath, mediaAssetPath);
+          const relativePath = getRelativePath(notePath, mediaAssetPath);
+          if (isImage) {
+            const uniqueFilename = mediaAssetPath.split("/").pop()!;
+            return `![${uniqueFilename}](${relativePath})`;
+          } else {
+            return `[${label}](${relativePath})`;
+          }
         }
         return match;
       });
