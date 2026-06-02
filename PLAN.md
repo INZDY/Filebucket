@@ -124,6 +124,7 @@
 - Store PDFs and TXT files as media assets if uploaded, but defer in-app PDF/TXT preview to a future feature.
 
 ## Milestone 8: ZIP Export
+- Status: completed; ZIP export route handler and UI button in user header menu implemented. Relative media path rewriting, metadata manifest creation, and full build validation verified.
 - Export folders, notes, tags, media metadata, and media references.
 - Produce one downloadable ZIP archive with folder structure, Markdown notes, media assets, and a metadata manifest.
 - Treat the MVP metadata manifest as useful export metadata, not a stable ZIP re-import or restore contract yet.

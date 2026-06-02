@@ -3,6 +3,7 @@ import {
   ArchiveRestore,
   BookOpenText,
   Cloud,
+  Download,
   FileQuestion,
   FileText,
   Folder,
@@ -591,6 +592,16 @@ export default async function Home({ searchParams }: HomeProps) {
             <div className="hidden min-w-0 rounded-md border border-slate-700 bg-[#1b1f27] px-3 py-1.5 text-sm text-slate-400 md:block">
               <span className="block max-w-[220px] truncate">{session.email}</span>
             </div>
+            <Button
+              variant="outline"
+              asChild
+              className="w-full border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800 sm:w-auto"
+            >
+              <a href="/api/export" download>
+                <Download className="mr-2 h-4 w-4" />
+                Export Vault
+              </a>
+            </Button>
             <form action={logoutAction}>
               <Button
                 variant="outline"
