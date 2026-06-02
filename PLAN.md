@@ -1,5 +1,7 @@
 # Filebucket MVP Plan
 
+**Status: MVP Completed & Fully Tested (June 2026)**
+
 ## Goal
 - Build Filebucket as a personal hosted file-and-note vault.
 - Keep the MVP private and single-user first.
@@ -206,12 +208,9 @@
 - `R2_PUBLIC_BASE_URL`
 
 ## Out Of Scope
-- Supabase Auth.
-- Supabase Storage.
 - Public signup for MVP; decide after MVP whether to keep controlled user creation or add registration.
 - Collaboration.
 - Public sharing.
 - Comments.
 - Backlinks.
 - Team permissions.
-- Notion-style blocks.

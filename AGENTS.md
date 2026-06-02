@@ -1,5 +1,7 @@
 # Filebucket
 
+**MVP Status: Completed & Fully Tested (June 2026)**
+
 ## Git workflow
 
 - Create a new branch for every new feature or implementation slice.
@@ -71,7 +73,8 @@
 - `npm run prisma:generate`: generate Prisma Client.
 - `npm run prisma:migrate`: run Prisma migrations locally.
 - `npm run prisma:seed`: seed the configured admin user.
-- There is no `npm test` script yet; add one only when introducing a test framework.
+- `npm run test`: run unit and integration tests with Vitest.
+- `npm run test:watch`: run Vitest in watch mode.
 
 ## Environment
 

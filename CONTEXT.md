@@ -1,5 +1,7 @@
 # Filebucket
 
+**MVP Status: Completed. All core vault browser, editor, media integration, trash/restore, and export features are fully implemented and verified.**
+
 Filebucket is a personal hosted file-and-note vault. It is Obsidian-inspired in its Markdown-first vault experience and quiet workbench feel, while keeping Filebucket-specific vault, media, and hosted-app cues; the first redesigned workspace can use one coherent dark mode before broader theme support. MVP does not include backlinks, graph view, plugins, themes, or local-folder sync. This glossary defines the product language used when discussing the domain.
 
 ## Language
