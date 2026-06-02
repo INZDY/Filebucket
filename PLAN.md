@@ -108,6 +108,7 @@
 - Defer Permanent Delete behavior until after MVP.
 
 ## Milestone 7: Media Assets
+- Status: completed; S3/R2 storage client, presigned URL generation, metadata storage, and browser upload integration completed. Lint, build, and database setup verified.
 - Configure Cloudflare R2 with an S3-compatible client.
 - Add a Next.js route or server action to create presigned upload URLs.
 - Upload images, audio, and video directly from the browser to R2.
