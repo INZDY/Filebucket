@@ -132,6 +132,7 @@
 - Keep automated backup scheduling later than MVP.
 
 ## Milestone 9: Testing And Hardening
+- Status: completed; test suite set up (Vitest + JSDOM), with 46 tests covering auth, folder CRUD, note CRUD/autosave, search/tags, trash/restore, media CRUD, R2 presigned URL generation, and ZIP export with relative path rewriting and manifest creation. Lint and production build verified.
 - Add test tooling after the Prisma/Auth foundation is stable.
 - Cover auth and protected routes.
 - Cover folder CRUD.
@@ -141,6 +142,7 @@
 - Cover R2 presigned URL generation.
 - Cover backup/export.
 - Run `npm run lint` and `npm run build` after every implementation slice.
+
 
 ## UI Redesign Slices
 - Status: planned from grill-with-docs UI design session; implement as scoped slices instead of one large rewrite. Complete these slices before Milestone 7 media/R2 work because upload, inline image, media preview, and asset-placement flows depend on the redesigned workspace.
