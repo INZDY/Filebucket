@@ -412,6 +412,13 @@ export default async function Home({ searchParams }: HomeProps) {
       ])
     : [[], []];
 
+  function resolveDisplayMarkdown(body: string) {
+    return body.replace(/filebucket-media:([a-zA-Z0-9]+)/g, (match, mediaId) => {
+      const media = mediaAssets.find((m) => m.id === mediaId) || deletedMediaAssets.find((m) => m.id === mediaId);
+      return media ? (getMediaAssetUrl(media.r2Key) ?? match) : match;
+    });
+  }
+
   const selectedNote =
     params?.note ? notes.find((note) => note.id === params.note) ?? null : null;
   const selectedMedia =
@@ -1049,7 +1056,7 @@ export default async function Home({ searchParams }: HomeProps) {
                       </div>
                       <div className="prose prose-slate mt-4 max-w-none rounded-md border bg-white px-4 py-4 text-sm leading-7 [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:pl-4 [&_blockquote]:text-muted-foreground [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_ol]:list-decimal [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-50 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:px-2 [&_th]:py-1 [&_ul]:list-disc">
                         <ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml>
-                          {selectedDeletedNote.body}
+                          {resolveDisplayMarkdown(selectedDeletedNote.body)}
                         </ReactMarkdown>
                       </div>
                     </div>
@@ -1183,11 +1190,12 @@ export default async function Home({ searchParams }: HomeProps) {
                       id: mediaAsset.id,
                       filename: mediaAsset.filename,
                       location: mediaAsset.folder?.name ?? "Vault",
+                      url: getMediaAssetUrl(mediaAsset.r2Key) ?? "",
                     }))}
                     note={{
                       id: selectedNote.id,
                       title: selectedNote.title,
-                      body: selectedNote.body,
+                      body: resolveDisplayMarkdown(selectedNote.body),
                     }}
                   />
                 </div>

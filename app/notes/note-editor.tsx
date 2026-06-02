@@ -21,6 +21,7 @@ type NoteEditorProps = {
     id: string;
     filename: string;
     location: string;
+    url: string;
   }[];
 };
 
@@ -41,8 +42,6 @@ function MilkdownNoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
   const [lastSavedTitle, setLastSavedTitle] = useState(note.title);
   const [saveError, setSaveError] = useState("");
   const [showImagePicker, setShowImagePicker] = useState(false);
-  const [editorInitialMarkdown, setEditorInitialMarkdown] = useState(note.body);
-  const [editorRevision, setEditorRevision] = useState(0);
   const [isPending, startTransition] = useTransition();
   const titleRef = useRef(note.title);
   const bodyRef = useRef(note.body);
@@ -50,6 +49,36 @@ function MilkdownNoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
   const savedBodyRef = useRef(note.body);
   const noteIdRef = useRef(note.id);
   const hasChanges = title !== lastSavedTitle || body !== lastSavedBody;
+
+  // Maintain local mediaAssets state to include newly uploaded images dynamically
+  const [mediaAssets, setMediaAssets] = useState(imageMediaAssets);
+
+  useEffect(() => {
+    setMediaAssets(imageMediaAssets);
+  }, [imageMediaAssets]);
+
+  // Translate database filebucket-media:id to public URLs
+  const resolveMediaUrls = useCallback((markdown: string, assets = mediaAssets) => {
+    return markdown.replace(/filebucket-media:([a-zA-Z0-9]+)/g, (match, mediaId) => {
+      const asset = assets.find((a) => a.id === mediaId);
+      return asset ? asset.url : match;
+    });
+  }, [mediaAssets]);
+
+  // Translate public URLs back to database filebucket-media:id
+  const restoreMediaUrls = useCallback((markdown: string, assets = mediaAssets) => {
+    let result = markdown;
+    for (const asset of assets) {
+      if (asset.url) {
+        const escapedUrl = asset.url.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+        result = result.replace(new RegExp(escapedUrl, "g"), `filebucket-media:${asset.id}`);
+      }
+    }
+    return result;
+  }, [mediaAssets]);
+
+  const [editorInitialMarkdown, setEditorInitialMarkdown] = useState(() => resolveMediaUrls(note.body));
+  const [editorRevision, setEditorRevision] = useState(0);
 
   const save = useCallback(() => {
     const noteIdSnapshot = noteIdRef.current;
@@ -88,13 +117,13 @@ function MilkdownNoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
     setLastSavedBody(note.body);
     setSaveError("");
     setShowImagePicker(false);
-    setEditorInitialMarkdown(note.body);
+    setEditorInitialMarkdown(resolveMediaUrls(note.body));
     titleRef.current = note.title;
     bodyRef.current = note.body;
     savedTitleRef.current = note.title;
     savedBodyRef.current = note.body;
     noteIdRef.current = note.id;
-  }, [note.body, note.id, note.title]);
+  }, [note.body, note.id, note.title, resolveMediaUrls]);
 
   const updateTitle = useCallback((nextTitle: string) => {
     titleRef.current = nextTitle;
@@ -102,17 +131,26 @@ function MilkdownNoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
   }, []);
 
   const updateBody = useCallback((nextBody: string) => {
-    bodyRef.current = nextBody;
-    setBody(nextBody);
-  }, []);
+    const dbBody = restoreMediaUrls(nextBody);
+    bodyRef.current = dbBody;
+    setBody(dbBody);
+  }, [restoreMediaUrls]);
 
-  function insertImageReference(mediaAsset: NoteEditorProps["imageMediaAssets"][number]) {
-    const trimmedBody = bodyRef.current.trimEnd();
-    const imageMarkdown = `![${mediaAsset.filename}](filebucket-media:${mediaAsset.id})`;
-    const nextBody = trimmedBody ? `${trimmedBody}\n\n${imageMarkdown}\n` : `${imageMarkdown}\n`;
+  function insertImageReference(
+    mediaAsset: NoteEditorProps["imageMediaAssets"][number],
+    customAssets?: NoteEditorProps["imageMediaAssets"]
+  ) {
+    const assetsList = customAssets || mediaAssets;
+    const editorBody = resolveMediaUrls(bodyRef.current, assetsList);
+    const trimmedBody = editorBody.trimEnd();
+    const imageMarkdown = `![${mediaAsset.filename}](${mediaAsset.url})`;
+    const nextEditorBody = trimmedBody ? `${trimmedBody}\n\n${imageMarkdown}\n` : `${imageMarkdown}\n`;
 
-    updateBody(nextBody);
-    setEditorInitialMarkdown(nextBody);
+    const nextDbBody = restoreMediaUrls(nextEditorBody, assetsList);
+    bodyRef.current = nextDbBody;
+    setBody(nextDbBody);
+
+    setEditorInitialMarkdown(nextEditorBody);
     setEditorRevision((currentRevision) => currentRevision + 1);
     setShowImagePicker(false);
   }
@@ -162,11 +200,16 @@ function MilkdownNoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
         useAssetsFolder: true,
       });
 
-      insertImageReference({
+      const newAsset = {
         id: result.id,
         filename: result.filename,
         location: "Assets",
-      });
+        url: result.url!,
+      };
+
+      const updatedAssets = [...mediaAssets, newAsset];
+      setMediaAssets(updatedAssets);
+      insertImageReference(newAsset, updatedAssets);
 
       setSaveError("");
     } catch (err: unknown) {

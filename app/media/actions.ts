@@ -305,8 +305,11 @@ export async function createMediaAssetAction(data: {
     },
   });
 
+  const baseUrl = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, "") || "";
+  const url = `${baseUrl}/${mediaAsset.r2Key.split("/").map(encodeURIComponent).join("/")}`;
+
   revalidatePath("/");
-  return { id: mediaAsset.id, folderId: mediaAsset.folderId, filename: mediaAsset.filename };
+  return { id: mediaAsset.id, folderId: mediaAsset.folderId, filename: mediaAsset.filename, url };
 }
 
 export async function renameMediaAssetAction(formData: FormData) {
