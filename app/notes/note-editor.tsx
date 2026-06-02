@@ -36,20 +36,6 @@ export function NoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
 }
 
 function MilkdownNoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
-  const [title, setTitle] = useState(note.title);
-  const [body, setBody] = useState(note.body);
-  const [lastSavedBody, setLastSavedBody] = useState(note.body);
-  const [lastSavedTitle, setLastSavedTitle] = useState(note.title);
-  const [saveError, setSaveError] = useState("");
-  const [showImagePicker, setShowImagePicker] = useState(false);
-  const [isPending, startTransition] = useTransition();
-  const titleRef = useRef(note.title);
-  const bodyRef = useRef(note.body);
-  const savedTitleRef = useRef(note.title);
-  const savedBodyRef = useRef(note.body);
-  const noteIdRef = useRef(note.id);
-  const hasChanges = title !== lastSavedTitle || body !== lastSavedBody;
-
   // Maintain local mediaAssets state to include newly uploaded images dynamically
   const [mediaAssets, setMediaAssets] = useState(imageMediaAssets);
 
@@ -76,6 +62,22 @@ function MilkdownNoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
     }
     return result;
   }, [mediaAssets]);
+
+  const [title, setTitle] = useState(note.title);
+  // Ensure the body state is initialized in the restored database format
+  const [body, setBody] = useState(() => restoreMediaUrls(note.body, imageMediaAssets));
+  const [lastSavedBody, setLastSavedBody] = useState(() => restoreMediaUrls(note.body, imageMediaAssets));
+  const [lastSavedTitle, setLastSavedTitle] = useState(note.title);
+  const [saveError, setSaveError] = useState("");
+  const [showImagePicker, setShowImagePicker] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  const titleRef = useRef(note.title);
+  const bodyRef = useRef(restoreMediaUrls(note.body, imageMediaAssets));
+  const savedTitleRef = useRef(note.title);
+  const savedBodyRef = useRef(restoreMediaUrls(note.body, imageMediaAssets));
+  const noteIdRef = useRef(note.id);
+  const hasChanges = title !== lastSavedTitle || body !== lastSavedBody;
 
   const [editorInitialMarkdown, setEditorInitialMarkdown] = useState(() => resolveMediaUrls(note.body));
   const [editorRevision, setEditorRevision] = useState(0);
@@ -111,19 +113,20 @@ function MilkdownNoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
   }, []);
 
   useEffect(() => {
+    const dbBody = restoreMediaUrls(note.body);
     setTitle(note.title);
-    setBody(note.body);
+    setBody(dbBody);
     setLastSavedTitle(note.title);
-    setLastSavedBody(note.body);
+    setLastSavedBody(dbBody);
     setSaveError("");
     setShowImagePicker(false);
     setEditorInitialMarkdown(resolveMediaUrls(note.body));
     titleRef.current = note.title;
-    bodyRef.current = note.body;
+    bodyRef.current = dbBody;
     savedTitleRef.current = note.title;
-    savedBodyRef.current = note.body;
+    savedBodyRef.current = dbBody;
     noteIdRef.current = note.id;
-  }, [note.body, note.id, note.title, resolveMediaUrls]);
+  }, [note.body, note.id, note.title, resolveMediaUrls, restoreMediaUrls]);
 
   const updateTitle = useCallback((nextTitle: string) => {
     titleRef.current = nextTitle;
