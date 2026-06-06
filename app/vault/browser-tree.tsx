@@ -289,7 +289,7 @@ export function BrowserTree({
       <div
         className={cn(
           "rounded-md transition-all",
-          dragOverFolderId === "root" && "bg-slate-700/50 border border-dashed border-teal-500",
+          dragOverFolderId === "root" && "bg-purple-950/20 border border-dashed border-purple-500",
         )}
         onDragLeave={handleDragLeave}
         onDragOver={(e) => handleDragOver(null, e)}
@@ -300,7 +300,7 @@ export function BrowserTree({
           variant="ghost"
           className={cn(
             "h-10 w-full justify-start px-3 text-slate-200 hover:bg-slate-800 hover:text-slate-50",
-            isVaultRootActive && "bg-teal-500/15 text-teal-100 hover:bg-teal-500/20",
+            isVaultRootActive && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
           )}
         >
           <Link href="/">

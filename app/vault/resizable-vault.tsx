@@ -158,12 +158,12 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
 function ResizeHandle() {
   return (
     <Separator
-      className="group relative w-px bg-slate-800 transition-colors hover:bg-teal-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group relative w-px bg-slate-800 transition-colors hover:bg-purple-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <span
         className={cn(
           "absolute left-1/2 top-1/2 h-10 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full",
-          "bg-slate-600 transition-colors group-hover:bg-teal-400",
+          "bg-slate-600 transition-colors group-hover:bg-purple-400",
         )}
       />
     </Separator>

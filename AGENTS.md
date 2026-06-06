@@ -1,121 +1,65 @@
-# Filebucket
+# AGENTS.md
 
-**MVP Status: Completed & Fully Tested (June 2026)**
+Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
-## Git workflow
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
-- Create a new branch for every new feature or implementation slice.
-- Keep `main` stable and merge feature branches back into `main` when done.
-- Before merging or pushing, update from `main` with `git pull --rebase origin main`.
-- If rebase conflicts happen, resolve them, stage the fixes, then run `git rebase --continue`.
-- Do not commit `.env` or other secrets.
+## 1. Think Before Coding
 
-## Milestone Execution Workflow
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
 
-- Use `PLAN.md` as the source of truth for milestone order, scope, and status.
-- Start each implementation cycle by reading `PLAN.md`, `CONTEXT.md`, this file, `git status --short`, the current branch, and the latest commit.
-- If the current milestone has uncommitted changes, verify and commit them before starting another milestone.
-- When starting a new milestone, create a dedicated `feature/<milestone-name>` branch unless already on the correct feature branch.
-- Implement only the next incomplete milestone from `PLAN.md`; keep edits scoped to that milestone.
-- Update the milestone status in `PLAN.md` after implementation.
-- Verify according to the Verification section below.
-- Commit each verified milestone with a concise milestone message.
-- Continue to the next milestone after a successful commit unless a stop condition applies.
-- Stop and ask for action if secrets/config are missing, verification fails without a clear fix, browser/manual smoke testing is required, destructive or data-risking work is needed, or scope would expand beyond `PLAN.md` or this file.
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
 
-## Product Scope
+## 2. Simplicity First
 
-- Personal-first hosted file-and-note vault.
-- Login required; no public signup for MVP.
-- Markdown notes are the primary content.
-- Media assets are first-class vault content and note references. Avoid generic "file" language when behavior depends on Folder, Note, or Media Asset.
-- Folders are the main organization model; tags are secondary filters.
-- Opening an item should immediately show its content.
-- Use soft delete with trash/restore.
-- Prioritize filename/title search before full-text note search.
-- Keep collaboration, sharing, comments, backlinks, teams, and block-editor features out of scope unless explicitly requested.
+**Minimum code that solves the problem. Nothing speculative.**
 
-## Tech Stack
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
 
-- Next.js App Router for UI, route handlers, and server actions.
-- TypeScript, Tailwind CSS, shadcn-style UI primitives, and Milkdown/Crepe for rendered Markdown editing.
-- Auth.js/NextAuth for authentication.
-- Prisma with PostgreSQL for relational data.
-- Supabase PostgreSQL is the intended hosted database.
-- Cloudflare R2 is the intended media blob store.
-- Vercel is the intended app host.
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
-## Project Structure
+## 3. Surgical Changes
 
-- `app/`: routes, layouts, route handlers, and server actions.
-- `app/page.tsx`: current authenticated home/dashboard screen.
-- `app/folders/`: folder workflow server actions.
-- `app/login/`: custom login page and login/logout server actions.
-- `app/media/`: media asset workflow server actions.
-- `app/notes/`: note workflow server actions and editor components.
-- `app/tags/`: tag workflow server actions.
-- `app/vault/`: vault shell layout components such as resizable panes.
-- `app/api/auth/[...nextauth]/route.ts`: Auth.js route handler.
-- `components/ui/`: reusable shadcn-style UI primitives.
-- `lib/`: shared helpers such as auth/session wrappers, Prisma client, and utilities.
-- `prisma/schema.prisma`: database schema.
-- `prisma/migrations/`: checked-in Prisma migrations.
-- `prisma/seed.mjs`: admin-user seed script.
-- `types/`: local TypeScript module augmentation.
+**Touch only what you must. Clean up only your own mess.**
 
-## Commands
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
 
-- Use npm with the checked-in `package-lock.json`.
-- `npm run dev`: start local Next.js development server.
-- `npm run build`: production build and type/build validation.
-- `npm run start`: serve a production build.
-- `npm run lint`: run ESLint.
-- `npm run prisma:generate`: generate Prisma Client.
-- `npm run prisma:migrate`: run Prisma migrations locally.
-- `npm run prisma:seed`: seed the configured admin user.
-- `npm run test`: run unit and integration tests with Vitest.
-- `npm run test:watch`: run Vitest in watch mode.
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
 
-## Environment
+The test: Every changed line should trace directly to the user's request.
 
-- Required for app/runtime work:
-  - `DATABASE_URL`
-  - `AUTH_SECRET`
-  - `AUTH_URL`
-  - `FILEBUCKET_ADMIN_EMAIL`
-  - `FILEBUCKET_ADMIN_PASSWORD`
-- R2 variables stay out of scope until real media upload work. UI-only media integration can proceed without them; presigned uploads must stop if R2 config is missing:
-  - `R2_ACCOUNT_ID`
-  - `R2_ACCESS_KEY_ID`
-  - `R2_SECRET_ACCESS_KEY`
-  - `R2_BUCKET_NAME`
-  - `R2_PUBLIC_BASE_URL`
+## 4. Goal-Driven Execution
 
-## Coding Style
+**Define success criteria. Loop until verified.**
 
-- Use TypeScript, React function components, and strict typing.
-- Prefer the `@/` import alias for local imports.
-- Keep shadcn-style primitive filenames lowercase, for example `components/ui/button.tsx`.
-- Use two-space indentation, semicolons, and double quotes.
-- Build styling with Tailwind utilities.
-- Use `cn()` from `lib/utils.ts` for conditional class merging.
-- Keep edits scoped; avoid unrelated refactors.
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
 
-## Auth And Data Notes
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
 
-- Use `auth()`, `signIn()`, and `signOut()` from `@/auth`.
-- Use `getSession()` or `requireSession()` from `lib/auth.ts` inside app code.
-- Credentials login uses hashed passwords stored on `User.passwordHash`.
-- Auth.js Credentials sessions are JWT-based; relational app data remains in PostgreSQL through Prisma.
-- Use the shared Prisma client from `lib/prisma.ts`.
-- Run Prisma validation/generation after schema changes.
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
-## Verification
+---
 
-- During active development, prefer `npm run lint` as the default check.
-- Run `npm run build` before merging a feature branch or after auth, database, route, config, or dependency changes.
-- Stop the dev server before running `npm run build`; build rewrites `.next` and can make the active dev server serve stale CSS.
-- After a build, restart `npm run dev` from a clean dev session before browser testing.
-- After frontend workspace changes, verify with the in-app browser when a local dev server is available. If manual verification is required from the user, provide a concise smoke-test checklist.
-- For Prisma schema changes, run `npm run prisma:generate`.
-- Run migrations and seed only when a real `DATABASE_URL` is configured.
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

@@ -2,11 +2,12 @@
 
 import { Crepe, CrepeFeature } from "@milkdown/crepe";
 import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react";
-import { ImagePlus, Save } from "lucide-react";
+import { ImagePlus, Save, Plus, Tag } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 import { updateNoteAction } from "@/app/notes/actions";
 import { getPresignedUploadUrlAction, createMediaAssetAction } from "@/app/media/actions";
+import { toggleNoteTagAction, createTagAction } from "@/app/tags/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -23,21 +24,37 @@ type NoteEditorProps = {
     location: string;
     url: string;
   }[];
+  allTags: {
+    id: string;
+    name: string;
+    slug: string;
+  }[];
+  assignedTags: {
+    id: string;
+    name: string;
+    slug: string;
+  }[];
 };
 
 const AUTOSAVE_DELAY_MS = 20_000;
 
-export function NoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
+export function NoteEditor({ imageMediaAssets, note, allTags, assignedTags }: NoteEditorProps) {
   return (
     <MilkdownProvider>
-      <MilkdownNoteEditor imageMediaAssets={imageMediaAssets} note={note} />
+      <MilkdownNoteEditor
+        imageMediaAssets={imageMediaAssets}
+        note={note}
+        allTags={allTags}
+        assignedTags={assignedTags}
+      />
     </MilkdownProvider>
   );
 }
 
-function MilkdownNoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
-  // Maintain local mediaAssets state to include newly uploaded images dynamically
+function MilkdownNoteEditor({ imageMediaAssets, note, allTags, assignedTags }: NoteEditorProps) {
   const [mediaAssets, setMediaAssets] = useState(imageMediaAssets);
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const [tagQuery, setTagQuery] = useState("");
 
   useEffect(() => {
     setMediaAssets(imageMediaAssets);
@@ -64,7 +81,6 @@ function MilkdownNoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
   }, [mediaAssets]);
 
   const [title, setTitle] = useState(note.title);
-  // Ensure the body state is initialized in the restored database format
   const [body, setBody] = useState(() => restoreMediaUrls(note.body, imageMediaAssets));
   const [lastSavedBody, setLastSavedBody] = useState(() => restoreMediaUrls(note.body, imageMediaAssets));
   const [lastSavedTitle, setLastSavedTitle] = useState(note.title);
@@ -221,40 +237,177 @@ function MilkdownNoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
     }
   }
 
+  // Tag interactions
+  async function handleAddTag(tagId: string) {
+    startTransition(async () => {
+      try {
+        const formData = new FormData();
+        formData.append("noteId", note.id);
+        formData.append("tagId", tagId);
+        formData.append("returnTo", "/");
+        await toggleNoteTagAction(formData);
+      } catch (err) {
+        console.error("Failed to add tag", err);
+      }
+    });
+  }
+
+  async function handleRemoveTag(tagId: string) {
+    startTransition(async () => {
+      try {
+        const formData = new FormData();
+        formData.append("noteId", note.id);
+        formData.append("tagId", tagId);
+        formData.append("returnTo", "/");
+        await toggleNoteTagAction(formData);
+      } catch (err) {
+        console.error("Failed to remove tag", err);
+      }
+    });
+  }
+
+  async function handleCreateTag(tagName: string) {
+    if (!tagName.trim()) return;
+    startTransition(async () => {
+      try {
+        const formData = new FormData();
+        formData.append("name", tagName.slice(0, 80));
+        formData.append("noteId", note.id);
+        formData.append("returnTo", "/");
+        await createTagAction(formData);
+        setTagQuery("");
+        setShowTagDropdown(false);
+      } catch (err) {
+        console.error("Failed to create tag", err);
+      }
+    });
+  }
+
   useEffect(() => {
-    if (!hasChanges) {
-      return;
+    if (!showTagDropdown) return;
+    function handleOutsideClick() {
+      setShowTagDropdown(false);
     }
+    window.addEventListener("click", handleOutsideClick);
+    return () => window.removeEventListener("click", handleOutsideClick);
+  }, [showTagDropdown]);
 
+  const filteredAvailableTags = allTags.filter(
+    (t) =>
+      !assignedTags.some((at) => at.id === t.id) &&
+      t.name.toLowerCase().includes(tagQuery.toLowerCase())
+  );
+
+  useEffect(() => {
     const timeout = window.setTimeout(save, AUTOSAVE_DELAY_MS);
-
     return () => window.clearTimeout(timeout);
   }, [body, hasChanges, save, title]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-[#191c22]">
-      <div className="flex min-h-11 flex-col gap-3 border-b border-slate-800 px-5 py-3 xl:flex-row xl:items-center xl:justify-between">
+    <div className="flex min-h-0 flex-1 flex-col bg-[#0d0d11]">
+      {/* Editor Header panel */}
+      <div className="flex min-h-12 flex-col gap-3 border-b border-slate-800/40 bg-[#101015]/40 backdrop-blur-md px-5 py-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="min-w-0 flex-1">
           <Input
             aria-label="Note title"
-            className="h-auto border-0 bg-transparent px-0 py-0 text-2xl font-semibold tracking-normal text-slate-50 shadow-none focus-visible:ring-0"
+            className="h-auto border-0 bg-transparent px-0 py-0 text-xl font-bold tracking-tight text-slate-100 shadow-none focus-visible:ring-0 placeholder:text-slate-500"
             onChange={(event) => updateTitle(event.target.value)}
             value={title}
           />
+          
+          {/* Note tags pills bar */}
+          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+            {assignedTags.map((tag) => (
+              <div
+                key={tag.id}
+                className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-600/10 border border-purple-500/20 text-purple-300 text-[11px] font-medium"
+              >
+                <span>#{tag.name}</span>
+                <button
+                  onClick={() => handleRemoveTag(tag.id)}
+                  className="text-purple-400 hover:text-purple-200 transition-colors ml-1 font-bold text-[10px]"
+                  type="button"
+                >
+                  &times;
+                </button>
+              </div>
+            ))}
+            
+            {/* Add tag button with autocomplete dropdown */}
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
+              <Button
+                onClick={() => setShowTagDropdown((prev) => !prev)}
+                className="flex h-5 items-center justify-center rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors text-[10px] px-2 py-0"
+                type="button"
+                variant="ghost"
+              >
+                <Tag className="h-2.5 w-2.5 mr-1" />
+                Add tag
+              </Button>
+              {showTagDropdown && (
+                <div className="absolute left-0 top-6 z-40 w-56 rounded-md border border-slate-800/80 bg-[#14141a]/95 backdrop-blur-md p-1 text-slate-100 shadow-xl glass-panel">
+                  <div className="p-1">
+                    <input
+                      type="text"
+                      placeholder="Search or create tag..."
+                      className="w-full h-8 px-2 rounded bg-slate-900/60 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500/50 mb-1"
+                      value={tagQuery}
+                      onChange={(e) => setTagQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && tagQuery.trim()) {
+                          e.preventDefault();
+                          handleCreateTag(tagQuery.trim());
+                        }
+                      }}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="max-h-48 overflow-y-auto space-y-0.5 p-1">
+                    {filteredAvailableTags.length > 0 ? (
+                      filteredAvailableTags.map((tag) => (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          className="w-full h-8 px-2 rounded hover:bg-purple-600/15 text-left text-xs text-slate-300 hover:text-purple-200 transition-colors flex items-center gap-1.5"
+                          onClick={() => handleAddTag(tag.id)}
+                        >
+                          <Tag className="h-3 w-3 text-slate-500" />
+                          <span>{tag.name}</span>
+                        </button>
+                      ))
+                    ) : tagQuery.trim() ? (
+                      <button
+                        type="button"
+                        className="w-full h-8 px-2 rounded hover:bg-purple-600/15 text-left text-xs text-purple-400 font-semibold transition-colors"
+                        onClick={() => handleCreateTag(tagQuery.trim())}
+                      >
+                        <Plus className="h-3 w-3 inline mr-1" />
+                        Create tag &quot;{tagQuery.trim()}&quot;
+                      </button>
+                    ) : (
+                      <p className="px-2 py-3 text-[11px] text-slate-500 text-center">No other tags</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-        <div className="relative flex items-center justify-between gap-3 xl:justify-end">
+
+        <div className="relative flex items-center justify-between gap-3 xl:justify-end shrink-0">
           <Button
             aria-expanded={showImagePicker}
             aria-haspopup="menu"
             onClick={() => setShowImagePicker((current) => !current)}
             type="button"
             variant="outline"
+            className="border-slate-800 bg-transparent text-slate-300 hover:bg-slate-900"
           >
-            <ImagePlus className="h-4 w-4" />
+            <ImagePlus className="h-4 w-4 mr-2" />
             Insert image
           </Button>
           {showImagePicker ? (
-            <div className="absolute right-0 top-11 z-40 w-72 rounded-md border border-slate-700 bg-[#1b1f27] p-2 text-slate-100 shadow-lg">
+            <div className="absolute right-0 top-11 z-40 w-72 rounded-md border border-slate-800/85 bg-[#14141a]/95 backdrop-blur-md p-2 text-slate-100 shadow-xl glass-panel">
               <div className="max-h-64 space-y-1 overflow-y-auto">
                 {imageMediaAssets.length > 0 ? (
                   imageMediaAssets.map((mediaAsset) => (
@@ -272,10 +425,10 @@ function MilkdownNoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
                     </Button>
                   ))
                 ) : (
-                  <p className="px-2 py-4 text-sm text-slate-500">No image media assets</p>
+                  <p className="px-2 py-4 text-xs text-slate-500 text-center">No image media assets</p>
                 )}
               </div>
-              <label className="mt-2 block rounded-md border border-dashed border-slate-700 px-3 py-2 text-center text-xs text-slate-400">
+              <label className="mt-2 block rounded-md border border-dashed border-slate-800 px-3 py-2 text-center text-xs text-slate-400 cursor-pointer hover:bg-slate-900/60 transition-colors">
                 Upload new image
                 <input
                   accept="image/*"
@@ -288,20 +441,26 @@ function MilkdownNoteEditor({ imageMediaAssets, note }: NoteEditorProps) {
           ) : null}
           <span
             className={cn(
-              "text-xs",
+              "text-[11px]",
               saveError
                 ? "text-destructive"
                 : isPending
-                  ? "text-amber-700"
+                  ? "text-amber-500/80"
                   : hasChanges
-                    ? "text-amber-700"
-                    : "text-slate-400",
+                    ? "text-amber-500/80"
+                    : "text-slate-500",
             )}
           >
             {saveError ? saveError : isPending ? "Saving..." : hasChanges ? "Unsaved changes" : "Saved"}
           </span>
-          <Button onClick={save} type="button" disabled={isPending || !hasChanges} variant="outline">
-            <Save className="h-4 w-4" />
+          <Button 
+            onClick={save} 
+            type="button" 
+            disabled={isPending || !hasChanges} 
+            variant="outline"
+            className="border-slate-800 bg-transparent text-slate-300 hover:bg-slate-900"
+          >
+            <Save className="h-4 w-4 mr-2" />
             Save
           </Button>
         </div>
@@ -346,7 +505,7 @@ function CrepeEditor({
   );
 
   return (
-    <div className="filebucket-crepe min-h-0 flex-1 overflow-y-auto bg-[#191c22]">
+    <div className="filebucket-crepe min-h-0 flex-1 overflow-y-auto bg-[#0d0d11]">
       <Milkdown />
     </div>
   );

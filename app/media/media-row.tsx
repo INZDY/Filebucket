@@ -69,10 +69,16 @@ export function MediaRow({
     <div
       className={cn(
         "group relative flex h-9 items-center rounded-md text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50",
-        isActive && "bg-teal-500/15 text-teal-100 hover:bg-teal-500/20",
+        isActive && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
       )}
       draggable
       onDragStart={handleDragStart}
+      onContextMenu={(event) => {
+        if (menu?.mode === "rename") return;
+        event.preventDefault();
+        event.stopPropagation();
+        openMenu(event.clientX, event.clientY);
+      }}
     >
       {menu?.mode === "rename" ? (
         <form
@@ -129,7 +135,7 @@ export function MediaRow({
 
       {menu ? (
         <div
-          className="fixed z-50 w-56 rounded-md border border-slate-700 bg-[#1b1f27] p-1 text-slate-100 shadow-lg"
+          className="fixed z-50 w-56 rounded-md border border-slate-800/80 bg-[#14141a]/95 backdrop-blur-md p-1 text-slate-100 shadow-xl"
           onClick={(event) => event.stopPropagation()}
           style={{ left: menu.x, top: menu.y }}
         >

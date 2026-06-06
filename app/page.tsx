@@ -10,7 +10,6 @@ import {
   ImagePlus,
   Music,
   Plus,
-  Search,
   Tags,
   Trash2,
   Video,
@@ -34,16 +33,15 @@ import {
 } from "@/app/notes/actions";
 import { NoteEditor } from "@/app/notes/note-editor";
 import {
-  createTagAction,
   deleteTagAction,
   renameTagAction,
-  toggleNoteTagAction,
 } from "@/app/tags/actions";
 import { MainContentTabs } from "@/app/vault/main-content-tabs";
 import { ResizableVault } from "@/app/vault/resizable-vault";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/search-input";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
@@ -196,6 +194,18 @@ function getMediaPreviewKind(contentType: string) {
 
   if (contentType.startsWith("video/")) {
     return "video";
+  }
+
+  if (contentType === "application/pdf") {
+    return "pdf";
+  }
+
+  if (
+    contentType.startsWith("text/") ||
+    contentType === "application/json" ||
+    contentType === "application/javascript"
+  ) {
+    return "text";
   }
 
   return "unsupported";
@@ -435,6 +445,27 @@ export default async function Home({ searchParams }: HomeProps) {
     isTrashView && params?.media
       ? deletedMediaAssets.find((mediaAsset) => mediaAsset.id === params.media) ?? null
       : null;
+
+  let textPreviewContent = "";
+  const activeMedia = selectedMedia || selectedDeletedMedia;
+  if (activeMedia) {
+    const previewKind = getMediaPreviewKind(activeMedia.contentType);
+    if (previewKind === "text") {
+      const previewUrl = getMediaAssetUrl(activeMedia.r2Key);
+      if (previewUrl) {
+        try {
+          const res = await fetch(previewUrl, { cache: "no-store" });
+          if (res.ok) {
+            textPreviewContent = await res.text();
+          } else {
+            textPreviewContent = `Error loading text content: ${res.statusText}`;
+          }
+        } catch (err) {
+          textPreviewContent = `Error loading text content: ${err instanceof Error ? err.message : String(err)}`;
+        }
+      }
+    }
+  }
   const matchingFolders = query && !activeTag
     ? folders.filter((folder) => folder.name.toLowerCase().includes(query.toLowerCase()))
     : [];
@@ -582,11 +613,11 @@ export default async function Home({ searchParams }: HomeProps) {
     : null;
 
   return (
-    <main className="h-screen overflow-hidden bg-[#111318] text-slate-100">
+    <main className="h-screen overflow-hidden bg-[#0d0d11] text-slate-100">
       <div className="flex h-screen flex-col overflow-hidden">
-        <header className="flex min-h-14 flex-col gap-3 border-b border-slate-800 bg-[#151820] px-4 py-2.5 md:flex-row md:items-center md:justify-between md:px-5">
+        <header className="flex min-h-14 flex-col gap-3 border-b border-slate-800/40 bg-[#101015]/60 backdrop-blur-md px-4 py-2.5 md:flex-row md:items-center md:justify-between md:px-5">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-teal-500 text-slate-950 shadow-soft">
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-purple-600/20 border border-purple-500/30 text-purple-400 shadow-[0_0_10px_rgba(139,92,246,0.15)]">
               <Cloud className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -691,17 +722,7 @@ export default async function Home({ searchParams }: HomeProps) {
                   </Button>
                 </form>
 
-                <form action="/" className="relative">
-                  {activeTagSlug ? <input type="hidden" name="tag" value={activeTagSlug} /> : null}
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-                  <Input
-                    className="border-slate-700 bg-[#111318] pl-9 text-slate-100 placeholder:text-slate-500"
-                    defaultValue={query}
-                    name="q"
-                    placeholder="Search titles and folders"
-                    disabled={isTrashView}
-                  />
-                </form>
+                <SearchInput defaultValue={query} disabled={isTrashView} />
 
                 <div className="flex flex-wrap gap-2">
                   {tags.length > 0 ? (
@@ -781,7 +802,7 @@ export default async function Home({ searchParams }: HomeProps) {
                           key={`note-result:${note.id}`}
                           className={cn(
                             "block rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50",
-                            selectedNote?.id === note.id && "bg-teal-500/15 text-teal-100 hover:bg-teal-500/20",
+                            selectedNote?.id === note.id && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
                           )}
                           href={getContentHref({
                             folderId: note.folder?.id ?? null,
@@ -804,7 +825,7 @@ export default async function Home({ searchParams }: HomeProps) {
                           key={`media-result:${mediaAsset.id}`}
                           className={cn(
                             "block rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50",
-                            selectedMedia?.id === mediaAsset.id && "bg-teal-500/15 text-teal-100 hover:bg-teal-500/20",
+                            selectedMedia?.id === mediaAsset.id && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
                           )}
                           href={getContentHref({
                             folderId: mediaAsset.folder?.id ?? null,
@@ -846,7 +867,7 @@ export default async function Home({ searchParams }: HomeProps) {
                   variant={isTrashView ? "secondary" : "ghost"}
                   className={cn(
                     "h-10 w-full justify-start px-3",
-                    isTrashView && "bg-teal-500/15 text-teal-100 hover:bg-teal-500/20",
+                    isTrashView && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
                   )}
                 >
                   <Link href="/?view=trash">
@@ -1141,48 +1162,6 @@ export default async function Home({ searchParams }: HomeProps) {
                         </form>
                       </div>
                     </div>
-
-                    <div className="mt-4 flex flex-col gap-3 border-t border-slate-800 pt-4">
-                      <div className="flex flex-wrap gap-2">
-                        {tags.length > 0 ? (
-                          tags.map((tag) => {
-                            const isAssigned = selectedNote.tags.some((noteTag) => noteTag.tagId === tag.id);
-
-                            return (
-                              <form key={tag.id} action={toggleNoteTagAction}>
-                                <input type="hidden" name="noteId" value={selectedNote.id} />
-                                <input type="hidden" name="tagId" value={tag.id} />
-                                <input type="hidden" name="returnTo" value={returnTo} />
-                                <Button
-                                  type="submit"
-                                  size="sm"
-                                  variant={isAssigned ? "secondary" : "outline"}
-                                  className={cn(
-                                    "h-8 gap-1",
-                                    isAssigned && "bg-teal-500/15 text-teal-100 hover:bg-teal-500/20",
-                                  )}
-                                >
-                                  <Tags className="h-3 w-3" />
-                                  {tag.name}
-                                </Button>
-                              </form>
-                            );
-                          })
-                        ) : (
-                          <p className="text-sm text-slate-400">Create a tag to classify this note.</p>
-                        )}
-                      </div>
-
-                      <form action={createTagAction} className="flex max-w-md gap-2">
-                        <input type="hidden" name="noteId" value={selectedNote.id} />
-                        <input type="hidden" name="returnTo" value={returnTo} />
-                        <Input name="name" placeholder="New tag" />
-                        <Button type="submit" variant="outline">
-                          <Plus className="h-4 w-4" />
-                          Add tag
-                        </Button>
-                      </form>
-                    </div>
                   </div>
                   <NoteEditor
                     key={selectedNote.id}
@@ -1197,6 +1176,8 @@ export default async function Home({ searchParams }: HomeProps) {
                       title: selectedNote.title,
                       body: resolveDisplayMarkdown(selectedNote.body),
                     }}
+                    allTags={tags.map((t) => ({ id: t.id, name: t.name, slug: t.slug }))}
+                    assignedTags={selectedNote.tags.map((nt) => ({ id: nt.tag.id, name: nt.tag.name, slug: nt.tag.slug }))}
                   />
                 </div>
               ) : selectedMedia ? (
@@ -1275,6 +1256,25 @@ export default async function Home({ searchParams }: HomeProps) {
                               controls
                               src={previewUrl}
                             />
+                          );
+                        }
+
+                        if (previewKind === "pdf" && previewUrl) {
+                          return (
+                            <iframe
+                              src={previewUrl}
+                              className="w-full h-full min-h-[calc(100vh-240px)] border-0 rounded-md bg-white shadow-md"
+                            />
+                          );
+                        }
+
+                        if (previewKind === "text" && previewUrl) {
+                          return (
+                            <div className="w-full max-w-4xl rounded-md border border-slate-800 bg-[#0d0d11]/80 backdrop-blur-md p-6 overflow-auto">
+                              <pre className="text-xs font-mono text-slate-300 leading-relaxed whitespace-pre-wrap text-left">
+                                <code>{textPreviewContent}</code>
+                              </pre>
+                            </div>
                           );
                         }
 
