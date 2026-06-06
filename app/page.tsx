@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArchiveRestore,
+  ArrowLeft,
   BookOpenText,
   Cloud,
   Download,
@@ -9,28 +10,28 @@ import {
   Folder,
   ImagePlus,
   Music,
-  Plus,
+  RotateCcw,
   Tags,
+  Trash,
   Trash2,
   Video,
 } from "lucide-react";
 
 import {
-  createFolderAction,
   restoreFolderAction,
+  deleteFolderAction,
+  emptyTrashAction,
 } from "@/app/folders/actions";
+import { BrowserToolbar } from "@/app/vault/browser-toolbar";
 import { BrowserTree } from "@/app/vault/browser-tree";
 import { logoutAction } from "@/app/login/actions";
-import { restoreMediaAssetAction } from "@/app/media/actions";
+import { restoreMediaAssetAction, deleteMediaAssetAction } from "@/app/media/actions";
 import { MediaActionsMenu } from "@/app/media/media-actions-menu";
-import { MediaUploadControl } from "@/app/media/media-upload-control";
 import {
-  createNoteAction,
-  importMarkdownNotesAction,
-  moveNoteAction,
   restoreNoteAction,
-  trashNoteAction,
+  deleteNoteAction,
 } from "@/app/notes/actions";
+import { NoteActionsMenu } from "@/app/notes/note-actions-menu";
 import { NoteEditor } from "@/app/notes/note-editor";
 import {
   deleteTagAction,
@@ -41,6 +42,8 @@ import { ResizableVault } from "@/app/vault/resizable-vault";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ConfirmForm } from "@/components/confirm-form";
+import { ClientForm } from "@/components/client-form";
 import { SearchInput } from "@/components/search-input";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -300,56 +303,85 @@ export default async function Home({ searchParams }: HomeProps) {
   const selectedFolder =
     params?.folder ? folders.find((folder) => folder.id === params.folder) ?? null : null;
 
-  const [notes, mediaAssets] = !isTrashView
-    ? await Promise.all([
-        prisma.note.findMany({
+  const [notes, mediaAssets] = await Promise.all([
+    prisma.note.findMany({
+      where: {
+        userId: session.user.id,
+        deletedAt: null,
+        OR: [
+          { folderId: null },
+          {
+            folder: {
+              is: {
+                deletedAt: null,
+              },
+            },
+          },
+        ],
+        ...(query
+          ? {
+              title: {
+                contains: query,
+                mode: "insensitive",
+              },
+            }
+          : {}),
+        ...(activeTag
+          ? {
+              tags: {
+                some: {
+                  tagId: activeTag.id,
+                },
+              },
+            }
+          : {}),
+      },
+      orderBy: [{ title: "asc" }],
+      include: {
+        folder: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        tags: {
+          include: {
+            tag: true,
+          },
+          orderBy: {
+            tag: {
+              name: "asc",
+            },
+          },
+        },
+      },
+    }),
+    activeTag
+      ? Promise.resolve([])
+      : prisma.mediaAsset.findMany({
           where: {
             userId: session.user.id,
             deletedAt: null,
-            ...(isFilteredView
-              ? {
-                  OR: [
-                    { folderId: null },
-                    {
-                      folder: {
-                        is: {
-                          deletedAt: null,
-                        },
-                      },
-                    },
-                  ],
-                }
-              : {
-                  OR: [
-                    { folderId: null },
-                    {
-                      folder: {
-                        is: {
-                          deletedAt: null,
-                        },
-                      },
-                    },
-                  ],
-                }),
+            OR: [
+              { folderId: null },
+              {
+                folder: {
+                  is: {
+                    deletedAt: null,
+                  },
+                },
+              },
+            ],
             ...(query
               ? {
-                  title: {
+                  filename: {
                     contains: query,
                     mode: "insensitive",
                   },
                 }
               : {}),
-            ...(activeTag
-              ? {
-                  tags: {
-                    some: {
-                      tagId: activeTag.id,
-                    },
-                  },
-                }
-              : {}),
           },
-          orderBy: [{ title: "asc" }],
+          orderBy: [{ filename: "asc" }],
           include: {
             folder: {
               select: {
@@ -357,70 +389,9 @@ export default async function Home({ searchParams }: HomeProps) {
                 name: true,
               },
             },
-            tags: {
-              include: {
-                tag: true,
-              },
-              orderBy: {
-                tag: {
-                  name: "asc",
-                },
-              },
-            },
           },
         }),
-        activeTag
-          ? Promise.resolve([])
-          : prisma.mediaAsset.findMany({
-              where: {
-                userId: session.user.id,
-                deletedAt: null,
-                ...(isFilteredView
-                  ? {
-                      OR: [
-                        { folderId: null },
-                        {
-                          folder: {
-                            is: {
-                              deletedAt: null,
-                            },
-                          },
-                        },
-                      ],
-                    }
-                  : {
-                      OR: [
-                        { folderId: null },
-                        {
-                          folder: {
-                            is: {
-                              deletedAt: null,
-                            },
-                          },
-                        },
-                      ],
-                    }),
-                ...(query
-                  ? {
-                      filename: {
-                        contains: query,
-                        mode: "insensitive",
-                      },
-                    }
-                  : {}),
-              },
-              orderBy: [{ filename: "asc" }],
-              include: {
-                folder: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            }),
-      ])
-    : [[], []];
+  ]);
 
   function resolveDisplayMarkdown(body: string) {
     return body.replace(/filebucket-media:([a-zA-Z0-9]+)/g, (match, mediaId) => {
@@ -526,7 +497,37 @@ export default async function Home({ searchParams }: HomeProps) {
             query,
           }),
         }
-      : undefined;
+      : selectedDeletedNote
+        ? {
+            id: selectedDeletedNote.id,
+            type: "note" as const,
+            title: selectedDeletedNote.title,
+            href: `/?view=trash&note=${selectedDeletedNote.id}`,
+          }
+        : selectedDeletedMedia
+          ? {
+              id: selectedDeletedMedia.id,
+              type: "media" as const,
+              title: selectedDeletedMedia.filename,
+              href: `/?view=trash&media=${selectedDeletedMedia.id}`,
+            }
+          : selectedDeletedFolder
+            ? {
+                id: selectedDeletedFolder.id,
+                type: "folder" as const,
+                title: selectedDeletedFolder.name,
+                href: `/?view=trash&folder=${selectedDeletedFolder.id}`,
+              }
+            : undefined;
+
+  const existingIds = [
+    ...folders.map((f) => f.id),
+    ...notes.map((n) => n.id),
+    ...mediaAssets.map((m) => m.id),
+    ...deletedFolders.map((f) => f.id),
+    ...deletedNotes.map((n) => n.id),
+    ...deletedMediaAssets.map((m) => m.id),
+  ];
   const contentFallbackHref = getContentHref({
     folderId: selectedNote?.folder?.id ?? selectedMedia?.folder?.id ?? selectedFolder?.id ?? null,
     query,
@@ -676,51 +677,7 @@ export default async function Home({ searchParams }: HomeProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <form action={createNoteAction}>
-                    <input type="hidden" name="folderId" value={selectedFolder?.id ?? ""} />
-                    <Button aria-label="Create note" disabled={isTrashView} size="sm" type="submit">
-                      <Plus className="h-4 w-4" />
-                      New note
-                    </Button>
-                  </form>
-                  <MediaUploadControl disabled={isTrashView} folderId={selectedFolder?.id ?? null} />
-                </div>
-
-                <form action={importMarkdownNotesAction} className="flex items-center gap-2">
-                  <input type="hidden" name="folderId" value={selectedFolder?.id ?? ""} />
-                  <Input
-                    accept=".md,text/markdown"
-                    className="h-9 border-slate-700 bg-[#111318] px-2 py-1 text-xs text-slate-100 file:mr-2 file:rounded file:border-0 file:bg-slate-800 file:px-2 file:py-1 file:text-slate-100"
-                    disabled={isTrashView}
-                    multiple
-                    name="files"
-                    type="file"
-                  />
-                  <Button
-                    className="border-slate-700 bg-[#1f242c] text-slate-200 hover:bg-slate-800"
-                    disabled={isTrashView}
-                    size="sm"
-                    type="submit"
-                    variant="outline"
-                  >
-                    Import
-                  </Button>
-                </form>
-
-                <form action={createFolderAction} className="flex gap-2">
-                  <input type="hidden" name="parentId" value={selectedFolder?.id ?? ""} />
-                  <Input
-                    className="border-slate-700 bg-[#111318] text-slate-100 placeholder:text-slate-500"
-                    name="name"
-                    placeholder="New folder"
-                    required
-                    disabled={isTrashView}
-                  />
-                  <Button size="icon" aria-label="Create folder" disabled={isTrashView}>
-                    <Folder className="h-4 w-4" />
-                  </Button>
-                </form>
+                <BrowserToolbar folderId={selectedFolder?.id ?? null} disabled={isTrashView} />
 
                 <SearchInput defaultValue={query} disabled={isTrashView} />
 
@@ -759,20 +716,20 @@ export default async function Home({ searchParams }: HomeProps) {
 
                 {activeTag ? (
                   <div className="flex flex-col gap-2 rounded-md border border-slate-700 bg-[#111318] p-2">
-                    <form action={renameTagAction} className="flex gap-2">
+                    <ClientForm action={renameTagAction} className="flex gap-2">
                       <input type="hidden" name="tagId" value={activeTag.id} />
                       <input type="hidden" name="returnTo" value={returnTo} />
                       <Input aria-label="Rename tag" defaultValue={activeTag.name} name="name" required />
                       <Button size="sm" type="submit" variant="outline">
                         Rename
                       </Button>
-                    </form>
-                    <form action={deleteTagAction}>
+                    </ClientForm>
+                    <ClientForm action={deleteTagAction}>
                       <input type="hidden" name="tagId" value={activeTag.id} />
                       <Button className="w-full" size="sm" type="submit" variant="outline">
                         Delete tag
                       </Button>
-                    </form>
+                    </ClientForm>
                   </div>
                 ) : null}
               </div>
@@ -858,7 +815,200 @@ export default async function Home({ searchParams }: HomeProps) {
                       isVaultRootActive={isVaultRootActive}
                     />
                   )
-                ) : null}
+                ) : (
+                  <div>
+                    <div className="mb-3 flex items-center justify-between border-b border-slate-800 pb-2.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Link
+                          href="/"
+                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+                          title="Back to Vault"
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                        </Link>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 truncate">Trash</span>
+                        <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+                          {trashCount}
+                        </Badge>
+                      </div>
+                      {trashCount > 0 ? (
+                        <ConfirmForm
+                          action={emptyTrashAction}
+                          message="Are you sure you want to empty the trash? All items will be permanently deleted. This action cannot be undone."
+                        >
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            type="submit"
+                            className="h-7 px-2 text-xs text-rose-400 hover:bg-rose-950/20 hover:text-rose-300"
+                            title="Empty Trash"
+                          >
+                            <Trash className="mr-1 h-3.5 w-3.5" />
+                            Empty
+                          </Button>
+                        </ConfirmForm>
+                      ) : null}
+                    </div>
+
+                    <nav className="space-y-1.5" aria-label="Trashed items">
+                      {deletedFolders.map((folder) => {
+                        const isSelected = selectedDeletedFolder?.id === folder.id;
+                        return (
+                          <div
+                            key={`deleted-folder:${folder.id}`}
+                            className="group flex h-9 items-center justify-between rounded-md px-2 transition-colors hover:bg-slate-800/60"
+                          >
+                            <Link
+                              href={`/?view=trash&folder=${folder.id}`}
+                              className={cn(
+                                "flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-300 hover:text-slate-50",
+                                isSelected && "text-purple-200"
+                              )}
+                            >
+                              <Folder className="h-4 w-4 shrink-0 text-slate-400" />
+                              <span className="truncate" title={folder.name}>{folder.name}</span>
+                            </Link>
+                            <div className="flex items-center gap-1 shrink-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
+                              <ClientForm action={restoreFolderAction}>
+                                <input type="hidden" name="folderId" value={folder.id} />
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  type="submit"
+                                  className="h-7 w-7 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                                  title="Restore folder"
+                                >
+                                  <RotateCcw className="h-3.5 w-3.5" />
+                                </Button>
+                              </ClientForm>
+                              <ConfirmForm
+                                action={deleteFolderAction}
+                                message={`Are you sure you want to permanently delete the folder '${folder.name}' and all of its contents? This action cannot be undone.`}
+                              >
+                                <input type="hidden" name="folderId" value={folder.id} />
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  type="submit"
+                                  className="h-7 w-7 text-rose-400 hover:bg-rose-950/30 hover:text-rose-300"
+                                  title="Permanently delete folder"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </ConfirmForm>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {deletedNotes.map((note) => {
+                        const isSelected = selectedDeletedNote?.id === note.id;
+                        return (
+                          <div
+                            key={`deleted-note:${note.id}`}
+                            className="group flex h-9 items-center justify-between rounded-md px-2 transition-colors hover:bg-slate-800/60"
+                          >
+                            <Link
+                              href={`/?view=trash&note=${note.id}`}
+                              className={cn(
+                                "flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-300 hover:text-slate-50",
+                                isSelected && "text-purple-200"
+                              )}
+                            >
+                              <FileText className="h-4 w-4 shrink-0 text-slate-400" />
+                              <span className="truncate" title={note.title}>{note.title}</span>
+                            </Link>
+                            <div className="flex items-center gap-1 shrink-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
+                              <ClientForm action={restoreNoteAction}>
+                                <input type="hidden" name="noteId" value={note.id} />
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  type="submit"
+                                  className="h-7 w-7 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                                  title="Restore note"
+                                >
+                                  <RotateCcw className="h-3.5 w-3.5" />
+                                </Button>
+                              </ClientForm>
+                              <ConfirmForm
+                                action={deleteNoteAction}
+                                message={`Are you sure you want to permanently delete the note '${note.title}'? This action cannot be undone.`}
+                              >
+                                <input type="hidden" name="noteId" value={note.id} />
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  type="submit"
+                                  className="h-7 w-7 text-rose-400 hover:bg-rose-950/30 hover:text-rose-300"
+                                  title="Permanently delete note"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </ConfirmForm>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {deletedMediaAssets.map((media) => {
+                        const isSelected = selectedDeletedMedia?.id === media.id;
+                        return (
+                          <div
+                            key={`deleted-media:${media.id}`}
+                            className="group flex h-9 items-center justify-between rounded-md px-2 transition-colors hover:bg-slate-800/60"
+                          >
+                            <Link
+                              href={`/?view=trash&media=${media.id}`}
+                              className={cn(
+                                "flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-300 hover:text-slate-50",
+                                isSelected && "text-purple-200"
+                              )}
+                            >
+                              <ImagePlus className="h-4 w-4 shrink-0 text-slate-400" />
+                              <span className="truncate" title={media.filename}>{media.filename}</span>
+                            </Link>
+                            <div className="flex items-center gap-1 shrink-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
+                              <ClientForm action={restoreMediaAssetAction}>
+                                <input type="hidden" name="mediaAssetId" value={media.id} />
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  type="submit"
+                                  className="h-7 w-7 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                                  title="Restore media asset"
+                                >
+                                  <RotateCcw className="h-3.5 w-3.5" />
+                                </Button>
+                              </ClientForm>
+                              <ConfirmForm
+                                action={deleteMediaAssetAction}
+                                message={`Are you sure you want to permanently delete the media asset '${media.filename}'? This action cannot be undone.`}
+                              >
+                                <input type="hidden" name="mediaAssetId" value={media.id} />
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  type="submit"
+                                  className="h-7 w-7 text-rose-400 hover:bg-rose-950/30 hover:text-rose-300"
+                                  title="Permanently delete media asset"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </ConfirmForm>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {trashCount === 0 ? (
+                        <div className="px-3 py-6 text-center text-xs text-slate-500">
+                          Trash is empty
+                        </div>
+                      ) : null}
+                    </nav>
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-slate-800 px-4 py-4">
@@ -884,228 +1034,189 @@ export default async function Home({ searchParams }: HomeProps) {
               key="vault-content-pane"
               className="h-full min-h-0 overflow-hidden bg-[#111318] text-slate-100"
             >
-              <MainContentTabs activeTab={activeContentTab} fallbackHref={contentFallbackHref}>
+              <MainContentTabs activeTab={activeContentTab} existingIds={existingIds} fallbackHref={contentFallbackHref}>
               {isTrashView ? (
-                <div className="h-full overflow-y-auto bg-[#191c22]">
-                  <div className="border-b border-slate-800 px-5 py-4">
-                    <h2 className="text-base font-semibold tracking-normal text-slate-50">Trash</h2>
-                    <p className="text-sm text-slate-400">Restore deleted folders and notes</p>
-                  </div>
-                  <div className="divide-y divide-slate-800">
-                    {trashCount > 0 ? (
-                      <>
-                        {deletedFolders.map((folder) => {
-                          const parentDeleted = Boolean(folder.parent?.deletedAt);
-
-                          return (
-                            <div key={folder.id} className="flex items-center gap-3 px-4 py-4">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-800 text-slate-300">
-                                <Trash2 className="h-4 w-4" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <Link
-                                  className="block truncate text-sm font-medium hover:text-primary"
-                                  href={`/?view=trash&folder=${folder.id}`}
-                                >
-                                  {folder.name}
-                                </Link>
-                                <p className="text-xs text-slate-400">
-                                  Folder deleted {folder.deletedAt ? formatDate(folder.deletedAt) : "recently"}
-                                </p>
-                                {parentDeleted ? (
-                                  <p className="mt-1 text-xs text-amber-700">
-                                    Restore the parent folder before restoring this folder.
-                                  </p>
-                                ) : null}
-                              </div>
-                              <form action={restoreFolderAction}>
-                                <input type="hidden" name="folderId" value={folder.id} />
-                                <Button variant="outline" size="sm" type="submit" disabled={parentDeleted}>
-                                  Restore
-                                </Button>
-                              </form>
-                            </div>
-                          );
-                        })}
-                        {deletedNotes.map((note) => {
-                          const folderDeleted = Boolean(note.folder?.deletedAt);
-
-                          return (
-                            <div key={note.id} className="flex items-center gap-3 px-4 py-4">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-800 text-slate-300">
-                                <FileText className="h-4 w-4" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <Link
-                                  className="block truncate text-sm font-medium hover:text-primary"
-                                  href={`/?view=trash&note=${note.id}`}
-                                >
-                                  {note.title}
-                                </Link>
-                                <p className="truncate text-xs text-slate-400">
-                                  Note in {note.folder?.name ?? "Vault"}
-                                  {note.deletedAt ? ` deleted ${formatDate(note.deletedAt)}` : ""}
-                                </p>
-                                {folderDeleted ? (
-                                  <p className="mt-1 text-xs text-amber-700">
-                                    Restore the folder before restoring this note.
-                                  </p>
-                                ) : null}
-                              </div>
-                              <form action={restoreNoteAction}>
-                                <input type="hidden" name="noteId" value={note.id} />
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  type="submit"
-                                  disabled={folderDeleted}
-                                >
-                                  Restore
-                                </Button>
-                              </form>
-                            </div>
-                          );
-                        })}
-                        {deletedMediaAssets.map((mediaAsset) => {
-                          const folderDeleted = Boolean(mediaAsset.folder?.deletedAt);
-
-                          return (
-                            <div key={mediaAsset.id} className="flex items-center gap-3 px-4 py-4">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-800 text-slate-300">
-                                <ImagePlus className="h-4 w-4" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <Link
-                                  className="block truncate text-sm font-medium hover:text-primary"
-                                  href={`/?view=trash&media=${mediaAsset.id}`}
-                                >
-                                  {mediaAsset.filename}
-                                </Link>
-                                <p className="truncate text-xs text-slate-400">
-                                  Media in {mediaAsset.folder?.name ?? "Vault"}
-                                  {mediaAsset.deletedAt ? ` deleted ${formatDate(mediaAsset.deletedAt)}` : ""}
-                                </p>
-                                {folderDeleted ? (
-                                  <p className="mt-1 text-xs text-amber-700">
-                                    Restore the folder before restoring this media asset.
-                                  </p>
-                                ) : null}
-                              </div>
-                              <form action={restoreMediaAssetAction}>
-                                <input type="hidden" name="mediaAssetId" value={mediaAsset.id} />
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  type="submit"
-                                  disabled={folderDeleted}
-                                >
-                                  Restore
-                                </Button>
-                              </form>
-                            </div>
-                          );
-                        })}
-                      </>
-                    ) : (
-                      <div className="px-4 py-10 text-center">
-                        <p className="text-sm font-medium">Trash is empty</p>
-                        <p className="mt-1 text-sm text-slate-400">
-                          Deleted folders, notes, and media will appear here.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  {selectedDeletedFolder && deletedFolderContents ? (
-                    <div className="border-t border-slate-800 px-5 py-5">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold uppercase text-muted-foreground">Read-only folder</p>
-                          <h3 className="mt-1 truncate text-lg font-semibold">{selectedDeletedFolder.name}</h3>
-                        </div>
-                        <form action={restoreFolderAction}>
-                          <input type="hidden" name="folderId" value={selectedDeletedFolder.id} />
-                          <Button
-                            variant="outline"
-                            type="submit"
-                            disabled={Boolean(selectedDeletedFolder.parent?.deletedAt)}
-                          >
-                            Restore folder
-                          </Button>
-                        </form>
-                      </div>
-                      <div className="mt-4 divide-y rounded-md border">
-                        {deletedFolderContents[0].map((folder) => (
-                          <div key={folder.id} className="flex items-center gap-2 px-3 py-2 text-sm">
-                            <Folder className="h-4 w-4 text-slate-700" />
-                            <span className="min-w-0 flex-1 truncate">{folder.name}</span>
-                            {folder.deletedAt ? <Badge variant="outline">Trashed</Badge> : null}
-                          </div>
-                        ))}
-                        {deletedFolderContents[1].map((note) => (
-                          <div key={note.id} className="flex items-center gap-2 px-3 py-2 text-sm">
-                            <FileText className="h-4 w-4 text-slate-700" />
-                            <span className="min-w-0 flex-1 truncate">{note.title}</span>
-                            {note.deletedAt ? <Badge variant="outline">Trashed</Badge> : null}
-                          </div>
-                        ))}
-                        {deletedFolderContents[2].map((mediaAsset) => (
-                          <div key={mediaAsset.id} className="flex items-center gap-2 px-3 py-2 text-sm">
-                            <ImagePlus className="h-4 w-4 text-slate-700" />
-                            <span className="min-w-0 flex-1 truncate">{mediaAsset.filename}</span>
-                            <span className="text-xs text-muted-foreground">{mediaAsset.contentType}</span>
-                            {mediaAsset.deletedAt ? <Badge variant="outline">Trashed</Badge> : null}
-                          </div>
-                        ))}
-                        {deletedFolderContents.every((rows) => rows.length === 0) ? (
-                          <div className="px-3 py-5 text-sm text-muted-foreground">This trashed folder is empty.</div>
-                        ) : null}
-                      </div>
-                    </div>
-                  ) : selectedDeletedNote ? (
-                    <div className="border-t border-slate-800 px-5 py-5">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold uppercase text-muted-foreground">Read-only note</p>
-                          <h3 className="mt-1 truncate text-lg font-semibold">{selectedDeletedNote.title}</h3>
-                        </div>
-                        <form action={restoreNoteAction}>
+                selectedDeletedNote ? (
+                  <div className="flex h-full min-h-0 flex-col">
+                    <div className="flex items-center justify-between border-b border-slate-800 bg-amber-500/10 px-5 py-3 text-xs text-amber-200">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        This note is in Trash. Restore it to edit.
+                      </span>
+                      <div className="flex gap-2">
+                        <ClientForm action={restoreNoteAction}>
                           <input type="hidden" name="noteId" value={selectedDeletedNote.id} />
-                          <Button variant="outline" type="submit" disabled={Boolean(selectedDeletedNote.folder?.deletedAt)}>
-                            Restore note
+                          <Button size="sm" type="submit" variant="outline" className="h-7 px-2.5 text-xs border-amber-500/30 text-amber-100 hover:bg-amber-500/20" disabled={Boolean(selectedDeletedNote.folder?.deletedAt)}>
+                            Restore
                           </Button>
-                        </form>
-                      </div>
-                      <div className="prose prose-slate mt-4 max-w-none rounded-md border bg-white px-4 py-4 text-sm leading-7 [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:pl-4 [&_blockquote]:text-muted-foreground [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:py-0.5 [&_ol]:list-decimal [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-50 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:px-2 [&_th]:py-1 [&_ul]:list-disc">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml>
-                          {resolveDisplayMarkdown(selectedDeletedNote.body)}
-                        </ReactMarkdown>
+                        </ClientForm>
+                        <ConfirmForm
+                          action={deleteNoteAction}
+                          message={`Are you sure you want to permanently delete the note '${selectedDeletedNote.title}'? This action cannot be undone.`}
+                        >
+                          <input type="hidden" name="noteId" value={selectedDeletedNote.id} />
+                          <Button size="sm" type="submit" className="h-7 px-2.5 text-xs bg-rose-600 hover:bg-rose-700 text-white">
+                            Delete Permanently
+                          </Button>
+                        </ConfirmForm>
                       </div>
                     </div>
-                  ) : selectedDeletedMedia ? (
-                    <div className="border-t border-slate-800 px-5 py-5">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold uppercase text-muted-foreground">Read-only media</p>
-                          <h3 className="mt-1 truncate text-lg font-semibold">{selectedDeletedMedia.filename}</h3>
-                          <p className="text-sm text-muted-foreground">{selectedDeletedMedia.contentType}</p>
-                        </div>
-                        <form action={restoreMediaAssetAction}>
+                    <div className="border-b border-slate-800 bg-[#191c22] px-5 py-4">
+                      <h2 className="text-lg font-semibold truncate">{selectedDeletedNote.title}</h2>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Note in {selectedDeletedNote.folder?.name ?? "Vault"} · Trashed
+                      </p>
+                    </div>
+                    <div className="min-h-0 flex-1 overflow-y-auto bg-[#101217] px-6 py-6 prose prose-slate max-w-none text-sm text-slate-300 leading-7 [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:pl-4 [&_blockquote]:text-muted-foreground [&_code]:rounded [&_code]:bg-slate-800/80 [&_code]:px-1 [&_code]:py-0.5 [&_ol]:list-decimal [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-50 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-800 [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-slate-800 [&_th]:px-2 [&_th]:py-1 [&_ul]:list-disc">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml>
+                        {resolveDisplayMarkdown(selectedDeletedNote.body)}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                ) : selectedDeletedMedia ? (
+                  <div className="flex h-full min-h-0 flex-col">
+                    <div className="flex items-center justify-between border-b border-slate-800 bg-amber-500/10 px-5 py-3 text-xs text-amber-200">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        This media asset is in Trash. Restore it to view or play.
+                      </span>
+                      <div className="flex gap-2">
+                        <ClientForm action={restoreMediaAssetAction}>
                           <input type="hidden" name="mediaAssetId" value={selectedDeletedMedia.id} />
-                          <Button
-                            variant="outline"
-                            type="submit"
-                            disabled={Boolean(selectedDeletedMedia.folder?.deletedAt)}
-                          >
-                            Restore media
+                          <Button size="sm" type="submit" variant="outline" className="h-7 px-2.5 text-xs border-amber-500/30 text-amber-100 hover:bg-amber-500/20" disabled={Boolean(selectedDeletedMedia.folder?.deletedAt)}>
+                            Restore
                           </Button>
-                        </form>
-                      </div>
-                      <div className="mt-4 rounded-md border bg-slate-50 px-4 py-8 text-center text-sm text-muted-foreground">
-                        Media preview will be available after the upload and preview milestone wires R2 URLs.
+                        </ClientForm>
+                        <ConfirmForm
+                          action={deleteMediaAssetAction}
+                          message={`Are you sure you want to permanently delete the media asset '${selectedDeletedMedia.filename}'? This action cannot be undone.`}
+                        >
+                          <input type="hidden" name="mediaAssetId" value={selectedDeletedMedia.id} />
+                          <Button size="sm" type="submit" className="h-7 px-2.5 text-xs bg-rose-600 hover:bg-rose-700 text-white">
+                            Delete Permanently
+                          </Button>
+                        </ConfirmForm>
                       </div>
                     </div>
-                  ) : null}
-                </div>
+                    <div className="border-b border-slate-800 bg-[#191c22] px-5 py-4">
+                      <h2 className="text-lg font-semibold truncate">{selectedDeletedMedia.filename}</h2>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {selectedDeletedMedia.contentType} · {Math.max(1, Math.round(selectedDeletedMedia.sizeBytes / 1024))} KB
+                      </p>
+                    </div>
+                    <div className="min-h-0 flex-1 overflow-y-auto bg-[#101217] px-6 py-6 flex items-center justify-center text-sm text-slate-400">
+                      {getMediaPreviewKind(selectedDeletedMedia.contentType) === "image" && getMediaAssetUrl(selectedDeletedMedia.r2Key) ? (
+                        <img
+                          src={getMediaAssetUrl(selectedDeletedMedia.r2Key) ?? ""}
+                          alt={selectedDeletedMedia.filename}
+                          className="max-h-full max-w-full rounded border border-slate-800 object-contain shadow-lg"
+                        />
+                      ) : getMediaPreviewKind(selectedDeletedMedia.contentType) === "video" && getMediaAssetUrl(selectedDeletedMedia.r2Key) ? (
+                        <video
+                          src={getMediaAssetUrl(selectedDeletedMedia.r2Key) ?? ""}
+                          controls
+                          className="max-h-full max-w-full rounded border border-slate-800 object-contain shadow-lg"
+                        />
+                      ) : getMediaPreviewKind(selectedDeletedMedia.contentType) === "audio" && getMediaAssetUrl(selectedDeletedMedia.r2Key) ? (
+                        <audio
+                          src={getMediaAssetUrl(selectedDeletedMedia.r2Key) ?? ""}
+                          controls
+                          className="w-full max-w-md"
+                        />
+                      ) : getMediaPreviewKind(selectedDeletedMedia.contentType) === "pdf" && getMediaAssetUrl(selectedDeletedMedia.r2Key) ? (
+                        <iframe
+                          src={getMediaAssetUrl(selectedDeletedMedia.r2Key) ?? ""}
+                          className="w-full h-full min-h-[600px] border-0 rounded-md bg-white"
+                        />
+                      ) : getMediaPreviewKind(selectedDeletedMedia.contentType) === "text" ? (
+                        <div className="w-full h-full max-w-none text-left">
+                          <pre className="h-full overflow-auto rounded-md border border-slate-800 bg-[#0d0f13] p-4 text-xs font-mono text-slate-300 leading-5">
+                            <code>{textPreviewContent}</code>
+                          </pre>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <FileQuestion className="mx-auto h-8 w-8 text-slate-500 mb-2" />
+                          Preview unavailable for this trashed media asset format.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : selectedDeletedFolder ? (
+                  <div className="flex h-full min-h-0 flex-col">
+                    <div className="flex items-center justify-between border-b border-slate-800 bg-amber-500/10 px-5 py-3 text-xs text-amber-200">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        This folder is in Trash. Restore it to browse or create items inside it.
+                      </span>
+                      <div className="flex gap-2">
+                        <ClientForm action={restoreFolderAction}>
+                          <input type="hidden" name="folderId" value={selectedDeletedFolder.id} />
+                          <Button size="sm" type="submit" variant="outline" className="h-7 px-2.5 text-xs border-amber-500/30 text-amber-100 hover:bg-amber-500/20" disabled={Boolean(selectedDeletedFolder.parent?.deletedAt)}>
+                            Restore
+                          </Button>
+                        </ClientForm>
+                        <ConfirmForm
+                          action={deleteFolderAction}
+                          message={`Are you sure you want to permanently delete the folder '${selectedDeletedFolder.name}' and all of its contents? This action cannot be undone.`}
+                        >
+                          <input type="hidden" name="folderId" value={selectedDeletedFolder.id} />
+                          <Button size="sm" type="submit" className="h-7 px-2.5 text-xs bg-rose-600 hover:bg-rose-700 text-white">
+                            Delete Permanently
+                          </Button>
+                        </ConfirmForm>
+                      </div>
+                    </div>
+                    <div className="border-b border-slate-800 bg-[#191c22] px-5 py-4">
+                      <h2 className="text-lg font-semibold truncate">{selectedDeletedFolder.name}</h2>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Read-only Folder · Trashed
+                      </p>
+                    </div>
+                    <div className="min-h-0 flex-1 overflow-y-auto bg-[#101217] px-6 py-6">
+                      <div className="divide-y divide-slate-800 rounded-md border border-slate-800 bg-[#161a23]/30">
+                        {deletedFolderContents && (
+                          <>
+                            {deletedFolderContents[0].map((f) => (
+                              <div key={f.id} className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-300">
+                                <Folder className="h-4 w-4 text-slate-500 shrink-0" />
+                                <span className="min-w-0 flex-1 truncate">{f.name}</span>
+                                {f.deletedAt ? <Badge variant="outline" className="border-rose-900 bg-rose-950/20 text-[10px] text-rose-300">Trashed</Badge> : null}
+                              </div>
+                            ))}
+                            {deletedFolderContents[1].map((n) => (
+                              <div key={n.id} className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-300">
+                                <FileText className="h-4 w-4 text-slate-500 shrink-0" />
+                                <span className="min-w-0 flex-1 truncate">{n.title}</span>
+                                {n.deletedAt ? <Badge variant="outline" className="border-rose-900 bg-rose-950/20 text-[10px] text-rose-300">Trashed</Badge> : null}
+                              </div>
+                            ))}
+                            {deletedFolderContents[2].map((m) => (
+                              <div key={m.id} className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-300">
+                                <ImagePlus className="h-4 w-4 text-slate-500 shrink-0" />
+                                <span className="min-w-0 flex-1 truncate">{m.filename}</span>
+                                <span className="text-[10px] text-slate-500">{m.contentType}</span>
+                                {m.deletedAt ? <Badge variant="outline" className="border-rose-900 bg-rose-950/20 text-[10px] text-rose-300">Trashed</Badge> : null}
+                              </div>
+                            ))}
+                            {deletedFolderContents.every((rows) => rows.length === 0) ? (
+                              <div className="px-3 py-6 text-center text-xs text-slate-500">This trashed folder is empty.</div>
+                            ) : null}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex h-full items-center justify-center bg-[#191c22]/10 p-6 text-center">
+                    <div className="max-w-md space-y-2">
+                      <div className="flex justify-center">
+                        <ArchiveRestore className="h-10 w-10 text-slate-500" />
+                      </div>
+                      <p className="text-sm font-medium text-slate-300">Trash Vault</p>
+                      <p className="text-xs text-slate-500">
+                        Select a deleted folder, note, or media asset from the sidebar Trash list to inspect or restore it.
+                      </p>
+                    </div>
+                  </div>
+                )
               ) : selectedNote ? (
                 <div className="flex h-full min-h-0 flex-col">
                   <div className="border-b border-slate-800 bg-[#191c22] px-5 py-4">
@@ -1132,35 +1243,7 @@ export default async function Home({ searchParams }: HomeProps) {
                         </p>
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
-                        <form action={moveNoteAction} className="flex items-center gap-2">
-                          <input type="hidden" name="noteId" value={selectedNote.id} />
-                          <select
-                            aria-label="Move note destination"
-                            className="h-9 max-w-44 rounded-md border border-input bg-background px-3 text-sm text-foreground"
-                            defaultValue={selectedNote.folder?.id ?? ""}
-                            name="folderId"
-                          >
-                            <option value="">Vault</option>
-                            {folderDestinations.map((destination) => (
-                              <option key={destination.id} value={destination.id}>
-                                {destination.name}
-                              </option>
-                            ))}
-                          </select>
-                          <Button type="submit" variant="outline">
-                            Move
-                          </Button>
-                        </form>
-                        <form action={trashNoteAction}>
-                          <input type="hidden" name="noteId" value={selectedNote.id} />
-                          <input type="hidden" name="folderId" value={selectedNote.folder?.id ?? ""} />
-                          <Button variant="outline" type="submit">
-                            <Trash2 className="h-4 w-4" />
-                            Move to trash
-                          </Button>
-                        </form>
-                      </div>
+                      <NoteActionsMenu note={selectedNote} destinations={folderDestinations} />
                     </div>
                   </div>
                   <NoteEditor

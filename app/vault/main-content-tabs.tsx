@@ -3,25 +3,26 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
-import { FileText, ImagePlus, X } from "lucide-react";
+import { FileText, Folder, ImagePlus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type ContentTab = {
   id: string;
-  type: "note" | "media";
+  type: "note" | "media" | "folder";
   title: string;
   href: string;
 };
 
 type MainContentTabsProps = {
   activeTab?: ContentTab;
+  existingIds?: string[];
   fallbackHref: string;
   children: ReactNode;
 };
 
-export function MainContentTabs({ activeTab, fallbackHref, children }: MainContentTabsProps) {
+export function MainContentTabs({ activeTab, existingIds, fallbackHref, children }: MainContentTabsProps) {
   const router = useRouter();
   const [tabs, setTabs] = useState<ContentTab[]>([]);
 
@@ -43,6 +44,12 @@ export function MainContentTabs({ activeTab, fallbackHref, children }: MainConte
     });
   }, [activeTab]);
 
+  useEffect(() => {
+    if (existingIds) {
+      setTabs((currentTabs) => currentTabs.filter((tab) => existingIds.includes(tab.id)));
+    }
+  }, [existingIds]);
+
   function closeTab(tabToClose: ContentTab) {
     setTabs((currentTabs) =>
       currentTabs.filter((tab) => tab.id !== tabToClose.id || tab.type !== tabToClose.type),
@@ -59,7 +66,7 @@ export function MainContentTabs({ activeTab, fallbackHref, children }: MainConte
         <div className="flex min-h-11 items-end overflow-x-auto border-b border-slate-800 bg-[#151820] px-2 pt-2">
           {tabs.map((tab) => {
             const isActive = activeTab?.id === tab.id && activeTab.type === tab.type;
-            const Icon = tab.type === "note" ? FileText : ImagePlus;
+            const Icon = tab.type === "note" ? FileText : tab.type === "folder" ? Folder : ImagePlus;
 
             return (
               <div
@@ -94,3 +101,4 @@ export function MainContentTabs({ activeTab, fallbackHref, children }: MainConte
     </div>
   );
 }
+

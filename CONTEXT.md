@@ -63,7 +63,7 @@ Behavior that returns a trashed folder, note, or media asset to its active state
 _Avoid_: Undelete, recover, unarchive
 
 **Permanent Delete**:
-Future behavior that irreversibly removes trashed content from the vault. MVP stops at Trash and Restore. Permanently deleting a folder should also permanently delete its descendant folders, notes, and media assets, and should require explicit confirmation.
+Behavior that irreversibly removes trashed content from the vault. Permanently deleting a folder also permanently deletes its descendant folders, notes, and media assets, and requires explicit confirmation.
 _Avoid_: Trash, archive, remove
 
 **Move**:

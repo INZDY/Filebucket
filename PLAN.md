@@ -73,3 +73,16 @@ This plan outlines the visual redesign and functional expansion of Filebucket, t
     *   Ensure all existing Vitest test suites (auth, CRUD, trash, export) pass cleanly.
     *   Run `npm run build` and `npm run lint` to confirm type-safety and syntax correctness.
 *   **Verification:** Console verification of tests, lint, and build.
+
+---
+
+## Milestone 7: UI Compaction, Trash Unification & Permanent Deletion
+*   **Status:** Completed & Verified (June 2026).
+*   **Goal:** Compact workspace headers, unify the Trash view under standard tab routing, and implement permanent deletion.
+*   **Tasks:**
+    *   **NoteActionsMenu**: Create a compact 3-dot dropdown menu for active notes to replace the large move select form and delete buttons.
+    *   **Obsidian-Style Creation Toolbar**: Build a unified toolbar at the top of the Vault Browser sidebar that supports new notes, inline new folders, programmatical file uploads, and markdown note imports.
+    *   **Trash Sidebar List**: Display deleted folders, notes, and media directly in the Vault Browser when in trash view mode.
+    *   **Trash Tab Previews**: Open deleted items in read-only tabs with a recovery/permanent-delete banner at the top, and auto-close open tabs when their corresponding items are permanently deleted.
+    *   **Permanent Deletion & Empty Trash**: Implement recursive folder deletion, S3/R2 blob cleanup, and user confirmations for permanent deletion.
+*   **Verification:** Validate actions menu, creation toolbar, trash list browsing/restoring/deleting, and run test suites.

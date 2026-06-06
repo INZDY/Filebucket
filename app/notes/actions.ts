@@ -390,3 +390,33 @@ export async function renameNoteAction(formData: FormData) {
   redirect(note.folderId ? `/?folder=${note.folderId}&note=${note.id}` : `/?note=${note.id}`);
 }
 
+export async function deleteNoteAction(formData: FormData) {
+  const session = await requireSession();
+  const noteId = readId(formData, "noteId");
+
+  if (!noteId) {
+    revalidatePath("/");
+    return;
+  }
+
+  const note = await prisma.note.findFirst({
+    where: {
+      id: noteId,
+      userId: session.user.id,
+      deletedAt: { not: null },
+    },
+  });
+
+  if (!note) {
+    revalidatePath("/");
+    return;
+  }
+
+  await prisma.note.delete({
+    where: { id: note.id },
+  });
+
+  revalidatePath("/");
+  redirect("/?view=trash");
+}
+

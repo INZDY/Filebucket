@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import { requireSession } from "@/lib/auth";
@@ -359,4 +359,46 @@ export async function renameMediaAssetAction(formData: FormData) {
       : `/?media=${mediaAsset.id}`
   );
 }
+
+export async function deleteMediaAssetAction(formData: FormData) {
+  const session = await requireSession();
+  const mediaAssetId = readId(formData, "mediaAssetId");
+
+  if (!mediaAssetId) {
+    revalidatePath("/");
+    return;
+  }
+
+  const media = await prisma.mediaAsset.findFirst({
+    where: {
+      id: mediaAssetId,
+      userId: session.user.id,
+      deletedAt: { not: null },
+    },
+  });
+
+  if (!media) {
+    revalidatePath("/");
+    return;
+  }
+
+  try {
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME || "",
+        Key: media.r2Key,
+      })
+    );
+  } catch (err) {
+    console.error("Failed to delete media from R2 during permanent delete:", err);
+  }
+
+  await prisma.mediaAsset.delete({
+    where: { id: media.id },
+  });
+
+  revalidatePath("/");
+  redirect("/?view=trash");
+}
+
 
