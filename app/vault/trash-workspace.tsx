@@ -177,11 +177,14 @@ export function TrashWorkspace({
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto bg-[#101217] px-6 py-6 flex items-center justify-center text-sm text-slate-400">
           {previewKind === "image" && previewUrl ? (
-            <img
-              src={previewUrl}
-              alt={selectedDeletedMedia.filename}
-              className="max-h-full max-w-full rounded border border-slate-800 object-contain shadow-lg"
-            />
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewUrl}
+                alt={selectedDeletedMedia.filename}
+                className="max-h-full max-w-full rounded border border-slate-800 object-contain shadow-lg"
+              />
+            </>
           ) : previewKind === "video" && previewUrl ? (
             <video
               src={previewUrl}

@@ -207,13 +207,12 @@ export function ActiveWorkspace({
           <div className="flex min-h-full items-center justify-center">
             {(() => {
               if (previewKind === "image" && previewUrl) {
-                return (
-                  <img
-                    alt={selectedMedia.filename}
-                    className="max-h-[calc(100vh-220px)] max-w-full object-contain"
-                    src={previewUrl}
-                  />
-                );
+                // eslint-disable-next-line @next/next/no-img-element
+                return <img
+                  alt={selectedMedia.filename}
+                  className="max-h-[calc(100vh-220px)] max-w-full object-contain"
+                  src={previewUrl}
+                />;
               }
 
               if (previewKind === "audio" && previewUrl) {
