@@ -3,12 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { s3 } from "@/lib/r2";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import JSZip from "jszip";
-
-function sanitizeFilename(name: string): string {
-  // Replace characters that are unsafe/invalid on common filesystems: \ / : * ? " < > |
-  // Also remove control characters
-  return name.replace(/[\\/:*?"<>|\x00-\x1F]/g, "_").trim();
-}
+import { namespaceManager } from "@/lib/namespace";
 
 function getRelativePath(fromZipPath: string, toZipPath: string): string {
   const fromParts = fromZipPath.split("/");
@@ -76,124 +71,22 @@ export async function GET() {
       }),
     ]);
 
-    // 2. Build folder hierarchy paths top-down to resolve parent paths and collisions
-    const childrenMap = new Map<string | null, typeof folders>();
-    for (const folder of folders) {
-      const pId = folder.parentId;
-      if (!childrenMap.has(pId)) {
-        childrenMap.set(pId, []);
-      }
-      childrenMap.get(pId)!.push(folder);
-    }
+    // 2. Resolve paths using VaultNamespaceManager
+    const paths = await namespaceManager.resolveVaultPaths(userId);
 
-    const folderPaths = new Map<string, string>(); // folderId -> relative path in zip (e.g. "Projects/Notes")
-
-    function resolveFolderPathsRecursive(parentId: string | null, parentPath: string) {
-      const children = childrenMap.get(parentId) || [];
-      const usedNames = new Set<string>();
-
-      for (const child of children) {
-        const sanitized = sanitizeFilename(child.name) || "Untitled folder";
-        let uniqueName = sanitized;
-        let suffix = 2;
-        while (usedNames.has(uniqueName.toLowerCase())) {
-          uniqueName = `${sanitized} ${suffix}`;
-          suffix++;
-        }
-        usedNames.add(uniqueName.toLowerCase());
-
-        const childPath = parentPath ? `${parentPath}/${uniqueName}` : uniqueName;
-        folderPaths.set(child.id, childPath);
-
-        resolveFolderPathsRecursive(child.id, childPath);
-      }
-    }
-
-    resolveFolderPathsRecursive(null, "");
-
-    // 3. Group notes and media assets by folder location
-    const notesByFolder = new Map<string | null, typeof notes>();
-    for (const note of notes) {
-      const fId = note.folderId;
-      if (!notesByFolder.has(fId)) {
-        notesByFolder.set(fId, []);
-      }
-      notesByFolder.get(fId)!.push(note);
-    }
-
-    const mediaByFolder = new Map<string | null, typeof mediaAssets>();
-    for (const media of mediaAssets) {
-      const fId = media.folderId;
-      if (!mediaByFolder.has(fId)) {
-        mediaByFolder.set(fId, []);
-      }
-      mediaByFolder.get(fId)!.push(media);
-    }
-
-    const notePaths = new Map<string, string>(); // noteId -> unique relative path (e.g. "Projects/Plan.md")
-    const mediaPaths = new Map<string, string>(); // mediaId -> unique relative path (e.g. "Projects/photo.png")
-
-    // 4. Resolve unique filenames for notes and media assets in each folder location
-    const allLocations = [null, ...folders.map((f) => f.id)];
-
-    for (const locationId of allLocations) {
-      const folderPath = locationId ? folderPaths.get(locationId)! : "";
-      const folderNotes = notesByFolder.get(locationId) || [];
-      const folderMedia = mediaByFolder.get(locationId) || [];
-
-      const usedNames = new Set<string>();
-
-      // Add child folders in this location to usedNames to avoid file-folder collisions
-      const childFolders = childrenMap.get(locationId) || [];
-      for (const child of childFolders) {
-        const childFolderName = folderPaths.get(child.id)!.split("/").pop()!;
-        usedNames.add(childFolderName.toLowerCase());
-      }
-
-      function getUniqueFilename(baseName: string, extension: string): string {
-        const sanitized = sanitizeFilename(baseName) || "Untitled";
-        let candidate = extension ? `${sanitized}${extension}` : sanitized;
-        let suffix = 2;
-        while (usedNames.has(candidate.toLowerCase())) {
-          candidate = extension ? `${sanitized} ${suffix}${extension}` : `${sanitized} ${suffix}`;
-          suffix++;
-        }
-        usedNames.add(candidate.toLowerCase());
-        return candidate;
-      }
-
-      // Process notes in this location
-      for (const note of folderNotes) {
-        const filename = getUniqueFilename(note.title, ".md");
-        const zipPath = folderPath ? `${folderPath}/${filename}` : filename;
-        notePaths.set(note.id, zipPath);
-      }
-
-      // Process media assets in this location
-      for (const media of folderMedia) {
-        const extIndex = media.filename.lastIndexOf(".");
-        const base = extIndex !== -1 ? media.filename.slice(0, extIndex) : media.filename;
-        const ext = extIndex !== -1 ? media.filename.slice(extIndex) : "";
-
-        const filename = getUniqueFilename(base, ext);
-        const zipPath = folderPath ? `${folderPath}/${filename}` : filename;
-        mediaPaths.set(media.id, zipPath);
-      }
-    }
-
-    // 5. Build the ZIP archive
+    // 3. Build the ZIP archive
     const zip = new JSZip();
 
     // A. Add notes (with rewritten media references)
     for (const note of notes) {
-      const notePath = notePaths.get(note.id)!;
+      const notePath = paths.notes.get(note.id)!;
       const body = note.body;
 
       // Rewrite media references:
       // If it is an image: ![scale](filebucket-media:mediaId) -> ![unique_filename](relative_path)
       // If it is a link: [text](filebucket-media:mediaId) -> [text](relative_path)
       const rewrittenBody = body.replace(/(!?)\[([^\]]*)\]\(filebucket-media:([a-zA-Z0-9]+)\)/g, (match, isImage, label, mediaId) => {
-        const mediaAssetPath = mediaPaths.get(mediaId);
+        const mediaAssetPath = paths.mediaAssets.get(mediaId);
         if (mediaAssetPath) {
           const relativePath = getRelativePath(notePath, mediaAssetPath);
           if (isImage) {
@@ -213,7 +106,7 @@ export async function GET() {
     const failedMediaIds = new Set<string>();
 
     for (const media of mediaAssets) {
-      const mediaPath = mediaPaths.get(media.id)!;
+      const mediaPath = paths.mediaAssets.get(media.id)!;
       try {
         if (!process.env.R2_BUCKET_NAME) {
           throw new Error("R2_BUCKET_NAME is not configured");
@@ -245,12 +138,12 @@ export async function GET() {
       folders: folders.map((f) => ({
         id: f.id,
         name: f.name,
-        path: folderPaths.get(f.id)!,
+        path: paths.folders.get(f.id)!,
       })),
       notes: notes.map((n) => ({
         id: n.id,
         title: n.title,
-        path: notePaths.get(n.id)!,
+        path: paths.notes.get(n.id)!,
         tags: n.tags.map((nt) => nt.tag.name),
         mediaReferences: Array.from(
           new Set(
@@ -261,7 +154,7 @@ export async function GET() {
       mediaAssets: mediaAssets.map((m) => ({
         id: m.id,
         filename: m.filename,
-        path: mediaPaths.get(m.id)!,
+        path: paths.mediaAssets.get(m.id)!,
         contentType: m.contentType,
         sizeBytes: m.sizeBytes,
         downloadFailed: failedMediaIds.has(m.id) ? true : undefined,

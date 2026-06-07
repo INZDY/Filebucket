@@ -5,15 +5,10 @@ import { redirect } from "next/navigation";
 
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { namespaceManager } from "@/lib/namespace";
 
 function readId(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
-}
-
-function noteFilename(title: string) {
-  const trimmedTitle = title.trim() || "Untitled note";
-
-  return trimmedTitle.toLowerCase().endsWith(".md") ? trimmedTitle : `${trimmedTitle}.md`;
 }
 
 async function getActiveFolder(userId: string, folderId: string) {
@@ -27,67 +22,6 @@ async function getActiveFolder(userId: string, folderId: string) {
   });
 }
 
-async function getLocationFilenames(userId: string, folderId: string | null, excludeNoteId?: string) {
-  const [notes, mediaAssets] = await Promise.all([
-    prisma.note.findMany({
-      where: {
-        userId,
-        folderId,
-        deletedAt: null,
-        ...(excludeNoteId
-          ? {
-              id: {
-                not: excludeNoteId,
-              },
-            }
-          : {}),
-      },
-      select: { title: true },
-    }),
-    prisma.mediaAsset.findMany({
-      where: {
-        userId,
-        folderId,
-        deletedAt: null,
-      },
-      select: { filename: true },
-    }),
-  ]);
-
-  return new Set([
-    ...notes.map((note) => noteFilename(note.title).toLowerCase()),
-    ...mediaAssets.map((mediaAsset) => mediaAsset.filename.toLowerCase()),
-  ]);
-}
-
-function titleWithSuffix(title: string, suffix: number) {
-  return suffix === 1 ? title : `${title} ${suffix}`;
-}
-
-async function getAvailableTitle(userId: string, folderId: string | null, baseTitle: string) {
-  const takenFilenames = await getLocationFilenames(userId, folderId);
-  let suffix = 1;
-  let title = titleWithSuffix(baseTitle, suffix);
-
-  while (takenFilenames.has(noteFilename(title).toLowerCase())) {
-    suffix += 1;
-    title = titleWithSuffix(baseTitle, suffix);
-  }
-
-  return title;
-}
-
-async function hasTitleCollision(
-  userId: string,
-  folderId: string | null,
-  title: string,
-  excludeNoteId?: string,
-) {
-  const takenFilenames = await getLocationFilenames(userId, folderId, excludeNoteId);
-
-  return takenFilenames.has(noteFilename(title).toLowerCase());
-}
-
 export async function createNoteAction(formData: FormData) {
   const session = await requireSession();
   const folderId = readId(formData, "folderId") || null;
@@ -98,7 +32,10 @@ export async function createNoteAction(formData: FormData) {
     return;
   }
 
-  const title = await getAvailableTitle(session.user.id, folder?.id ?? null, "Untitled note");
+  const title = await namespaceManager.resolve(session.user.id, folder?.id ?? null, {
+    type: "Note",
+    name: "Untitled note",
+  });
   const note = await prisma.note.create({
     data: {
       title,
@@ -131,7 +68,10 @@ export async function importMarkdownNotesAction(formData: FormData) {
     }
 
     const importedTitle = file.name.replace(/\.md$/i, "").trim() || "Imported note";
-    const title = await getAvailableTitle(session.user.id, folder?.id ?? null, importedTitle);
+    const title = await namespaceManager.resolve(session.user.id, folder?.id ?? null, {
+      type: "Note",
+      name: importedTitle,
+    });
     const note = await prisma.note.create({
       data: {
         title,
@@ -184,7 +124,13 @@ export async function updateNoteAction(noteId: string, title: string, body: stri
     };
   }
 
-  if (await hasTitleCollision(session.user.id, note.folderId, nextTitle, note.id)) {
+  const validation = await namespaceManager.validate(session.user.id, note.folderId, {
+    id: note.id,
+    type: "Note",
+    name: nextTitle,
+  });
+
+  if (!validation.isValid) {
     return {
       ok: false,
       error: "A note or media asset with this name already exists here.",
@@ -246,7 +192,13 @@ export async function moveNoteAction(formData: FormData) {
     return;
   }
 
-  if (await hasTitleCollision(session.user.id, folder?.id ?? null, note.title, note.id)) {
+  const validation = await namespaceManager.validate(session.user.id, folder?.id ?? null, {
+    id: note.id,
+    type: "Note",
+    name: note.title,
+  });
+
+  if (!validation.isValid) {
     revalidatePath("/");
     return;
   }
@@ -374,7 +326,13 @@ export async function renameNoteAction(formData: FormData) {
     return;
   }
 
-  if (await hasTitleCollision(session.user.id, note.folderId, newTitle, note.id)) {
+  const validation = await namespaceManager.validate(session.user.id, note.folderId, {
+    id: note.id,
+    type: "Note",
+    name: newTitle,
+  });
+
+  if (!validation.isValid) {
     revalidatePath("/");
     return;
   }
@@ -419,4 +377,3 @@ export async function deleteNoteAction(formData: FormData) {
   revalidatePath("/");
   redirect("/?view=trash");
 }
-

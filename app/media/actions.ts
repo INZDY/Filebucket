@@ -8,6 +8,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { s3 } from "@/lib/r2";
+import { namespaceManager } from "@/lib/namespace";
 
 function readId(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -22,52 +23,6 @@ async function getActiveFolder(userId: string, folderId: string) {
     },
     select: { id: true },
   });
-}
-
-function noteFilename(title: string) {
-  const trimmedTitle = title.trim() || "Untitled note";
-
-  return trimmedTitle.toLowerCase().endsWith(".md") ? trimmedTitle : `${trimmedTitle}.md`;
-}
-
-async function hasFilenameCollision(
-  userId: string,
-  folderId: string | null,
-  filename: string,
-  excludeMediaAssetId?: string,
-) {
-  const [notes, mediaAssets] = await Promise.all([
-    prisma.note.findMany({
-      where: {
-        userId,
-        folderId,
-        deletedAt: null,
-      },
-      select: { title: true },
-    }),
-    prisma.mediaAsset.findMany({
-      where: {
-        userId,
-        folderId,
-        deletedAt: null,
-        ...(excludeMediaAssetId
-          ? {
-              id: {
-                not: excludeMediaAssetId,
-              },
-            }
-          : {}),
-      },
-      select: { filename: true },
-    }),
-  ]);
-
-  const normalizedFilename = filename.toLowerCase();
-
-  return [
-    ...notes.map((note) => noteFilename(note.title).toLowerCase()),
-    ...mediaAssets.map((mediaAsset) => mediaAsset.filename.toLowerCase()),
-  ].includes(normalizedFilename);
 }
 
 export async function moveMediaAssetAction(formData: FormData) {
@@ -110,7 +65,13 @@ export async function moveMediaAssetAction(formData: FormData) {
     return;
   }
 
-  if (await hasFilenameCollision(session.user.id, folder?.id ?? null, mediaAsset.filename, mediaAsset.id)) {
+  const validation = await namespaceManager.validate(session.user.id, folder?.id ?? null, {
+    id: mediaAsset.id,
+    type: "MediaAsset",
+    name: mediaAsset.filename,
+  });
+
+  if (!validation.isValid) {
     revalidatePath("/");
     return;
   }
@@ -281,18 +242,10 @@ export async function createMediaAssetAction(data: {
     throw new Error("Invalid folder");
   }
 
-  let finalFilename = data.filename;
-  if (await hasFilenameCollision(userId, folder?.id ?? null, finalFilename)) {
-    const extIndex = data.filename.lastIndexOf(".");
-    const base = extIndex !== -1 ? data.filename.slice(0, extIndex) : data.filename;
-    const ext = extIndex !== -1 ? data.filename.slice(extIndex) : "";
-    let suffix = 2;
-    finalFilename = `${base} ${suffix}${ext}`;
-    while (await hasFilenameCollision(userId, folder?.id ?? null, finalFilename)) {
-      suffix += 1;
-      finalFilename = `${base} ${suffix}${ext}`;
-    }
-  }
+  const finalFilename = await namespaceManager.resolve(userId, folder?.id ?? null, {
+    type: "MediaAsset",
+    name: data.filename,
+  });
 
   const mediaAsset = await prisma.mediaAsset.create({
     data: {
@@ -340,7 +293,13 @@ export async function renameMediaAssetAction(formData: FormData) {
     return;
   }
 
-  if (await hasFilenameCollision(session.user.id, mediaAsset.folderId, newName, mediaAsset.id)) {
+  const validation = await namespaceManager.validate(session.user.id, mediaAsset.folderId, {
+    id: mediaAsset.id,
+    type: "MediaAsset",
+    name: newName,
+  });
+
+  if (!validation.isValid) {
     revalidatePath("/");
     return;
   }
@@ -400,5 +359,3 @@ export async function deleteMediaAssetAction(formData: FormData) {
   revalidatePath("/");
   redirect("/?view=trash");
 }
-
-

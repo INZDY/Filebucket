@@ -176,10 +176,10 @@ describe("Media Server Actions", () => {
     it("should handle filename collision by appending suffix", async () => {
       vi.mocked(prisma.note.findMany).mockResolvedValue([]);
       // Simulate that "pic.jpg" and "pic 2.jpg" already exist, so it should resolve to "pic 3.jpg"
-      vi.mocked(prisma.mediaAsset.findMany)
-        .mockResolvedValueOnce([{ filename: "pic.jpg" }] as any) // first check
-        .mockResolvedValueOnce([{ filename: "pic 2.jpg" }] as any) // second check
-        .mockResolvedValue([]); // third check
+      vi.mocked(prisma.mediaAsset.findMany).mockResolvedValue([
+        { filename: "pic.jpg" },
+        { filename: "pic 2.jpg" },
+      ] as any);
 
       vi.mocked(prisma.mediaAsset.create).mockImplementation(async ({ data }: any) => ({
         id: "media-999",

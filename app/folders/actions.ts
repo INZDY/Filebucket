@@ -7,6 +7,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { s3 } from "@/lib/r2";
+import { namespaceManager } from "@/lib/namespace";
 
 function readName(formData: FormData) {
   return String(formData.get("name") ?? "").trim().slice(0, 120);
@@ -35,58 +36,6 @@ async function getActiveFolder(userId: string, folderId: string) {
   });
 }
 
-async function hasSiblingName(
-  userId: string,
-  parentId: string | null,
-  name: string,
-  excludeId?: string,
-) {
-  const sibling = await prisma.folder.findFirst({
-    where: {
-      userId,
-      parentId,
-      deletedAt: null,
-      name: {
-        equals: name,
-        mode: "insensitive",
-      },
-      ...(excludeId
-        ? {
-            id: {
-              not: excludeId,
-            },
-          }
-        : {}),
-    },
-    select: { id: true },
-  });
-
-  return Boolean(sibling);
-}
-
-async function isDescendantFolder(userId: string, folderId: string, parentId: string) {
-  let currentId: string | null = parentId;
-
-  while (currentId) {
-    if (currentId === folderId) {
-      return true;
-    }
-
-    const current: { parentId: string | null } | null = await prisma.folder.findFirst({
-      where: {
-        id: currentId,
-        userId,
-        deletedAt: null,
-      },
-      select: { parentId: true },
-    });
-
-    currentId = current?.parentId ?? null;
-  }
-
-  return false;
-}
-
 export async function createFolderAction(formData: FormData) {
   const session = await requireSession();
   const name = readName(formData);
@@ -102,7 +51,12 @@ export async function createFolderAction(formData: FormData) {
     return;
   }
 
-  if (await hasSiblingName(session.user.id, parentId, name)) {
+  const validation = await namespaceManager.validate(session.user.id, parentId, {
+    type: "Folder",
+    name,
+  });
+
+  if (!validation.isValid) {
     revalidatePath("/");
     return;
   }
@@ -131,7 +85,18 @@ export async function renameFolderAction(formData: FormData) {
 
   const folder = await getActiveFolder(session.user.id, folderId);
 
-  if (!folder || await hasSiblingName(session.user.id, folder.parentId, name, folder.id)) {
+  if (!folder) {
+    revalidatePath("/");
+    return;
+  }
+
+  const validation = await namespaceManager.validate(session.user.id, folder.parentId, {
+    id: folder.id,
+    type: "Folder",
+    name,
+  });
+
+  if (!validation.isValid) {
     revalidatePath("/");
     return;
   }
@@ -165,11 +130,13 @@ export async function moveFolderAction(formData: FormData) {
     return;
   }
 
-  if (
-    parentId === folder.id ||
-    (parentId && await isDescendantFolder(session.user.id, folder.id, parentId)) ||
-    await hasSiblingName(session.user.id, parentId, folder.name, folder.id)
-  ) {
+  const validation = await namespaceManager.validate(session.user.id, parentId, {
+    id: folder.id,
+    type: "Folder",
+    name: folder.name,
+  });
+
+  if (!validation.isValid) {
     revalidatePath("/");
     return;
   }

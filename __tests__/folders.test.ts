@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { namespaceManager } from "@/lib/namespace";
 
 vi.mock("@/lib/auth", () => ({
   requireSession: vi.fn(),
@@ -23,6 +24,13 @@ vi.mock("@/lib/prisma", () => ({
       update: vi.fn(),
       updateMany: vi.fn(),
     },
+  },
+}));
+
+vi.mock("@/lib/namespace", () => ({
+  namespaceManager: {
+    validate: vi.fn(),
+    resolve: vi.fn(),
   },
 }));
 
@@ -71,9 +79,8 @@ describe("Folder Server Actions", () => {
     });
 
     it("should fail if sibling folder name collides case-insensitively", async () => {
-      vi.mocked(prisma.folder.findFirst)
-        .mockResolvedValueOnce({ id: "parent-123", name: "Parent", parentId: null }) // getActiveFolder check
-        .mockResolvedValueOnce({ id: "colliding-id" }); // hasSiblingName check
+      vi.mocked(prisma.folder.findFirst).mockResolvedValue({ id: "parent-123", name: "Parent", parentId: null } as any);
+      vi.mocked(namespaceManager.validate).mockResolvedValue({ isValid: false, error: "NameCollision" });
 
       const formData = new FormData();
       formData.append("name", "colliding");
@@ -86,10 +93,8 @@ describe("Folder Server Actions", () => {
     });
 
     it("should successfully create folder and redirect", async () => {
-      vi.mocked(prisma.folder.findFirst)
-        .mockResolvedValueOnce({ id: "parent-123", name: "Parent", parentId: null }) // getActiveFolder check
-        .mockResolvedValueOnce(null); // hasSiblingName check (no collision)
-
+      vi.mocked(prisma.folder.findFirst).mockResolvedValue({ id: "parent-123", name: "Parent", parentId: null } as any);
+      vi.mocked(namespaceManager.validate).mockResolvedValue({ isValid: true });
       vi.mocked(prisma.folder.create).mockResolvedValue({ id: "new-folder-789" } as any);
 
       const formData = new FormData();
@@ -121,9 +126,8 @@ describe("Folder Server Actions", () => {
     });
 
     it("should fail if name collides with another sibling", async () => {
-      vi.mocked(prisma.folder.findFirst)
-        .mockResolvedValueOnce({ id: "folder-123", name: "Folder", parentId: null }) // getActiveFolder
-        .mockResolvedValueOnce({ id: "colliding-id" }); // hasSiblingName collision
+      vi.mocked(prisma.folder.findFirst).mockResolvedValue({ id: "folder-123", name: "Folder", parentId: null } as any);
+      vi.mocked(namespaceManager.validate).mockResolvedValue({ isValid: false, error: "NameCollision" });
 
       const formData = new FormData();
       formData.append("folderId", "folder-123");
@@ -134,9 +138,8 @@ describe("Folder Server Actions", () => {
     });
 
     it("should successfully update name and redirect", async () => {
-      vi.mocked(prisma.folder.findFirst)
-        .mockResolvedValueOnce({ id: "folder-123", name: "Folder", parentId: "parent-123" }) // getActiveFolder
-        .mockResolvedValueOnce(null); // hasSiblingName (no collision)
+      vi.mocked(prisma.folder.findFirst).mockResolvedValue({ id: "folder-123", name: "Folder", parentId: "parent-123" } as any);
+      vi.mocked(namespaceManager.validate).mockResolvedValue({ isValid: true });
 
       const formData = new FormData();
       formData.append("folderId", "folder-123");
@@ -155,8 +158,10 @@ describe("Folder Server Actions", () => {
   describe("moveFolderAction", () => {
     it("should prevent cycle by blocking moving folder into itself", async () => {
       vi.mocked(prisma.folder.findFirst)
-        .mockResolvedValueOnce({ id: "folder-123", name: "Folder", parentId: null }) // target folder
-        .mockResolvedValueOnce({ id: "folder-123", name: "Folder", parentId: null }); // parent folder (same id)
+        .mockResolvedValueOnce({ id: "folder-123", name: "Folder", parentId: null } as any) // target
+        .mockResolvedValueOnce({ id: "folder-123", name: "Folder", parentId: null } as any); // parent
+
+      vi.mocked(namespaceManager.validate).mockResolvedValue({ isValid: false, error: "SelfNesting" });
 
       const formData = new FormData();
       formData.append("folderId", "folder-123");
@@ -168,10 +173,10 @@ describe("Folder Server Actions", () => {
 
     it("should prevent cycle by blocking moving folder into its descendant", async () => {
       vi.mocked(prisma.folder.findFirst)
-        .mockResolvedValueOnce({ id: "folder-123", name: "Folder", parentId: null }) // target
-        .mockResolvedValueOnce({ id: "descendant-456", name: "Descendant", parentId: "folder-123" }) // parent
-        // isDescendantFolder calls:
-        .mockResolvedValueOnce({ parentId: "folder-123" }); // check descendant-456 parent which is folder-123 (matching target ID)
+        .mockResolvedValueOnce({ id: "folder-123", name: "Folder", parentId: null } as any) // target
+        .mockResolvedValueOnce({ id: "descendant-456", name: "Descendant", parentId: "folder-123" } as any); // parent
+
+      vi.mocked(namespaceManager.validate).mockResolvedValue({ isValid: false, error: "SelfNesting" });
 
       const formData = new FormData();
       formData.append("folderId", "folder-123");
@@ -183,12 +188,10 @@ describe("Folder Server Actions", () => {
 
     it("should successfully move folder to another location", async () => {
       vi.mocked(prisma.folder.findFirst)
-        .mockResolvedValueOnce({ id: "folder-123", name: "Folder", parentId: "old-parent" }) // target
-        .mockResolvedValueOnce({ id: "new-parent", name: "New Parent", parentId: null }) // new parent
-        // isDescendantFolder check (not descendant, returns null):
-        .mockResolvedValueOnce(null)
-        // hasSiblingName check (no collision, returns null):
-        .mockResolvedValueOnce(null);
+        .mockResolvedValueOnce({ id: "folder-123", name: "Folder", parentId: "old-parent" } as any) // target
+        .mockResolvedValueOnce({ id: "new-parent", name: "New Parent", parentId: null } as any); // new parent
+
+      vi.mocked(namespaceManager.validate).mockResolvedValue({ isValid: true });
 
       const formData = new FormData();
       formData.append("folderId", "folder-123");
