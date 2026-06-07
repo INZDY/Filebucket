@@ -84,7 +84,7 @@ export async function GET() {
       // Rewrite media references:
       // If it is an image: ![scale](filebucket-media:mediaId) -> ![unique_filename](relative_path)
       // If it is a link: [text](filebucket-media:mediaId) -> [text](relative_path)
-      const rewrittenBody = body.replace(/(!?)\[([^\]]*)\]\(filebucket-media:([a-zA-Z0-9]+)\)/g, (match, isImage, label, mediaId) => {
+      const rewrittenBody = body.replace(/(!?)\[([^\]]*)\]\(filebucket-media:([a-zA-Z0-9]+)\)/g, (match: string, isImage: string, label: string, mediaId: string) => {
         const mediaAssetPath = paths.mediaAssets.get(mediaId);
         if (mediaAssetPath) {
           const relativePath = getRelativePath(notePath, mediaAssetPath);
