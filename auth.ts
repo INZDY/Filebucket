@@ -59,18 +59,23 @@ if (isDev) {
   );
 }
 
-// Enable Google and GitHub OAuth providers
+// Enable Google and GitHub OAuth providers with explicit fallback mappings
 providers.push(
   Google({
+    clientId: process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_ID,
+    clientSecret: process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET || process.env.GOOGLE_SECRET,
     allowDangerousEmailAccountLinking: true,
   }),
   GitHub({
+    clientId: process.env.AUTH_GITHUB_ID || process.env.GITHUB_CLIENT_ID || process.env.GITHUB_ID,
+    clientSecret: process.env.AUTH_GITHUB_SECRET || process.env.GITHUB_CLIENT_SECRET || process.env.GITHUB_SECRET,
     allowDangerousEmailAccountLinking: true,
   })
 );
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  trustHost: true, // Automatically trust host headers in serverless/Vercel environments
   pages: {
     signIn: "/login",
   },
