@@ -2,13 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { s3 } from "@/lib/r2";
 import { namespaceManager } from "@/lib/namespace";
+import { storageEngine } from "@/lib/storage";
 
 function readId(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -183,13 +180,7 @@ export async function getPresignedUploadUrlAction(filename: string, contentType:
   const cleanFilename = filename.replace(/\s+/g, "_");
   const r2Key = `vaults/${userId}/${uuid}-${cleanFilename}`;
 
-  const command = new PutObjectCommand({
-    Bucket: process.env.R2_BUCKET_NAME || "",
-    Key: r2Key,
-    ContentType: contentType,
-  });
-
-  const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+  const uploadUrl = await storageEngine.presignUploadUrl(r2Key, contentType);
 
   return { uploadUrl, r2Key };
 }
@@ -342,12 +333,7 @@ export async function deleteMediaAssetAction(formData: FormData) {
   }
 
   try {
-    await s3.send(
-      new DeleteObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME || "",
-        Key: media.r2Key,
-      })
-    );
+    await storageEngine.deleteFile(media.r2Key);
   } catch (err) {
     console.error("Failed to delete media from R2 during permanent delete:", err);
   }

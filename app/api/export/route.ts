@@ -1,7 +1,6 @@
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { s3 } from "@/lib/r2";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { storageEngine } from "@/lib/storage";
 import JSZip from "jszip";
 import { namespaceManager } from "@/lib/namespace";
 
@@ -108,23 +107,8 @@ export async function GET() {
     for (const media of mediaAssets) {
       const mediaPath = paths.mediaAssets.get(media.id)!;
       try {
-        if (!process.env.R2_BUCKET_NAME) {
-          throw new Error("R2_BUCKET_NAME is not configured");
-        }
-
-        const response = await s3.send(
-          new GetObjectCommand({
-            Bucket: process.env.R2_BUCKET_NAME,
-            Key: media.r2Key,
-          }),
-        );
-
-        if (response.Body) {
-          const bytes = await response.Body.transformToByteArray();
-          zip.file(mediaPath, Buffer.from(bytes));
-        } else {
-          throw new Error("Response body is empty");
-        }
+        const fileBuffer = await storageEngine.downloadFile(media.r2Key);
+        zip.file(mediaPath, fileBuffer);
       } catch (err) {
         console.error(`Failed to download media asset ${media.filename} (ID: ${media.id}):`, err);
         failedMediaIds.add(media.id);

@@ -22,6 +22,7 @@ type NoteEntry = {
   title: string;
   body: string;
   updatedAt: Date;
+  folderId: string | null;
   tags: {
     tag: {
       id: string;

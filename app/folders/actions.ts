@@ -5,8 +5,7 @@ import { redirect } from "next/navigation";
 
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { s3 } from "@/lib/r2";
+import { storageEngine } from "@/lib/storage";
 import { namespaceManager } from "@/lib/namespace";
 
 function readName(formData: FormData) {
@@ -207,12 +206,7 @@ async function permanentlyDeleteFolderRecursively(userId: string, folderId: stri
 
   for (const media of mediaAssets) {
     try {
-      await s3.send(
-        new DeleteObjectCommand({
-          Bucket: process.env.R2_BUCKET_NAME || "",
-          Key: media.r2Key,
-        })
-      );
+      await storageEngine.deleteFile(media.r2Key);
     } catch (err) {
       console.error(`Failed to delete media ${media.id} from R2 during recursive folder delete:`, err);
     }
@@ -295,12 +289,7 @@ export async function emptyTrashAction() {
 
   for (const media of trashedMedia) {
     try {
-      await s3.send(
-        new DeleteObjectCommand({
-          Bucket: process.env.R2_BUCKET_NAME || "",
-          Key: media.r2Key,
-        })
-      );
+      await storageEngine.deleteFile(media.r2Key);
     } catch (err) {
       console.error("Failed to delete media from R2 during empty trash:", err);
     }

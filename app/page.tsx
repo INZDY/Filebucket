@@ -1,8 +1,6 @@
-import Link from "next/link";
 import {
   Cloud,
   Download,
-  FileText,
 } from "lucide-react";
 
 import { requireSession } from "@/lib/auth";
@@ -37,14 +35,6 @@ type FolderListEntry = {
     notes: number;
   };
 };
-
-function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(value);
-}
 
 function flattenFolders(folders: FolderListEntry[]) {
   const children = new Map<string | null, FolderListEntry[]>();

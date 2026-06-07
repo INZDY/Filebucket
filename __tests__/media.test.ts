@@ -47,18 +47,12 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-vi.mock("@aws-sdk/s3-request-presigner", () => ({
-  getSignedUrl: vi.fn().mockResolvedValue("https://fake-r2-presigned-url.local/upload-here"),
-}));
-
-vi.mock("@aws-sdk/client-s3", () => ({
-  PutObjectCommand: class PutObjectCommand {
-    constructor(public input: any) {}
+vi.mock("@/lib/storage", () => ({
+  storageEngine: {
+    presignUploadUrl: vi.fn().mockResolvedValue("https://fake-r2-presigned-url.local/upload-here"),
+    downloadFile: vi.fn(),
+    deleteFile: vi.fn(),
   },
-}));
-
-vi.mock("@/lib/r2", () => ({
-  s3: {},
 }));
 
 describe("Media Server Actions", () => {

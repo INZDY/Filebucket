@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET } from "@/app/api/export/route";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { s3 } from "@/lib/r2";
+import { storageEngine } from "@/lib/storage";
 import JSZip from "jszip";
 
 vi.mock("@/lib/auth", () => ({
@@ -23,15 +23,11 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-vi.mock("@/lib/r2", () => ({
-  s3: {
-    send: vi.fn(),
-  },
-}));
-
-vi.mock("@aws-sdk/client-s3", () => ({
-  GetObjectCommand: class GetObjectCommand {
-    constructor(public input: any) {}
+vi.mock("@/lib/storage", () => ({
+  storageEngine: {
+    presignUploadUrl: vi.fn(),
+    downloadFile: vi.fn(),
+    deleteFile: vi.fn(),
   },
 }));
 
@@ -167,22 +163,15 @@ describe("ZIP Export Route Handler", () => {
     vi.mocked(prisma.note.findMany).mockResolvedValue(mockNotes as any);
     vi.mocked(prisma.mediaAsset.findMany).mockResolvedValue(mockMediaAssets as any);
 
-    // Mock R2 S3 response body bytes
-    vi.mocked(s3.send).mockImplementation(async (command: any) => {
-      const key = command.input.Key;
+    // Mock storageEngine downloadFile
+    vi.mocked(storageEngine.downloadFile).mockImplementation(async (key: string) => {
       let text = "dummy content";
       if (key === "r2-key-photo") text = "photo-bytes";
       if (key === "r2-key-doc") text = "pdf-bytes";
       if (key === "r2-key-work-2") text = "work2-bytes";
 
       const encoder = new TextEncoder();
-      const bytes = encoder.encode(text);
-
-      return {
-        Body: {
-          transformToByteArray: async () => bytes,
-        },
-      };
+      return Buffer.from(encoder.encode(text));
     });
 
     const response = await GET();
@@ -249,8 +238,8 @@ describe("ZIP Export Route Handler", () => {
       },
     ] as any);
 
-    // Mock S3 throw error
-    vi.mocked(s3.send).mockRejectedValue(new Error("Connection refused"));
+    // Mock storageEngine downloadFile throw error
+    vi.mocked(storageEngine.downloadFile).mockRejectedValue(new Error("Connection refused"));
 
     const response = await GET();
     expect(response.status).toBe(200);

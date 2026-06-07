@@ -43,9 +43,9 @@ type FolderEntry = {
   name: string;
   parentId: string | null;
   _count?: {
-    children: number;
-    mediaAssets: number;
-    notes: number;
+    children?: number;
+    mediaAssets?: number;
+    notes?: number;
   };
 };
 
@@ -92,9 +92,9 @@ interface SidebarBrowserProps {
   selectedDeletedMedia: MediaEntry | null;
   
   folders: FolderEntry[];
-  deletedFolders: (FolderEntry & { parent?: { deletedAt: any } | null })[];
-  deletedNotes: (NoteEntry & { folder?: { name: string; deletedAt: any } | null })[];
-  deletedMediaAssets: (MediaEntry & { contentType: string; sizeBytes: number; folder?: { name: string; deletedAt: any } | null })[];
+  deletedFolders: (FolderEntry & { parent?: { deletedAt: Date | string | null } | null })[];
+  deletedNotes: (NoteEntry & { folder?: { name: string; deletedAt: Date | string | null } | null })[];
+  deletedMediaAssets: (MediaEntry & { contentType: string; sizeBytes: number; folder?: { name: string; deletedAt: Date | string | null } | null })[];
   tags: TagEntry[];
   notes: NoteEntry[];
   mediaAssets: MediaEntry[];
@@ -271,7 +271,7 @@ export function SidebarBrowser({
                   <Folder className="h-4 w-4 shrink-0 text-slate-400" />
                   <span className="min-w-0 flex-1 truncate">{folder.name}</span>
                   <span className="text-xs text-slate-500">
-                    {folder._count ? folder._count.children + folder._count.notes + folder._count.mediaAssets : 0}
+                    {folder._count ? (folder._count.children ?? 0) + (folder._count.notes ?? 0) + (folder._count.mediaAssets ?? 0) : 0}
                   </span>
                 </Link>
               ))}

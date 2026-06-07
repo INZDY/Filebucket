@@ -4,8 +4,6 @@ import {
   FileText,
   Folder,
   ImagePlus,
-  Music,
-  Video,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,7 +21,7 @@ type FolderEntry = {
   name: string;
   parentId: string | null;
   parent?: {
-    deletedAt: any;
+    deletedAt: Date | string | null;
   } | null;
 };
 
@@ -34,7 +32,7 @@ type NoteEntry = {
   folder?: {
     id: string;
     name: string;
-    deletedAt: any;
+    deletedAt: Date | string | null;
   } | null;
 };
 
@@ -47,7 +45,7 @@ type MediaEntry = {
   folder?: {
     id: string;
     name: string;
-    deletedAt: any;
+    deletedAt: Date | string | null;
   } | null;
 };
 
@@ -56,9 +54,9 @@ interface TrashWorkspaceProps {
   selectedDeletedMedia: MediaEntry | null;
   selectedDeletedFolder: FolderEntry | null;
   deletedFolderContents: [
-    { id: string; name: string; deletedAt: any }[],
-    { id: string; title: string; deletedAt: any }[],
-    { id: string; filename: string; contentType: string; deletedAt: any }[]
+    { id: string; name: string; deletedAt: Date | string | null }[],
+    { id: string; title: string; deletedAt: Date | string | null }[],
+    { id: string; filename: string; contentType: string; deletedAt: Date | string | null }[]
   ] | null;
   textPreviewContent: string;
   getMediaAssetUrl: (r2Key: string) => string | null;
