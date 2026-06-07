@@ -20,3 +20,4 @@ pnpm-debug.log*
 
 # system files
 .DS_Store
+.env.prod

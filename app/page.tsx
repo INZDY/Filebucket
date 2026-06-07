@@ -6,6 +6,7 @@ import {
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
+import { storageEngine } from "@/lib/storage";
 
 import { SidebarBrowser } from "@/app/vault/sidebar-browser";
 import { ActiveWorkspace } from "@/app/vault/active-workspace";
@@ -131,13 +132,7 @@ function getContentHref({
 }
 
 function getMediaAssetUrl(r2Key: string) {
-  const baseUrl = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, "");
-
-  if (!baseUrl) {
-    return null;
-  }
-
-  return `${baseUrl}/${r2Key.split("/").map(encodeURIComponent).join("/")}`;
+  return `/api/media?key=${encodeURIComponent(r2Key)}`;
 }
 
 function getMediaPreviewKind(contentType: string) {
@@ -376,18 +371,11 @@ export default async function Home({ searchParams }: HomeProps) {
   if (activeMedia) {
     const previewKind = getMediaPreviewKind(activeMedia.contentType);
     if (previewKind === "text") {
-      const previewUrl = getMediaAssetUrl(activeMedia.r2Key);
-      if (previewUrl) {
-        try {
-          const res = await fetch(previewUrl, { cache: "no-store" });
-          if (res.ok) {
-            textPreviewContent = await res.text();
-          } else {
-            textPreviewContent = `Error loading text content: ${res.statusText}`;
-          }
-        } catch (err) {
-          textPreviewContent = `Error loading text content: ${err instanceof Error ? err.message : String(err)}`;
-        }
+      try {
+        const fileBuffer = await storageEngine.downloadFile(activeMedia.r2Key);
+        textPreviewContent = fileBuffer.toString("utf-8");
+      } catch (err) {
+        textPreviewContent = `Error loading text content: ${err instanceof Error ? err.message : String(err)}`;
       }
     }
   }

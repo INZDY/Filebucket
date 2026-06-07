@@ -1,7 +1,7 @@
 import { Cloud, LockKeyhole, BookOpenText, ImagePlus, Tags, Download } from "lucide-react";
 import { redirect } from "next/navigation";
 
-import { loginAction } from "@/app/login/actions";
+import { loginAction, loginWithProviderAction } from "@/app/login/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   }
 
   const params = await searchParams;
-  const hasError = params?.error === "invalid";
 
   return (
     <main className="grid min-h-screen grid-cols-1 lg:grid-cols-2 bg-[#0a0a0d] text-slate-100 antialiased overflow-hidden">
@@ -134,57 +133,111 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               <div>
                 <CardTitle className="text-2xl font-bold text-slate-50 tracking-tight">Login</CardTitle>
                 <CardDescription className="text-slate-400 text-xs mt-1">
-                  Use the admin credentials configured for this deployment.
+                  {process.env.NODE_ENV === "development"
+                    ? "Use the admin credentials or OAuth to access your private vault."
+                    : "Sign in using your configured Google or GitHub account."}
                 </CardDescription>
               </div>
             </CardHeader>
-            <CardContent>
-              <form action={loginAction} className="space-y-5">
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-300" htmlFor="email">
-                    Email Address
-                  </label>
-                  <Input
-                    autoComplete="email"
-                    autoFocus
-                    id="email"
-                    name="email"
-                    placeholder="admin@filebucket.local"
-                    required
-                    type="email"
-                    className="glass-input h-10 bg-slate-900/60 border-slate-800 text-slate-200 placeholder-slate-500 focus-visible:ring-1 focus-visible:ring-purple-500 text-sm"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-300" htmlFor="password">
-                    Password
-                  </label>
-                  <Input
-                    autoComplete="current-password"
-                    id="password"
-                    name="password"
-                    placeholder="Enter password"
-                    required
-                    type="password"
-                    className="glass-input h-10 bg-slate-900/60 border-slate-800 text-slate-200 placeholder-slate-500 focus-visible:ring-1 focus-visible:ring-purple-500 text-sm"
-                  />
-                </div>
-
-                {hasError ? (
-                  <div className="rounded-lg border border-red-500/20 bg-red-950/35 px-4 py-3 text-xs text-red-300 flex items-start gap-2.5 animate-shake">
-                    <div className="h-1.5 w-1.5 rounded-full bg-red-400 mt-1.5 shrink-0" />
-                    <span>Invalid email or password. Please verify the credentials.</span>
+            <CardContent className="space-y-5">
+              {process.env.NODE_ENV === "development" && (
+                <form action={loginAction} className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-300" htmlFor="email">
+                      Email Address
+                    </label>
+                    <Input
+                      autoComplete="email"
+                      autoFocus
+                      id="email"
+                      name="email"
+                      placeholder="admin@filebucket.local"
+                      required
+                      type="email"
+                      className="glass-input h-10 bg-slate-900/60 border-slate-800 text-slate-200 placeholder-slate-500 focus-visible:ring-1 focus-visible:ring-purple-500 text-sm"
+                    />
                   </div>
-                ) : null}
 
-                <Button 
-                  className="w-full h-10 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium shadow-md shadow-purple-600/10 hover:shadow-purple-600/25 transition-all duration-200" 
-                  type="submit"
-                >
-                  Sign in
-                </Button>
-              </form>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-300" htmlFor="password">
+                      Password
+                    </label>
+                    <Input
+                      autoComplete="current-password"
+                      id="password"
+                      name="password"
+                      placeholder="Enter password"
+                      required
+                      type="password"
+                      className="glass-input h-10 bg-slate-900/60 border-slate-800 text-slate-200 placeholder-slate-500 focus-visible:ring-1 focus-visible:ring-purple-500 text-sm"
+                    />
+                  </div>
+
+                  {params?.error === "invalid" && (
+                    <div className="rounded-lg border border-red-500/20 bg-red-950/35 px-4 py-3 text-xs text-red-300 flex items-start gap-2.5 animate-shake">
+                      <div className="h-1.5 w-1.5 rounded-full bg-red-400 mt-1.5 shrink-0" />
+                      <span>Invalid email or password. Please verify the credentials.</span>
+                    </div>
+                  )}
+
+                  <Button 
+                    className="w-full h-10 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium shadow-md shadow-purple-600/10 hover:shadow-purple-600/25 transition-all duration-200" 
+                    type="submit"
+                  >
+                    Sign in
+                  </Button>
+                </form>
+              )}
+
+              {process.env.NODE_ENV === "development" && (
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-slate-800" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-[#0a0a0d] px-2 text-slate-500">Or continue with</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <form action={async () => {
+                  "use server";
+                  await loginWithProviderAction("google");
+                }}>
+                  <Button
+                    type="submit"
+                    className="w-full h-10 bg-slate-900 hover:bg-slate-800 hover:text-white text-slate-200 border border-slate-800/80 font-medium flex items-center justify-center transition-all duration-200"
+                  >
+                    <svg className="mr-2 h-4 w-4 text-purple-400" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
+                      <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
+                    </svg>
+                    Sign in with Google
+                  </Button>
+                </form>
+
+                <form action={async () => {
+                  "use server";
+                  await loginWithProviderAction("github");
+                }}>
+                  <Button
+                    type="submit"
+                    className="w-full h-10 bg-slate-900 hover:bg-slate-800 hover:text-white text-slate-200 border border-slate-800/80 font-medium flex items-center justify-center transition-all duration-200"
+                  >
+                    <svg className="mr-2 h-4 w-4 text-indigo-400" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="github" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v-3.293c0-.319.192-.694.801-.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path>
+                    </svg>
+                    Sign in with GitHub
+                  </Button>
+                </form>
+              </div>
+
+              {params?.error && params.error !== "invalid" && (
+                <div className="rounded-lg border border-red-500/20 bg-red-950/35 px-4 py-3 text-xs text-red-300 flex items-start gap-2.5 animate-shake">
+                  <div className="h-1.5 w-1.5 rounded-full bg-red-400 mt-1.5 shrink-0" />
+                  <span>Access denied. Only the configured admin user can log in.</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

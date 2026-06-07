@@ -35,3 +35,9 @@ export async function logoutAction() {
     redirectTo: "/login",
   });
 }
+
+export async function loginWithProviderAction(provider: "google" | "github") {
+  await signIn(provider, {
+    redirectTo: "/",
+  });
+}

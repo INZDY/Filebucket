@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
+import GitHub from "next-auth/providers/github";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { compare } from "bcryptjs";
 import { z } from "zod";
@@ -11,15 +13,12 @@ const credentialsSchema = z.object({
   password: z.string().min(1),
 });
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
-  pages: {
-    signIn: "/login",
-  },
-  session: {
-    strategy: "jwt",
-  },
-  providers: [
+const isDev = process.env.NODE_ENV === "development";
+
+const providers = [];
+
+if (isDev) {
+  providers.push(
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
@@ -56,9 +55,40 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           image: user.image,
         };
       },
-    }),
-  ],
+    })
+  );
+}
+
+// Enable Google and GitHub OAuth providers
+providers.push(
+  Google({
+    allowDangerousEmailAccountLinking: true,
+  }),
+  GitHub({
+    allowDangerousEmailAccountLinking: true,
+  })
+);
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  pages: {
+    signIn: "/login",
+  },
+  session: {
+    strategy: "jwt",
+  },
+  providers,
   callbacks: {
+    async signIn({ user, account }) {
+      // For OAuth providers, restrict access to the single admin email
+      if (account?.provider === "google" || account?.provider === "github") {
+        const adminEmail = process.env.FILEBUCKET_ADMIN_EMAIL;
+        if (!adminEmail || user.email !== adminEmail) {
+          return false; // Reject sign in
+        }
+      }
+      return true;
+    },
     jwt({ token, user }) {
       if (user?.id) {
         token.id = user.id;
