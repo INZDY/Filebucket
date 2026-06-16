@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   BookOpenText,
   FileQuestion,
@@ -6,10 +10,14 @@ import {
   ImagePlus,
   Music,
   Video,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { NoteActionsMenu } from "@/app/notes/note-actions-menu";
 import { NoteEditor } from "@/app/notes/note-editor";
 import { MediaActionsMenu } from "@/app/media/media-actions-menu";
+import { compareAlphanumeric } from "@/lib/sorting";
+import { getMediaAssetUrl } from "@/lib/utils";
 
 type FolderEntry = {
   id: string;
@@ -65,7 +73,12 @@ interface ActiveWorkspaceProps {
   textPreviewContent: string;
   hasVaultContent: boolean;
   browserTitle: string;
-  getMediaAssetUrl: (r2Key: string) => string | null;
+  allMediaAssets: {
+    id: string;
+    filename: string;
+    contentType: string;
+    folderId: string | null;
+  }[];
 }
 
 function formatDate(value: Date) {
@@ -115,8 +128,92 @@ export function ActiveWorkspace({
   textPreviewContent,
   hasVaultContent,
   browserTitle,
-  getMediaAssetUrl,
+  allMediaAssets,
 }: ActiveWorkspaceProps) {
+  const router = useRouter();
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // 1. Identify the preview kind of the active media asset
+  const activeMediaKind = selectedMedia ? getMediaPreviewKind(selectedMedia.contentType) : null;
+
+  // 2. Filter the media assets to those in the same folder and with the same preview kind
+  const siblingMedia = selectedMedia && activeMediaKind !== "unsupported"
+    ? allMediaAssets
+        .filter(
+          (m) =>
+            m.folderId === (selectedMedia.folder?.id ?? null) &&
+            getMediaPreviewKind(m.contentType) === activeMediaKind
+        )
+        .slice()
+        .sort((a, b) => compareAlphanumeric(a.filename, b.filename))
+    : [];
+
+  // 3. Find the current, next, and previous items
+  const currentIndex = selectedMedia ? siblingMedia.findIndex((m) => m.id === selectedMedia.id) : -1;
+  const prevMedia = currentIndex > 0 ? siblingMedia[currentIndex - 1] : null;
+  const nextMedia = currentIndex >= 0 && currentIndex < siblingMedia.length - 1 ? siblingMedia[currentIndex + 1] : null;
+
+  const getNavigationHref = (media: typeof siblingMedia[number]) => {
+    const params = new URLSearchParams();
+    if (media.folderId) {
+      params.set("folder", media.folderId);
+    }
+    params.set("media", media.id);
+    return `/?${params.toString()}`;
+  };
+
+  const prevHref = prevMedia ? getNavigationHref(prevMedia) : null;
+  const nextHref = nextMedia ? getNavigationHref(nextMedia) : null;
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!selectedMedia) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA" ||
+        document.activeElement?.getAttribute("contenteditable") === "true"
+      ) {
+        return;
+      }
+
+      if (e.key === "ArrowLeft" && prevHref) {
+        router.push(prevHref);
+      } else if (e.key === "ArrowRight" && nextHref) {
+        router.push(nextHref);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedMedia, prevHref, nextHref, router]);
+
+  // Touch navigation handlers
+  const minSwipeDistance = 50;
+
+  function handleTouchStart(e: React.TouchEvent) {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    setTouchEnd(e.targetTouches[0].clientX);
+  }
+
+  function handleTouchEnd() {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe && nextHref) {
+      router.push(nextHref);
+    } else if (isRightSwipe && prevHref) {
+      router.push(prevHref);
+    }
+  }
   
   if (selectedNote) {
     return (
@@ -203,8 +300,24 @@ export function ActiveWorkspace({
             />
           </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto bg-[#101217] px-6 py-6">
-          <div className="flex min-h-full items-center justify-center">
+        <div
+          className="min-h-0 flex-1 overflow-y-auto bg-[#101217] px-6 py-6 relative group/media-nav"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="flex min-h-full items-center justify-center relative">
+            {/* Previous Media Chevron */}
+            {prevHref && (
+              <Link
+                href={prevHref}
+                className="absolute left-2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-slate-800 bg-[#171a20]/70 text-slate-400 hover:bg-[#1f242c]/90 hover:text-slate-100 opacity-0 group-hover/media-nav:opacity-100 transition-opacity duration-200 shadow-lg"
+                title="Previous media"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </Link>
+            )}
+
             {(() => {
               if (previewKind === "image" && previewUrl) {
                 // eslint-disable-next-line @next/next/no-img-element
@@ -217,7 +330,7 @@ export function ActiveWorkspace({
 
               if (previewKind === "audio" && previewUrl) {
                 return (
-                  <div className="w-full max-w-2xl rounded-md border border-slate-800 bg-[#191c22] p-5">
+                  <div className="w-full max-w-2xl rounded-md border border-slate-800 bg-[#191c22] p-5 z-0">
                     <div className="mb-4 flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-800 text-slate-300">
                         <Music className="h-5 w-5" />
@@ -246,7 +359,7 @@ export function ActiveWorkspace({
                 return (
                   <iframe
                     src={previewUrl}
-                    className="w-full h-full min-h-[calc(100vh-240px)] border-0 rounded-md bg-white shadow-md"
+                    className="w-full h-full min-h-[calc(100vh-240px)] border-0 rounded-md bg-white shadow-md z-0"
                   />
                 );
               }
@@ -275,6 +388,17 @@ export function ActiveWorkspace({
                 </div>
               );
             })()}
+
+            {/* Next Media Chevron */}
+            {nextHref && (
+              <Link
+                href={nextHref}
+                className="absolute right-2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-slate-800 bg-[#171a20]/70 text-slate-400 hover:bg-[#1f242c]/90 hover:text-slate-100 opacity-0 group-hover/media-nav:opacity-100 transition-opacity duration-200 shadow-lg"
+                title="Next media"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </Link>
+            )}
           </div>
         </div>
       </div>

@@ -7,6 +7,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { storageEngine } from "@/lib/storage";
+import { getMediaAssetUrl } from "@/lib/utils";
 
 import { SidebarBrowser } from "@/app/vault/sidebar-browser";
 import { ActiveWorkspace } from "@/app/vault/active-workspace";
@@ -14,6 +15,7 @@ import { TrashWorkspace } from "@/app/vault/trash-workspace";
 
 import { MainContentTabs } from "@/app/vault/main-content-tabs";
 import { ResizableVault } from "@/app/vault/resizable-vault";
+import { GlobalLoader } from "@/components/global-loader";
 
 type HomeProps = {
   searchParams?: Promise<{
@@ -131,9 +133,7 @@ function getContentHref({
   return `/${hrefParams.toString() ? `?${hrefParams.toString()}` : ""}`;
 }
 
-function getMediaAssetUrl(r2Key: string) {
-  return `/api/media?key=${encodeURIComponent(r2Key)}`;
-}
+// getMediaAssetUrl imported from @/lib/utils
 
 function getMediaPreviewKind(contentType: string) {
   if (contentType.startsWith("image/")) {
@@ -170,6 +170,7 @@ export default async function Home({ searchParams }: HomeProps) {
   const query = String(params?.q ?? "").trim();
   const activeTagSlug = String(params?.tag ?? "").trim();
   const isFilteredView = !isTrashView && Boolean(query || activeTagSlug);
+  const renderKey = new Date().getTime();
 
   const [folders, deletedFolders, deletedNotes, deletedMediaAssets, tags] = await Promise.all([
     prisma.folder.findMany({
@@ -556,6 +557,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
   return (
     <main className="h-screen overflow-hidden bg-[#0d0d11] text-slate-100">
+      <GlobalLoader renderKey={renderKey} />
       <div className="flex h-screen flex-col overflow-hidden">
         <header className="flex min-h-14 flex-col gap-3 border-b border-slate-800/40 bg-[#101015]/60 backdrop-blur-md px-4 py-2.5 md:flex-row md:items-center md:justify-between md:px-5">
           <div className="flex min-w-0 items-center gap-3">
@@ -633,7 +635,6 @@ export default async function Home({ searchParams }: HomeProps) {
                     selectedDeletedFolder={selectedDeletedFolder}
                     deletedFolderContents={deletedFolderContents}
                     textPreviewContent={textPreviewContent}
-                    getMediaAssetUrl={getMediaAssetUrl}
                     resolveDisplayMarkdown={resolveDisplayMarkdown}
                   />
                 ) : (
@@ -660,7 +661,7 @@ export default async function Home({ searchParams }: HomeProps) {
                     textPreviewContent={textPreviewContent}
                     hasVaultContent={hasVaultContent}
                     browserTitle={browserTitle}
-                    getMediaAssetUrl={getMediaAssetUrl}
+                    allMediaAssets={mediaAssets}
                   />
                 )}
               </MainContentTabs>

@@ -13,8 +13,10 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { restoreFolderAction, deleteFolderAction } from "@/app/folders/actions";
+import { compareAlphanumeric } from "@/lib/sorting";
 import { restoreNoteAction, deleteNoteAction } from "@/app/notes/actions";
 import { restoreMediaAssetAction, deleteMediaAssetAction } from "@/app/media/actions";
+import { getMediaAssetUrl } from "@/lib/utils";
 
 type FolderEntry = {
   id: string;
@@ -59,7 +61,6 @@ interface TrashWorkspaceProps {
     { id: string; filename: string; contentType: string; deletedAt: Date | string | null }[]
   ] | null;
   textPreviewContent: string;
-  getMediaAssetUrl: (r2Key: string) => string | null;
   resolveDisplayMarkdown: (body: string) => string;
 }
 
@@ -97,7 +98,6 @@ export function TrashWorkspace({
   selectedDeletedFolder,
   deletedFolderContents,
   textPreviewContent,
-  getMediaAssetUrl,
   resolveDisplayMarkdown,
 }: TrashWorkspaceProps) {
   
@@ -254,28 +254,37 @@ export function TrashWorkspace({
           <div className="divide-y divide-slate-800 rounded-md border border-slate-800 bg-[#161a23]/30">
             {deletedFolderContents && (
               <>
-                {deletedFolderContents[0].map((f) => (
-                  <div key={f.id} className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-300">
-                    <Folder className="h-4 w-4 text-slate-500 shrink-0" />
-                    <span className="min-w-0 flex-1 truncate">{f.name}</span>
-                    {f.deletedAt ? <Badge variant="outline" className="border-rose-900 bg-rose-950/20 text-[10px] text-rose-300">Trashed</Badge> : null}
-                  </div>
-                ))}
-                {deletedFolderContents[1].map((n) => (
-                  <div key={n.id} className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-300">
-                    <FileText className="h-4 w-4 text-slate-500 shrink-0" />
-                    <span className="min-w-0 flex-1 truncate">{n.title}</span>
-                    {n.deletedAt ? <Badge variant="outline" className="border-rose-900 bg-rose-950/20 text-[10px] text-rose-300">Trashed</Badge> : null}
-                  </div>
-                ))}
-                {deletedFolderContents[2].map((m) => (
-                  <div key={m.id} className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-300">
-                    <ImagePlus className="h-4 w-4 text-slate-500 shrink-0" />
-                    <span className="min-w-0 flex-1 truncate">{m.filename}</span>
-                    <span className="text-[10px] text-slate-500">{m.contentType}</span>
-                    {m.deletedAt ? <Badge variant="outline" className="border-rose-900 bg-rose-950/20 text-[10px] text-rose-300">Trashed</Badge> : null}
-                  </div>
-                ))}
+                {deletedFolderContents[0]
+                  .slice()
+                  .sort((a, b) => compareAlphanumeric(a.name, b.name))
+                  .map((f) => (
+                    <div key={f.id} className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-300">
+                      <Folder className="h-4 w-4 text-slate-500 shrink-0" />
+                      <span className="min-w-0 flex-1 truncate">{f.name}</span>
+                      {f.deletedAt ? <Badge variant="outline" className="border-rose-900 bg-rose-950/20 text-[10px] text-rose-300">Trashed</Badge> : null}
+                    </div>
+                  ))}
+                {deletedFolderContents[1]
+                  .slice()
+                  .sort((a, b) => compareAlphanumeric(a.title, b.title))
+                  .map((n) => (
+                    <div key={n.id} className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-300">
+                      <FileText className="h-4 w-4 text-slate-500 shrink-0" />
+                      <span className="min-w-0 flex-1 truncate">{n.title}</span>
+                      {n.deletedAt ? <Badge variant="outline" className="border-rose-900 bg-rose-950/20 text-[10px] text-rose-300">Trashed</Badge> : null}
+                    </div>
+                  ))}
+                {deletedFolderContents[2]
+                  .slice()
+                  .sort((a, b) => compareAlphanumeric(a.filename, b.filename))
+                  .map((m) => (
+                    <div key={m.id} className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-300">
+                      <ImagePlus className="h-4 w-4 text-slate-500 shrink-0" />
+                      <span className="min-w-0 flex-1 truncate">{m.filename}</span>
+                      <span className="text-[10px] text-slate-500">{m.contentType}</span>
+                      {m.deletedAt ? <Badge variant="outline" className="border-rose-900 bg-rose-950/20 text-[10px] text-rose-300">Trashed</Badge> : null}
+                    </div>
+                  ))}
                 {deletedFolderContents.every((rows) => rows.length === 0) ? (
                   <div className="px-3 py-6 text-center text-xs text-slate-500">This trashed folder is empty.</div>
                 ) : null}

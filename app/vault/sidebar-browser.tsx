@@ -19,6 +19,7 @@ import { SearchInput } from "@/components/search-input";
 import { BrowserToolbar } from "./browser-toolbar";
 import { BrowserTree } from "./browser-tree";
 import { cn } from "@/lib/utils";
+import { compareAlphanumeric } from "@/lib/sorting";
 
 import {
   restoreFolderAction,
@@ -262,64 +263,73 @@ export function SidebarBrowser({
               <p className="px-3 py-1 text-xs font-semibold uppercase text-slate-500">
                 {browserTitle}
               </p>
-              {matchingFolders.map((folder) => (
-                <Link
-                  key={`folder-result:${folder.id}`}
-                  className="flex h-9 min-w-0 items-center gap-2 rounded-md px-3 text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50"
-                  href={`/?folder=${folder.id}`}
-                >
-                  <Folder className="h-4 w-4 shrink-0 text-slate-400" />
-                  <span className="min-w-0 flex-1 truncate">{folder.name}</span>
-                  <span className="text-xs text-slate-500">
-                    {folder._count ? (folder._count.children ?? 0) + (folder._count.notes ?? 0) + (folder._count.mediaAssets ?? 0) : 0}
-                  </span>
-                </Link>
-              ))}
-              {notes.map((note) => (
-                <Link
-                  key={`note-result:${note.id}`}
-                  className={cn(
-                    "block rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50",
-                    selectedNote?.id === note.id && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
-                  )}
-                  href={getContentHref({
-                    folderId: note.folder?.id ?? null,
-                    noteId: note.id,
-                    query,
-                    tagSlug: activeTagSlug,
-                  })}
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <FileText className="h-4 w-4 shrink-0 text-slate-400" />
-                    <span className="min-w-0 flex-1 truncate">{note.title}</span>
-                  </span>
-                  <span className="mt-1 block truncate pl-6 text-xs text-slate-500">
-                    {note.folder?.name ?? "Vault"}
-                  </span>
-                </Link>
-              ))}
-              {mediaAssets.map((mediaAsset) => (
-                <Link
-                  key={`media-result:${mediaAsset.id}`}
-                  className={cn(
-                    "block rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50",
-                    selectedMedia?.id === mediaAsset.id && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
-                  )}
-                  href={getContentHref({
-                    folderId: mediaAsset.folder?.id ?? null,
-                    mediaId: mediaAsset.id,
-                    query,
-                  })}
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <ImagePlus className="h-4 w-4 shrink-0 text-slate-400" />
-                    <span className="min-w-0 flex-1 truncate">{mediaAsset.filename}</span>
-                  </span>
-                  <span className="mt-1 block truncate pl-6 text-xs text-slate-500">
-                    {mediaAsset.folder?.name ?? "Vault"}
-                  </span>
-                </Link>
-              ))}
+              {matchingFolders
+                .slice()
+                .sort((a, b) => compareAlphanumeric(a.name, b.name))
+                .map((folder) => (
+                  <Link
+                    key={`folder-result:${folder.id}`}
+                    className="flex h-9 min-w-0 items-center gap-2 rounded-md px-3 text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50"
+                    href={`/?folder=${folder.id}`}
+                  >
+                    <Folder className="h-4 w-4 shrink-0 text-slate-400" />
+                    <span className="min-w-0 flex-1 truncate">{folder.name}</span>
+                    <span className="text-xs text-slate-500">
+                      {folder._count ? (folder._count.children ?? 0) + (folder._count.notes ?? 0) + (folder._count.mediaAssets ?? 0) : 0}
+                    </span>
+                  </Link>
+                ))}
+              {notes
+                .slice()
+                .sort((a, b) => compareAlphanumeric(a.title, b.title))
+                .map((note) => (
+                  <Link
+                    key={`note-result:${note.id}`}
+                    className={cn(
+                      "block rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50",
+                      selectedNote?.id === note.id && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
+                    )}
+                    href={getContentHref({
+                      folderId: note.folder?.id ?? null,
+                      noteId: note.id,
+                      query,
+                      tagSlug: activeTagSlug,
+                    })}
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <FileText className="h-4 w-4 shrink-0 text-slate-400" />
+                      <span className="min-w-0 flex-1 truncate">{note.title}</span>
+                    </span>
+                    <span className="mt-1 block truncate pl-6 text-xs text-slate-500">
+                      {note.folder?.name ?? "Vault"}
+                    </span>
+                  </Link>
+                ))}
+              {mediaAssets
+                .slice()
+                .sort((a, b) => compareAlphanumeric(a.filename, b.filename))
+                .map((mediaAsset) => (
+                  <Link
+                    key={`media-result:${mediaAsset.id}`}
+                    className={cn(
+                      "block rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50",
+                      selectedMedia?.id === mediaAsset.id && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
+                    )}
+                    href={getContentHref({
+                      folderId: mediaAsset.folder?.id ?? null,
+                      mediaId: mediaAsset.id,
+                      query,
+                    })}
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <ImagePlus className="h-4 w-4 shrink-0 text-slate-400" />
+                      <span className="min-w-0 flex-1 truncate">{mediaAsset.filename}</span>
+                    </span>
+                    <span className="mt-1 block truncate pl-6 text-xs text-slate-500">
+                      {mediaAsset.folder?.name ?? "Vault"}
+                    </span>
+                  </Link>
+                ))}
               {matchingFolders.length === 0 && notes.length === 0 && mediaAssets.length === 0 ? (
                 <div className="px-3 py-5 text-sm text-slate-500">No matching vault content</div>
               ) : null}
@@ -372,155 +382,164 @@ export function SidebarBrowser({
             </div>
 
             <nav className="space-y-1.5" aria-label="Trashed items">
-              {deletedFolders.map((folder) => {
-                const isSelected = selectedDeletedFolder?.id === folder.id;
-                return (
-                  <div
-                    key={`deleted-folder:${folder.id}`}
-                    className="group flex h-9 items-center justify-between rounded-md px-2 transition-colors hover:bg-slate-800/60"
-                  >
-                    <Link
-                      href={`/?view=trash&folder=${folder.id}`}
-                      className={cn(
-                        "flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-300 hover:text-slate-50",
-                        isSelected && "text-purple-200"
-                      )}
+              {deletedFolders
+                .slice()
+                .sort((a, b) => compareAlphanumeric(a.name, b.name))
+                .map((folder) => {
+                  const isSelected = selectedDeletedFolder?.id === folder.id;
+                  return (
+                    <div
+                      key={`deleted-folder:${folder.id}`}
+                      className="group flex h-9 items-center justify-between rounded-md px-2 transition-colors hover:bg-slate-800/60"
                     >
-                      <Folder className="h-4 w-4 shrink-0 text-slate-400" />
-                      <span className="truncate" title={folder.name}>{folder.name}</span>
-                    </Link>
-                    <div className="flex items-center gap-1 shrink-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
-                      <ClientForm action={restoreFolderAction}>
-                        <input type="hidden" name="folderId" value={folder.id} />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          type="submit"
-                          className="h-7 w-7 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
-                          title="Restore folder"
-                        >
-                          <RotateCcw className="h-3.5 w-3.5" />
-                        </Button>
-                      </ClientForm>
-                      <ConfirmForm
-                        action={deleteFolderAction}
-                        message={`Are you sure you want to permanently delete the folder '${folder.name}' and all of its contents? This action cannot be undone.`}
+                      <Link
+                        href={`/?view=trash&folder=${folder.id}`}
+                        className={cn(
+                          "flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-300 hover:text-slate-50",
+                          isSelected && "text-purple-200"
+                        )}
                       >
-                        <input type="hidden" name="folderId" value={folder.id} />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          type="submit"
-                          className="h-7 w-7 text-rose-400 hover:bg-rose-950/30 hover:text-rose-300"
-                          title="Permanently delete folder"
+                        <Folder className="h-4 w-4 shrink-0 text-slate-400" />
+                        <span className="truncate" title={folder.name}>{folder.name}</span>
+                      </Link>
+                      <div className="flex items-center gap-1 shrink-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
+                        <ClientForm action={restoreFolderAction}>
+                          <input type="hidden" name="folderId" value={folder.id} />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            type="submit"
+                            className="h-7 w-7 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                            title="Restore folder"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          </Button>
+                        </ClientForm>
+                        <ConfirmForm
+                          action={deleteFolderAction}
+                          message={`Are you sure you want to permanently delete the folder '${folder.name}' and all of its contents? This action cannot be undone.`}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </ConfirmForm>
+                          <input type="hidden" name="folderId" value={folder.id} />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            type="submit"
+                            className="h-7 w-7 text-rose-400 hover:bg-rose-950/30 hover:text-rose-300"
+                            title="Permanently delete folder"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </ConfirmForm>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
 
-              {deletedNotes.map((note) => {
-                const isSelected = selectedDeletedNote?.id === note.id;
-                return (
-                  <div
-                    key={`deleted-note:${note.id}`}
-                    className="group flex h-9 items-center justify-between rounded-md px-2 transition-colors hover:bg-slate-800/60"
-                  >
-                    <Link
-                      href={`/?view=trash&note=${note.id}`}
-                      className={cn(
-                        "flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-300 hover:text-slate-50",
-                        isSelected && "text-purple-200"
-                      )}
+              {deletedNotes
+                .slice()
+                .sort((a, b) => compareAlphanumeric(a.title, b.title))
+                .map((note) => {
+                  const isSelected = selectedDeletedNote?.id === note.id;
+                  return (
+                    <div
+                      key={`deleted-note:${note.id}`}
+                      className="group flex h-9 items-center justify-between rounded-md px-2 transition-colors hover:bg-slate-800/60"
                     >
-                      <FileText className="h-4 w-4 shrink-0 text-slate-400" />
-                      <span className="truncate" title={note.title}>{note.title}</span>
-                    </Link>
-                    <div className="flex items-center gap-1 shrink-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
-                      <ClientForm action={restoreNoteAction}>
-                        <input type="hidden" name="noteId" value={note.id} />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          type="submit"
-                          className="h-7 w-7 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
-                          title="Restore note"
-                        >
-                          <RotateCcw className="h-3.5 w-3.5" />
-                        </Button>
-                      </ClientForm>
-                      <ConfirmForm
-                        action={deleteNoteAction}
-                        message={`Are you sure you want to permanently delete the note '${note.title}'? This action cannot be undone.`}
+                      <Link
+                        href={`/?view=trash&note=${note.id}`}
+                        className={cn(
+                          "flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-300 hover:text-slate-50",
+                          isSelected && "text-purple-200"
+                        )}
                       >
-                        <input type="hidden" name="noteId" value={note.id} />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          type="submit"
-                          className="h-7 w-7 text-rose-400 hover:bg-rose-950/30 hover:text-rose-300"
-                          title="Permanently delete note"
+                        <FileText className="h-4 w-4 shrink-0 text-slate-400" />
+                        <span className="truncate" title={note.title}>{note.title}</span>
+                      </Link>
+                      <div className="flex items-center gap-1 shrink-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
+                        <ClientForm action={restoreNoteAction}>
+                          <input type="hidden" name="noteId" value={note.id} />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            type="submit"
+                            className="h-7 w-7 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                            title="Restore note"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          </Button>
+                        </ClientForm>
+                        <ConfirmForm
+                          action={deleteNoteAction}
+                          message={`Are you sure you want to permanently delete the note '${note.title}'? This action cannot be undone.`}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </ConfirmForm>
+                          <input type="hidden" name="noteId" value={note.id} />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            type="submit"
+                            className="h-7 w-7 text-rose-400 hover:bg-rose-950/30 hover:text-rose-300"
+                            title="Permanently delete note"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </ConfirmForm>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
 
-              {deletedMediaAssets.map((media) => {
-                const isSelected = selectedDeletedMedia?.id === media.id;
-                return (
-                  <div
-                    key={`deleted-media:${media.id}`}
-                    className="group flex h-9 items-center justify-between rounded-md px-2 transition-colors hover:bg-slate-800/60"
-                  >
-                    <Link
-                      href={`/?view=trash&media=${media.id}`}
-                      className={cn(
-                        "flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-300 hover:text-slate-50",
-                        isSelected && "text-purple-200"
-                      )}
+              {deletedMediaAssets
+                .slice()
+                .sort((a, b) => compareAlphanumeric(a.filename, b.filename))
+                .map((media) => {
+                  const isSelected = selectedDeletedMedia?.id === media.id;
+                  return (
+                    <div
+                      key={`deleted-media:${media.id}`}
+                      className="group flex h-9 items-center justify-between rounded-md px-2 transition-colors hover:bg-slate-800/60"
                     >
-                      <ImagePlus className="h-4 w-4 shrink-0 text-slate-400" />
-                      <span className="truncate" title={media.filename}>{media.filename}</span>
-                    </Link>
-                    <div className="flex items-center gap-1 shrink-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
-                      <ClientForm action={restoreMediaAssetAction}>
-                        <input type="hidden" name="mediaAssetId" value={media.id} />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          type="submit"
-                          className="h-7 w-7 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
-                          title="Restore media asset"
-                        >
-                          <RotateCcw className="h-3.5 w-3.5" />
-                        </Button>
-                      </ClientForm>
-                      <ConfirmForm
-                        action={deleteMediaAssetAction}
-                        message={`Are you sure you want to permanently delete the media asset '${media.filename}'? This action cannot be undone.`}
+                      <Link
+                        href={`/?view=trash&media=${media.id}`}
+                        className={cn(
+                          "flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-300 hover:text-slate-50",
+                          isSelected && "text-purple-200"
+                        )}
                       >
-                        <input type="hidden" name="mediaAssetId" value={media.id} />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          type="submit"
-                          className="h-7 w-7 text-rose-400 hover:bg-rose-950/30 hover:text-rose-300"
-                          title="Permanently delete media asset"
+                        <ImagePlus className="h-4 w-4 shrink-0 text-slate-400" />
+                        <span className="truncate" title={media.filename}>{media.filename}</span>
+                      </Link>
+                      <div className="flex items-center gap-1 shrink-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
+                        <ClientForm action={restoreMediaAssetAction}>
+                          <input type="hidden" name="mediaAssetId" value={media.id} />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            type="submit"
+                            className="h-7 w-7 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                            title="Restore media asset"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          </Button>
+                        </ClientForm>
+                        <ConfirmForm
+                          action={deleteMediaAssetAction}
+                          message={`Are you sure you want to permanently delete the media asset '${media.filename}'? This action cannot be undone.`}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </ConfirmForm>
+                          <input type="hidden" name="mediaAssetId" value={media.id} />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            type="submit"
+                            className="h-7 w-7 text-rose-400 hover:bg-rose-950/30 hover:text-rose-300"
+                            title="Permanently delete media asset"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </ConfirmForm>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
 
               {trashCount === 0 ? (
                 <div className="px-3 py-6 text-center text-xs text-slate-500">

@@ -13,6 +13,7 @@ import { moveNoteAction } from "@/app/notes/actions";
 import { MediaRow } from "@/app/media/media-row";
 import { moveMediaAssetAction } from "@/app/media/actions";
 import { cn } from "@/lib/utils";
+import { compareAlphanumeric } from "@/lib/sorting";
 
 type BrowserTreeProps = {
   folders: {
@@ -190,18 +191,18 @@ export function BrowserTree({
 
   // Recursive tree row builder with alphabetical sorting
   function renderVaultTree(parentId: string | null, depth: number): ReactNode[] {
-    // Sort alphabetically (case-insensitive)
+    // Sort naturally (case-insensitive)
     const sortedFolders = (foldersByParent.get(parentId) ?? [])
       .slice()
-      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+      .sort((a, b) => compareAlphanumeric(a.name, b.name));
 
     const sortedNotes = (notesByFolder.get(parentId) ?? [])
       .slice()
-      .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: "base" }));
+      .sort((a, b) => compareAlphanumeric(a.title, b.title));
 
     const sortedMedia = (mediaByFolder.get(parentId) ?? [])
       .slice()
-      .sort((a, b) => a.filename.localeCompare(b.filename, undefined, { sensitivity: "base" }));
+      .sort((a, b) => compareAlphanumeric(a.filename, b.filename));
 
     return [
       ...sortedFolders.flatMap((folder) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { HardDriveUpload, RefreshCw, X } from "lucide-react";
+import { HardDriveUpload, RefreshCw, X, ChevronDown, ChevronUp } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { getPresignedUploadUrlAction, createMediaAssetAction } from "@/app/media/actions";
@@ -46,6 +46,7 @@ function formatSize(size: number) {
 export function MediaUploadControl({ disabled, folderId }: MediaUploadControlProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploads, setUploads] = useState<UploadState[]>([]);
+  const [showDetails, setShowDetails] = useState(false);
 
   function updateUploadStatus(id: string, updates: Partial<UploadState>) {
     setUploads((prev) =>
@@ -126,7 +127,8 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
       };
     });
 
-    setUploads((prev) => [...newUploads, ...prev].slice(0, 5)); // Keep last 5 upload history
+    setUploads((prev) => [...newUploads, ...prev]);
+    setShowDetails(true);
 
     // Run upload sequence
     for (const upload of newUploads) {
@@ -165,87 +167,144 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
       </Button>
 
       {uploads.length > 0 ? (
-        <div className="absolute left-3 right-3 top-16 z-30 space-y-1.5 rounded-md border border-slate-800 bg-[#111318] p-2.5 text-slate-100 shadow-xl max-w-sm">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-400 border-b border-slate-800 pb-1.5">
-            <span>Uploads</span>
-            <Button
-              className="h-4 w-4 p-0 hover:bg-slate-800 hover:text-slate-100"
-              onClick={() => setUploads([])}
-              size="icon"
-              variant="ghost"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </div>
-          <div className="max-h-48 overflow-y-auto space-y-2 pt-1.5">
-            {uploads.map((upload) => (
-              <div key={upload.id} className="relative text-xs">
-                <div className="flex min-w-0 items-center justify-between gap-2">
-                  <span className="truncate font-medium text-slate-200" title={upload.name}>
-                    {upload.name}
+        (() => {
+          const totalCount = uploads.length;
+          const activeCount = uploads.filter((u) => u.status === "uploading" || u.status === "waiting").length;
+          const completedCount = uploads.filter((u) => u.status === "success").length;
+          const failedCount = uploads.filter((u) => u.status === "error" || u.status === "unsupported").length;
+
+          const overallProgress = totalCount > 0
+            ? Math.round(uploads.reduce((sum, u) => sum + u.progress, 0) / totalCount)
+            : 0;
+
+          return (
+            <div className="absolute left-3 right-3 top-16 z-30 space-y-2 rounded-md border border-slate-800 bg-[#111318] p-3 text-slate-100 shadow-xl max-w-sm">
+              {/* Summary Header */}
+              <div className="flex items-center justify-between text-xs border-b border-slate-800/80 pb-2">
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <span className="font-semibold text-slate-200 truncate">
+                    {activeCount > 0
+                      ? `Uploading: ${completedCount}/${totalCount} files`
+                      : `Uploads complete (${completedCount} success, ${failedCount} failed)`}
                   </span>
-                  <span className="shrink-0 text-[10px] text-slate-500">
-                    {formatSize(upload.size)}
-                  </span>
+                  {activeCount > 0 && (
+                    <span className="text-[10px] text-slate-400">
+                      {overallProgress}% overall
+                    </span>
+                  )}
                 </div>
-                <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-800">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all duration-300",
-                      upload.status === "success" && "bg-teal-500 w-full",
-                      upload.status === "uploading" && "bg-blue-500",
-                      upload.status === "error" && "bg-rose-500 w-full",
-                      upload.status === "unsupported" && "bg-rose-500 w-full",
-                      upload.status === "waiting" && "bg-amber-500 w-1/12"
-                    )}
-                    style={upload.status === "uploading" ? { width: `${upload.progress}%` } : undefined}
-                  />
-                </div>
-                <div className="mt-1 flex items-center justify-between gap-2 text-[10px]">
-                  <span
-                    className={cn(
-                      upload.status === "success" && "text-teal-400",
-                      upload.status === "uploading" && "text-blue-400",
-                      upload.status === "error" && "text-rose-400",
-                      upload.status === "unsupported" && "text-rose-400",
-                      upload.status === "waiting" && "text-amber-400"
-                    )}
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                    onClick={() => setShowDetails((d) => !d)}
+                    type="button"
+                    title={showDetails ? "Hide details" : "Show details"}
                   >
-                    {upload.status === "uploading" && `Uploading ${upload.progress}%`}
-                    {upload.status === "success" && "Upload completed"}
-                    {upload.status === "error" && (upload.error || "Upload failed")}
-                    {upload.status === "unsupported" && (upload.error || "Unsupported")}
-                    {upload.status === "waiting" && "Queued..."}
-                  </span>
-                  <div className="flex gap-1">
-                    {upload.status === "error" ? (
-                      <Button
-                        aria-label="Retry upload"
-                        className="h-4 w-4 p-0 text-slate-400 hover:bg-slate-700 hover:text-slate-100"
-                        onClick={() => performUpload(upload)}
-                        size="icon"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <RefreshCw className="h-2.5 w-2.5" />
-                      </Button>
-                    ) : null}
-                    <Button
-                      aria-label="Remove upload item"
-                      className="h-4 w-4 p-0 text-slate-400 hover:bg-slate-700 hover:text-slate-100"
-                      onClick={() => removeUpload(upload.id)}
-                      size="icon"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <X className="h-2.5 w-2.5" />
-                    </Button>
-                  </div>
+                    {showDetails ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                  </Button>
+                  <Button
+                    className="h-5 w-5 p-0 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+                    onClick={() => {
+                      setUploads([]);
+                      setShowDetails(false);
+                    }}
+                    size="icon"
+                    variant="ghost"
+                    type="button"
+                    title="Clear uploads"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+
+              {/* Overall Progress Bar */}
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-300",
+                    activeCount > 0 ? "bg-purple-500 animate-pulse" : failedCount > 0 ? "bg-amber-500" : "bg-teal-500"
+                  )}
+                  style={{ width: `${overallProgress}%` }}
+                />
+              </div>
+
+              {/* Detail list of files */}
+              {showDetails && (
+                <div className="max-h-48 overflow-y-auto space-y-2 pt-1 border-t border-slate-800/80 mt-2">
+                  {uploads.map((upload) => (
+                    <div key={upload.id} className="relative text-xs py-1">
+                      <div className="flex min-w-0 items-center justify-between gap-2">
+                        <span className="truncate font-medium text-slate-200 max-w-[200px]" title={upload.name}>
+                          {upload.name}
+                        </span>
+                        <span className="shrink-0 text-[10px] text-slate-500">
+                          {formatSize(upload.size)}
+                        </span>
+                      </div>
+                      <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-800">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-300",
+                            upload.status === "success" && "bg-teal-500 w-full",
+                            upload.status === "uploading" && "bg-blue-500",
+                            upload.status === "error" && "bg-rose-500 w-full",
+                            upload.status === "unsupported" && "bg-rose-500 w-full",
+                            upload.status === "waiting" && "bg-amber-500 w-1/12"
+                          )}
+                          style={upload.status === "uploading" ? { width: `${upload.progress}%` } : undefined}
+                        />
+                      </div>
+                      <div className="mt-1 flex items-center justify-between gap-2 text-[10px]">
+                        <span
+                          className={cn(
+                            upload.status === "success" && "text-teal-400",
+                            upload.status === "uploading" && "text-blue-400",
+                            upload.status === "error" && "text-rose-400",
+                            upload.status === "unsupported" && "text-rose-400",
+                            upload.status === "waiting" && "text-amber-400"
+                          )}
+                        >
+                          {upload.status === "uploading" && `Uploading ${upload.progress}%`}
+                          {upload.status === "success" && "Upload completed"}
+                          {upload.status === "error" && (upload.error || "Upload failed")}
+                          {upload.status === "unsupported" && (upload.error || "Unsupported")}
+                          {upload.status === "waiting" && "Queued..."}
+                        </span>
+                        <div className="flex gap-1">
+                          {upload.status === "error" ? (
+                            <Button
+                              aria-label="Retry upload"
+                              className="h-4 w-4 p-0 text-slate-400 hover:bg-slate-700 hover:text-slate-100"
+                              onClick={() => performUpload(upload)}
+                              size="icon"
+                              type="button"
+                              variant="ghost"
+                            >
+                              <RefreshCw className="h-2.5 w-2.5" />
+                            </Button>
+                          ) : null}
+                          <Button
+                            aria-label="Remove upload item"
+                            className="h-4 w-4 p-0 text-slate-400 hover:bg-slate-700 hover:text-slate-100"
+                            onClick={() => removeUpload(upload.id)}
+                            size="icon"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <X className="h-2.5 w-2.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()
       ) : null}
     </div>
   );
