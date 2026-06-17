@@ -60,6 +60,12 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## 5. Git and Version Control Standards
+
+- Follow clean version control practices.
+- Commit messages should be structured, imperative, and cover exactly the scope of changes (e.g. `feat: add ...` or `fix: resolve ...`).
+- Avoid batching unrelated changes into a single commit; split modifications into logical atomic changes.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
