@@ -1,11 +1,9 @@
 import {
   Cloud,
-  Download,
 } from "lucide-react";
 
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Button } from "@/components/ui/button";
 import { storageEngine } from "@/lib/storage";
 import { getMediaAssetUrl } from "@/lib/utils";
 
@@ -16,6 +14,7 @@ import { TrashWorkspace } from "@/app/vault/trash-workspace";
 import { MainContentTabs } from "@/app/vault/main-content-tabs";
 import { ResizableVault } from "@/app/vault/resizable-vault";
 import { GlobalLoader } from "@/components/global-loader";
+import { ExportButton } from "@/components/export-button";
 
 type HomeProps = {
   searchParams?: Promise<{
@@ -570,21 +569,7 @@ export default async function Home({ searchParams }: HomeProps) {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="hidden min-w-0 rounded-md border border-slate-700 bg-[#1b1f27] px-3 py-1.5 text-sm text-slate-400 md:block">
-              <span className="block max-w-[220px] truncate">{session.email}</span>
-            </div>
-            <Button
-              variant="outline"
-              className="w-full border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800 sm:w-auto"
-              asChild
-            >
-              <a href="/api/export" download>
-                <Download className="mr-2 h-4 w-4" />
-                Export Vault
-              </a>
-            </Button>
-          </div>
+          <ExportButton email={session.email} />
         </header>
 
         <ResizableVault
