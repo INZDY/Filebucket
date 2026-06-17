@@ -133,7 +133,7 @@ export function MediaRow({
         </Button>
       )}
 
-      {menu ? (
+      {menu && menu.mode !== "rename" ? (
         <div
           className="fixed z-50 w-56 rounded-md border border-slate-800/80 bg-[#14141a]/95 backdrop-blur-md p-1 text-slate-100 shadow-xl"
           onClick={(event) => event.stopPropagation()}
