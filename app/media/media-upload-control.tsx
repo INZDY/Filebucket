@@ -32,7 +32,7 @@ const ACCEPTED_TYPES = [
   "application/x-zip-compressed",
   "application/x-cbz",
 ];
-const MAX_SIZE_BYTES = 100 * 1024 * 1024;
+const MAX_SIZE_BYTES = 4 * 1024 * 1024 * 1024; // 4 GB
 
 function isAccepted(file: File) {
   const isMimeAccepted = ACCEPTED_TYPES.some((type) => file.type === type || file.type.startsWith(type));
@@ -126,7 +126,7 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
         error: isOk
           ? ""
           : file.size > MAX_SIZE_BYTES
-          ? "File exceeds 100 MB"
+          ? "File exceeds 4 GB"
           : "Unsupported file type",
         file,
       };
