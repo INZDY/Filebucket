@@ -1,0 +1,103 @@
+import { describe, it, expect, vi } from "vitest";
+import React from "react";
+import { createRoot } from "react-dom/client";
+import { act } from "react";
+import { MainContentTabs } from "@/app/vault/main-content-tabs";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
+
+describe("MainContentTabs", () => {
+  it("should open notes in separate tabs but reuse a single media tab", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    const activeTabNote1 = {
+      id: "note-1",
+      type: "note" as const,
+      title: "Note 1",
+      href: "/?note=note-1",
+    };
+
+    const activeTabNote2 = {
+      id: "note-2",
+      type: "note" as const,
+      title: "Note 2",
+      href: "/?note=note-2",
+    };
+
+    const activeTabMedia1 = {
+      id: "media-1",
+      type: "media" as const,
+      title: "Image 1.png",
+      href: "/?media=media-1",
+    };
+
+    const activeTabMedia2 = {
+      id: "media-2",
+      type: "media" as const,
+      title: "Image 2.png",
+      href: "/?media=media-2",
+    };
+
+    // 1. Render first note
+    await act(async () => {
+      root.render(
+        <MainContentTabs activeTab={activeTabNote1} fallbackHref="/">
+          <div>Content</div>
+        </MainContentTabs>
+      );
+    });
+
+    expect(container.textContent).toContain("Note 1");
+
+    // 2. Render second note
+    await act(async () => {
+      root.render(
+        <MainContentTabs activeTab={activeTabNote2} fallbackHref="/">
+          <div>Content</div>
+        </MainContentTabs>
+      );
+    });
+
+    expect(container.textContent).toContain("Note 1");
+    expect(container.textContent).toContain("Note 2");
+
+    // 3. Render first media asset
+    await act(async () => {
+      root.render(
+        <MainContentTabs activeTab={activeTabMedia1} fallbackHref="/">
+          <div>Content</div>
+        </MainContentTabs>
+      );
+    });
+
+    expect(container.textContent).toContain("Note 1");
+    expect(container.textContent).toContain("Note 2");
+    expect(container.textContent).toContain("Image 1.png");
+
+    // 4. Render second media asset - should replace the first media asset tab
+    await act(async () => {
+      root.render(
+        <MainContentTabs activeTab={activeTabMedia2} fallbackHref="/">
+          <div>Content</div>
+        </MainContentTabs>
+      );
+    });
+
+    expect(container.textContent).toContain("Note 1");
+    expect(container.textContent).toContain("Note 2");
+    expect(container.textContent).not.toContain("Image 1.png");
+    expect(container.textContent).toContain("Image 2.png");
+
+    // Clean up
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
+});

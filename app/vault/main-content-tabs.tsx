@@ -32,9 +32,12 @@ export function MainContentTabs({ activeTab, existingIds, fallbackHref, children
     }
 
     setTabs((currentTabs) => {
-      const existingIndex = currentTabs.findIndex(
-        (tab) => tab.id === activeTab.id && tab.type === activeTab.type,
-      );
+      const existingIndex = currentTabs.findIndex((tab) => {
+        if (activeTab.type === "media") {
+          return tab.type === "media";
+        }
+        return tab.id === activeTab.id && tab.type === activeTab.type;
+      });
 
       if (existingIndex === -1) {
         return [...currentTabs, activeTab];
