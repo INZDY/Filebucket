@@ -2,7 +2,7 @@ const CACHE_NAME = "filebucket-v1";
 const STATIC_ASSETS = [
   "/",
   "/login",
-  "/icon.jpg",
+  "/icon.svg",
 ];
 
 // Install Event: pre-cache static entry screens
