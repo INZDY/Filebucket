@@ -42,6 +42,23 @@ _Avoid_: Deleted embed, removed attachment, broken note
 Behavior where a user views or plays a media asset directly in Filebucket without downloading it first. MVP media preview covers simple fit-to-pane images, audio and video with browser playback controls, and in-app PDF and TXT previews within main content tabs. Navigating within a folder allows moving between active media assets of the same preview kind (e.g. image to next image, video to next video, PDF to next PDF) using on-screen chevrons, left/right arrow keys, or touch swipe gestures.
 _Avoid_: Download, external viewer, attachment only
 
+**Manga Reader**:
+A fullscreen overlay utility launched from an image media preview that enables sequential image reading. It can paginate through loose images inside a folder or dynamically extract images from an uploaded ZIP or CBZ archive.
+_Avoid_: Comic viewer, book reader, gallery preview
+
+**Webtoon Mode**:
+A layout configuration inside the Manga Reader that displays all image pages stacked vertically in a single continuous scrollable view.
+_Avoid_: Scroll view, vertical mode
+
+**Paged Mode**:
+A layout configuration inside the Manga Reader that displays images one-by-one, supporting horizontal page navigation (Left-to-Right or Right-to-Left).
+_Avoid_: Single page mode, flip mode
+
+**Standalone Mode**:
+The display setting of the PWA when launched from the home screen or dock, running the application in a borderless window without standard browser navigation bars.
+_Avoid_: Fullscreen window, browser mode
+
+
 **Main Content Pane**:
 The primary work area where opened notes are edited as Markdown or opened media assets are previewed in lightweight tabs on a single scrollable tab row. Selecting a note opens a tab or focuses its existing tab, while selecting any media asset opens or focuses a single reusable media tab that replaces the previously previewed media asset; folder selection does not replace already opened content or create a tab. The active opened content should be restorable, while the wider open tab set may stay temporary for MVP. Note tabs protect unsaved editor state on close, while media tabs can close immediately. Before any note or media is opened, the main content pane may stay a quiet blank work surface. A broader keyboard shortcut system is a later interaction layer, not required to define MVP tab behavior. The main content pane is UI language, not a separate domain entity.
 _Avoid_: Middle panel, item list, viewer

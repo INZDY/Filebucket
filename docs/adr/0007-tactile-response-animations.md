@@ -1,0 +1,3 @@
+# Tactile Response Animations and Sidebar Transitions
+
+To enhance the visual responsiveness of the workbench, we decided to implement micro-animations using Tailwind CSS utility classes and custom keyframe transitions in `globals.css` instead of introducing heavy runtime animation libraries. Buttons scale down slightly when pressed (`active:scale-95 duration-100 transition-transform`), mobile drawer panels slide in using translation transforms (`transition-transform duration-300 ease-in-out`), and page transitions fade or slide, ensuring high-performance CSS composition with zero bundle size impact.
