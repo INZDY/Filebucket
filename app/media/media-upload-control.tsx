@@ -135,6 +135,11 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
     setUploads((prev) => [...newUploads, ...prev]);
     setShowDetails(true);
 
+    // Reset file input value to allow uploading the same file again immediately
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+
     // Run upload sequence
     for (const upload of newUploads) {
       if (upload.status === "waiting") {
@@ -225,14 +230,16 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
                 </div>
               </div>
 
-              {/* Overall Progress Bar */}
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
                 <div
                   className={cn(
                     "h-full rounded-full transition-all duration-300",
-                    activeCount > 0 ? "bg-purple-500 animate-pulse" : failedCount > 0 ? "bg-amber-500" : "bg-teal-500"
+                    activeCount > 0 ? "bg-purple-500" : failedCount > 0 ? "bg-amber-500" : "bg-teal-500"
                   )}
-                  style={{ width: `${overallProgress}%` }}
+                  style={{
+                    width: `${overallProgress}%`,
+                    animation: activeCount > 0 ? "pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite" : undefined
+                  }}
                 />
               </div>
 
