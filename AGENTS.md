@@ -63,6 +63,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ## 5. Git and Version Control Standards
 
 - Follow clean version control practices.
+- Always create and work in appropriate branches (e.g. `feat/...` or `fix/...`) when making changes rather than committing directly to `main`.
 - Commit messages should be structured, imperative, and cover exactly the scope of changes (e.g. `feat: add ...` or `fix: resolve ...`).
 - Avoid batching unrelated changes into a single commit; split modifications into logical atomic changes.
 
