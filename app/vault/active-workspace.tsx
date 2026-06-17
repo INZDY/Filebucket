@@ -11,12 +11,16 @@ import {
   Video,
   ChevronLeft,
   ChevronRight,
+  BookOpen,
+  Loader2,
 } from "lucide-react";
 import { NoteActionsMenu } from "@/app/notes/note-actions-menu";
 import { NoteEditor } from "@/app/notes/note-editor";
 import { MediaActionsMenu } from "@/app/media/media-actions-menu";
 import { compareAlphanumeric } from "@/lib/sorting";
 import { getMediaAssetUrl } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { MangaReader, type ReaderPage } from "@/components/manga-reader";
 
 type FolderEntry = {
   id: string;
@@ -76,35 +80,25 @@ interface ActiveWorkspaceProps {
     id: string;
     filename: string;
     contentType: string;
+    r2Key: string;
     folderId: string | null;
   }[];
 }
 
-function getMediaPreviewKind(contentType: string) {
-  if (contentType.startsWith("image/")) {
-    return "image";
-  }
-
-  if (contentType.startsWith("audio/")) {
-    return "audio";
-  }
-
-  if (contentType.startsWith("video/")) {
-    return "video";
-  }
-
-  if (contentType === "application/pdf") {
-    return "pdf";
-  }
-
+function getMediaPreviewKind(contentType: string, filename = "") {
+  if (contentType.startsWith("image/")) return "image";
+  if (contentType.startsWith("audio/")) return "audio";
+  if (contentType.startsWith("video/")) return "video";
+  if (contentType === "application/pdf") return "pdf";
+  if (contentType.startsWith("text/") || contentType === "application/json") return "text";
   if (
-    contentType.startsWith("text/") ||
-    contentType === "application/json" ||
-    contentType === "application/javascript"
+    contentType === "application/zip" ||
+    contentType === "application/x-zip-compressed" ||
+    filename.endsWith(".zip") ||
+    filename.endsWith(".cbz")
   ) {
-    return "text";
+    return "archive";
   }
-
   return "unsupported";
 }
 
@@ -125,8 +119,14 @@ export function ActiveWorkspace({
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
+  // Manga Reader states
+  const [isReaderOpen, setIsReaderOpen] = useState(false);
+  const [archivePages, setArchivePages] = useState<ReaderPage[]>([]);
+  const [isArchiveLoading, setIsArchiveLoading] = useState(false);
+  const [archiveError, setArchiveError] = useState("");
+
   // 1. Identify the preview kind of the active media asset
-  const activeMediaKind = selectedMedia ? getMediaPreviewKind(selectedMedia.contentType) : null;
+  const activeMediaKind = selectedMedia ? getMediaPreviewKind(selectedMedia.contentType, selectedMedia.filename) : null;
 
   // 2. Filter the media assets to those in the same folder and with the same preview kind
   const siblingMedia = selectedMedia && activeMediaKind !== "unsupported"
@@ -134,11 +134,40 @@ export function ActiveWorkspace({
         .filter(
           (m) =>
             m.folderId === (selectedMedia.folder?.id ?? null) &&
-            getMediaPreviewKind(m.contentType) === activeMediaKind
+            getMediaPreviewKind(m.contentType, m.filename) === activeMediaKind
         )
         .slice()
         .sort((a, b) => compareAlphanumeric(a.filename, b.filename))
     : [];
+
+  const handleOpenArchiveReader = async () => {
+    if (!selectedMedia) return;
+    const previewUrl = getMediaAssetUrl(selectedMedia.r2Key);
+    if (!previewUrl) return;
+
+    setIsArchiveLoading(true);
+    setArchiveError("");
+
+    try {
+      const { parseMangaArchive } = await import("@/lib/manga");
+      const res = await fetch(previewUrl);
+      if (!res.ok) {
+        throw new Error(`Failed to download archive: ${res.statusText}`);
+      }
+      const buffer = await res.arrayBuffer();
+      const parsedPages = await parseMangaArchive(buffer);
+      if (parsedPages.length === 0) {
+        throw new Error("No readable image pages found in the archive.");
+      }
+      setArchivePages(parsedPages);
+      setIsReaderOpen(true);
+    } catch (err) {
+      console.error(err);
+      setArchiveError(err instanceof Error ? err.message : "Failed to load archive.");
+    } finally {
+      setIsArchiveLoading(false);
+    }
+  };
 
   // 3. Find the current, next, and previous items
   const currentIndex = selectedMedia ? siblingMedia.findIndex((m) => m.id === selectedMedia.id) : -1;
@@ -159,7 +188,7 @@ export function ActiveWorkspace({
 
   // Keyboard navigation
   useEffect(() => {
-    if (!selectedMedia) return;
+    if (!selectedMedia || isReaderOpen) return;
 
     function handleKeyDown(e: KeyboardEvent) {
       if (
@@ -179,7 +208,7 @@ export function ActiveWorkspace({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedMedia, prevHref, nextHref, router]);
+  }, [selectedMedia, prevHref, nextHref, router, isReaderOpen]);
 
   // Touch navigation handlers
   const minSwipeDistance = 50;
@@ -250,7 +279,7 @@ export function ActiveWorkspace({
 
   if (selectedMedia) {
     const previewUrl = getMediaAssetUrl(selectedMedia.r2Key);
-    const previewKind = getMediaPreviewKind(selectedMedia.contentType);
+    const previewKind = getMediaPreviewKind(selectedMedia.contentType, selectedMedia.filename);
 
     return (
       <div className="flex h-full min-h-0 flex-col">
@@ -277,14 +306,26 @@ export function ActiveWorkspace({
                 </span>
               </div>
             </div>
-            <MediaActionsMenu
-              destinations={folderDestinations}
-              mediaAsset={{
-                id: selectedMedia.id,
-                filename: selectedMedia.filename,
-                folderId: selectedMedia.folder?.id ?? null,
-              }}
-            />
+            <div className="flex items-center gap-2 shrink-0">
+              {previewKind === "image" && (
+                <Button
+                  className="h-8 gap-1.5 px-3 bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs shadow-md shadow-purple-600/10 active:scale-95 transition-transform"
+                  onClick={() => setIsReaderOpen(true)}
+                  type="button"
+                >
+                  <BookOpen className="h-3.5 w-3.5" />
+                  Manga Mode
+                </Button>
+              )}
+              <MediaActionsMenu
+                destinations={folderDestinations}
+                mediaAsset={{
+                  id: selectedMedia.id,
+                  filename: selectedMedia.filename,
+                  folderId: selectedMedia.folder?.id ?? null,
+                }}
+              />
+            </div>
           </div>
         </div>
         <div
@@ -361,6 +402,43 @@ export function ActiveWorkspace({
                 );
               }
 
+              if (previewKind === "archive") {
+                return (
+                  <div className="w-full max-w-md rounded-md border border-slate-800 bg-[#191c22] p-6 text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-purple-950/40 text-purple-400">
+                      <BookOpen className="h-5 w-5" />
+                    </div>
+                    <p className="mt-4 text-sm font-medium text-slate-100">{selectedMedia.filename}</p>
+                    <p className="mt-1 text-[10px] font-mono text-slate-400 mb-6">
+                      {Math.max(1, Math.round(selectedMedia.sizeBytes / 1024 / 1024))} MB · Manga Archive
+                    </p>
+                    {archiveError && (
+                      <p className="text-xs text-rose-400 bg-rose-950/20 border border-rose-900/30 px-3 py-2 rounded-md mb-4 text-left">
+                        {archiveError}
+                      </p>
+                    )}
+                    <Button
+                      className="w-full h-10 bg-purple-600 hover:bg-purple-500 text-white active:scale-95 transition-transform text-xs font-semibold gap-1.5"
+                      onClick={handleOpenArchiveReader}
+                      disabled={isArchiveLoading}
+                      type="button"
+                    >
+                      {isArchiveLoading ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Decompressing Archive...
+                        </>
+                      ) : (
+                        <>
+                          <BookOpen className="h-3.5 w-3.5" />
+                          Read Archive
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                );
+              }
+
               const EmptyIcon = previewKind === "image" ? ImagePlus : previewKind === "audio" ? Music : previewKind === "video" ? Video : FileQuestion;
 
               return (
@@ -388,6 +466,31 @@ export function ActiveWorkspace({
             )}
           </div>
         </div>
+
+        {/* Fullscreen Manga Reader Overlay */}
+        {isReaderOpen && (
+          <MangaReader
+            isOpen={isReaderOpen}
+            onClose={() => {
+              setIsReaderOpen(false);
+              setArchivePages([]);
+            }}
+            title={archivePages.length > 0 ? selectedMedia.filename : selectedMedia.folder?.name || "Vault"}
+            pages={
+              archivePages.length > 0
+                ? archivePages
+                : siblingMedia.map((m) => ({
+                    name: m.filename,
+                    url: getMediaAssetUrl(m.r2Key) || "",
+                  }))
+            }
+            initialPageIndex={
+              archivePages.length > 0
+                ? 0
+                : siblingMedia.findIndex((m) => m.id === selectedMedia.id)
+            }
+          />
+        )}
       </div>
     );
   }
