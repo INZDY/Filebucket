@@ -18,6 +18,7 @@ type NoteEditorProps = {
     title: string;
     body: string;
   };
+  updatedAt?: Date;
   imageMediaAssets: {
     id: string;
     filename: string;
@@ -36,14 +37,23 @@ type NoteEditorProps = {
   }[];
 };
 
+function formatDate(value: Date) {
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(value);
+}
+
 const AUTOSAVE_DELAY_MS = 20_000;
 
-export function NoteEditor({ imageMediaAssets, note, allTags, assignedTags }: NoteEditorProps) {
+export function NoteEditor({ imageMediaAssets, note, updatedAt, allTags, assignedTags }: NoteEditorProps) {
   return (
     <MilkdownProvider>
       <MilkdownNoteEditor
         imageMediaAssets={imageMediaAssets}
         note={note}
+        updatedAt={updatedAt}
         allTags={allTags}
         assignedTags={assignedTags}
       />
@@ -51,7 +61,7 @@ export function NoteEditor({ imageMediaAssets, note, allTags, assignedTags }: No
   );
 }
 
-function MilkdownNoteEditor({ imageMediaAssets, note, allTags, assignedTags }: NoteEditorProps) {
+function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assignedTags }: NoteEditorProps) {
   const [mediaAssets, setMediaAssets] = useState(imageMediaAssets);
   const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [tagQuery, setTagQuery] = useState("");
@@ -451,7 +461,7 @@ function MilkdownNoteEditor({ imageMediaAssets, note, allTags, assignedTags }: N
                     : "text-slate-500",
             )}
           >
-            {saveError ? saveError : isPending ? "Saving..." : hasChanges ? "Unsaved changes" : "Saved"}
+            {saveError ? saveError : isPending ? "Saving..." : hasChanges ? "Unsaved changes" : (updatedAt ? `Saved · Last updated ${formatDate(updatedAt)}` : "Saved")}
           </span>
           <Button 
             onClick={save} 

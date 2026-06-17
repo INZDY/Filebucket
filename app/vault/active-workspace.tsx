@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  BookOpenText,
   FileQuestion,
   FileText,
   ImagePlus,
@@ -79,14 +78,6 @@ interface ActiveWorkspaceProps {
     contentType: string;
     folderId: string | null;
   }[];
-}
-
-function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(value);
 }
 
 function getMediaPreviewKind(contentType: string) {
@@ -218,11 +209,10 @@ export function ActiveWorkspace({
   if (selectedNote) {
     return (
       <div className="flex h-full min-h-0 flex-col">
-        <div className="border-b border-slate-800 bg-[#191c22] px-5 py-4">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="border-b border-slate-800 bg-[#191c22] px-5 py-2.5">
+          <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
-                <BookOpenText className="h-4 w-4" />
                 <Link className="hover:text-slate-100" href="/">
                   Vault
                 </Link>
@@ -235,11 +225,8 @@ export function ActiveWorkspace({
                   </span>
                 ))}
                 <span>/</span>
-                <span className="max-w-56 truncate">{selectedNote.title}</span>
+                <span className="max-w-56 truncate font-medium text-slate-200">{selectedNote.title}</span>
               </div>
-              <p className="mt-1 text-sm text-slate-400">
-                Updated {formatDate(selectedNote.updatedAt)}
-              </p>
             </div>
 
             <NoteActionsMenu note={selectedNote} destinations={folderDestinations} />
@@ -253,6 +240,7 @@ export function ActiveWorkspace({
             title: selectedNote.title,
             body: selectedNote.body,
           }}
+          updatedAt={selectedNote.updatedAt}
           allTags={tags}
           assignedTags={selectedNote.tags.map((nt) => ({ id: nt.tag.id, name: nt.tag.name, slug: nt.tag.slug }))}
         />
@@ -266,11 +254,10 @@ export function ActiveWorkspace({
 
     return (
       <div className="flex h-full min-h-0 flex-col">
-        <div className="border-b border-slate-800 bg-[#191c22] px-5 py-4">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="border-b border-slate-800 bg-[#191c22] px-5 py-2.5">
+          <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
-                <ImagePlus className="h-4 w-4" />
                 <Link className="hover:text-slate-100" href="/">
                   Vault
                 </Link>
@@ -283,12 +270,12 @@ export function ActiveWorkspace({
                   </span>
                 ))}
                 <span>/</span>
-                <span className="max-w-56 truncate">{selectedMedia.filename}</span>
+                <span className="max-w-56 truncate font-medium text-slate-200">{selectedMedia.filename}</span>
+                <span className="text-slate-500">•</span>
+                <span className="text-xs text-slate-500">
+                  {selectedMedia.contentType} · {Math.max(1, Math.round(selectedMedia.sizeBytes / 1024))} KB
+                </span>
               </div>
-              <h2 className="mt-1 truncate text-lg font-semibold tracking-normal">{selectedMedia.filename}</h2>
-              <p className="truncate text-sm text-slate-400">
-                {selectedMedia.contentType} · {Math.max(1, Math.round(selectedMedia.sizeBytes / 1024))} KB
-              </p>
             </div>
             <MediaActionsMenu
               destinations={folderDestinations}
