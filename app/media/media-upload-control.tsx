@@ -28,11 +28,16 @@ const ACCEPTED_TYPES = [
   "video/",
   "application/pdf",
   "text/plain",
+  "application/zip",
+  "application/x-zip-compressed",
+  "application/x-cbz",
 ];
 const MAX_SIZE_BYTES = 100 * 1024 * 1024;
 
 function isAccepted(file: File) {
-  return ACCEPTED_TYPES.some((type) => file.type === type || file.type.startsWith(type));
+  const isMimeAccepted = ACCEPTED_TYPES.some((type) => file.type === type || file.type.startsWith(type));
+  const isExtensionAccepted = /\.(zip|cbz)$/i.test(file.name);
+  return isMimeAccepted || isExtensionAccepted;
 }
 
 function formatSize(size: number) {
@@ -146,7 +151,7 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
     <div className="flex min-w-0 flex-col gap-1.5">
       <input
         ref={inputRef}
-        accept="image/*,audio/*,video/*,application/pdf,text/plain"
+        accept="image/*,audio/*,video/*,application/pdf,text/plain,.zip,.cbz"
         className="sr-only"
         disabled={disabled}
         multiple
