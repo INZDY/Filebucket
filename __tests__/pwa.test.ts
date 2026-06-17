@@ -23,7 +23,7 @@ describe("Root Layout Metadata", () => {
       title: "Filebucket",
     });
     expect(viewport).toBeDefined();
-    expect(viewport.themeColor).toBe("#7c3aed");
+    expect(viewport.themeColor).toBe("#111318");
   });
 });
 
