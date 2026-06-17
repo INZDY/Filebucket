@@ -46,6 +46,27 @@ export function MangaReader({
 
   // Cache of resolved page URLs (direct URL or blob URL)
   const [resolvedUrls, setResolvedUrls] = useState<Record<number, string>>({});
+  const resolvedUrlsRef = useRef<Record<number, string>>({});
+  const pagesRef = useRef(pages);
+  const prevPagesLengthRef = useRef(pages.length);
+  const prevFirstPageNameRef = useRef(pages[0]?.name);
+
+  // Sync pages ref and handle page array changes
+  useEffect(() => {
+    pagesRef.current = pages;
+
+    const pagesChanged =
+      pages.length !== prevPagesLengthRef.current ||
+      pages[0]?.name !== prevFirstPageNameRef.current;
+
+    if (pagesChanged) {
+      resolvedUrlsRef.current = {};
+      setResolvedUrls({});
+      prevPagesLengthRef.current = pages.length;
+      prevFirstPageNameRef.current = pages[0]?.name;
+    }
+  }, [pages]);
+
   const [isLoading, setIsLoading] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -68,24 +89,26 @@ export function MangaReader({
   // Load a single page URL (if not already cached)
   const resolvePageUrl = useCallback(
     async (idx: number): Promise<string> => {
-      if (resolvedUrls[idx]) return resolvedUrls[idx];
-      const page = pages[idx];
+      if (resolvedUrlsRef.current[idx]) return resolvedUrlsRef.current[idx];
+      const page = pagesRef.current[idx];
       if (!page) return "";
 
       if (page.url) {
+        resolvedUrlsRef.current[idx] = page.url;
         setResolvedUrls((prev) => ({ ...prev, [idx]: page.url! }));
         return page.url;
       }
 
       if (page.load) {
         const url = await page.load();
+        resolvedUrlsRef.current[idx] = url;
         setResolvedUrls((prev) => ({ ...prev, [idx]: url }));
         return url;
       }
 
       return "";
     },
-    [pages, resolvedUrls]
+    []
   );
 
   // Load current page in Paged Mode
