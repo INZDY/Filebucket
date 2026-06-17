@@ -49,28 +49,35 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
         >
           <PanelLeft className="h-4 w-4" />
         </Button>
-        {isBrowserOpen ? (
-          <div className="fixed inset-0 z-50 bg-black/55" onClick={() => setIsBrowserOpen(false)}>
-            <div
-              className="h-full w-[min(360px,88vw)] border-r border-slate-800 bg-[#171a20] shadow-2xl"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="flex h-12 items-center justify-end border-b border-slate-800 px-3">
-                <Button
-                  aria-label="Close vault browser"
-                  className="text-slate-300 hover:bg-slate-800 hover:text-slate-50"
-                  onClick={() => setIsBrowserOpen(false)}
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="h-[calc(100%-3rem)] min-h-0">{browser}</div>
+        <div
+          className={cn(
+            "fixed inset-0 z-50 bg-black/55 transition-opacity duration-300 ease-in-out",
+            isBrowserOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          )}
+          onClick={() => setIsBrowserOpen(false)}
+        >
+          <div
+            className={cn(
+              "h-full w-[min(360px,88vw)] border-r border-slate-800 bg-[#171a20] shadow-2xl transition-transform duration-300 ease-in-out transform",
+              isBrowserOpen ? "translate-x-0" : "-translate-x-full"
+            )}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex h-12 items-center justify-end border-b border-slate-800 px-3">
+              <Button
+                aria-label="Close vault browser"
+                className="text-slate-300 hover:bg-slate-800 hover:text-slate-50"
+                onClick={() => setIsBrowserOpen(false)}
+                size="icon"
+                type="button"
+                variant="ghost"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
+            <div className="h-[calc(100%-3rem)] min-h-0">{browser}</div>
           </div>
-        ) : null}
+        </div>
       </div>
     );
   }
