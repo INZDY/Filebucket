@@ -13,6 +13,17 @@ export class R2StorageAdapter implements VaultStorageEngine {
     return getSignedUrl(s3, command, { expiresIn });
   }
 
+  async presignDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
+    if (!process.env.R2_BUCKET_NAME) {
+      throw new Error("R2_BUCKET_NAME is not configured");
+    }
+    const command = new GetObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: key,
+    });
+    return getSignedUrl(s3, command, { expiresIn });
+  }
+
   async downloadFile(key: string): Promise<Buffer> {
     if (!process.env.R2_BUCKET_NAME) {
       throw new Error("R2_BUCKET_NAME is not configured");

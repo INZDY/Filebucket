@@ -29,14 +29,9 @@ export async function GET(request: NextRequest) {
       return new Response("Not Found", { status: 404 });
     }
 
-    const fileBuffer = await storageEngine.downloadFile(mediaAsset.r2Key);
+    const presignedUrl = await storageEngine.presignDownloadUrl(mediaAsset.r2Key);
 
-    return new Response(new Uint8Array(fileBuffer), {
-      headers: {
-        "Content-Type": mediaAsset.contentType,
-        "Cache-Control": "private, max-age=31536000, immutable",
-      },
-    });
+    return Response.redirect(presignedUrl, 307);
   } catch (error) {
     console.error("Error serving media asset:", error);
     return new Response("Internal Server Error", { status: 500 });
