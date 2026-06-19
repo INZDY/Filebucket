@@ -56,7 +56,7 @@ An uploaded item in the vault, such as an image, audio clip, video, PDF, TXT fil
 _Avoid_: File, blob, upload
 
 **Media Reference**:
-A note's use of an existing first-class media asset from its Markdown body, such as Markdown image syntax that points to a Filebucket media asset. For MVP, the rendered note editor can upload new image media assets or choose existing image media assets through a focused image picker and show their references inline; audio and video are previewed when opened as media assets, but are not embedded inside Markdown notes. A media reference is usage, not placement or ownership; the same media asset may be referenced by multiple notes, and removing one reference does not delete the media asset.
+A note's use of an existing first-class media asset from its Markdown body. Clicking a media reference inside an Obsidian note context-switches the application mode (e.g. from Notes to Files) and opens the media preview workspace while highlighting the file's folder in the explorer.
 _Avoid_: Embedded file, attachment ownership, copied media
 
 **Trashed Media Reference**:
@@ -141,7 +141,7 @@ An automated or recurring preservation process for vault content. Backup is a la
 _Avoid_: Export, download, sync
 
 **Autosave**:
-Editing behavior where note title and body changes are saved automatically without requiring a prominent manual save command. Autosave should save after the user pauses typing for about 1500-2000ms, keep save status subtle unless a save needs attention, let affected note tabs signal unsaved or failed-save state without labeling every saved tab, and protect pending or failed saves when closing a note tab. Autosave is not a domain entity.
+Editing behavior where note title, body, or card changes are saved automatically without requiring a manual save command. Autosave saves after the user pauses typing for 1500-2000ms. If a user switches workspace modes or closes an active content tab/modal, the app instantly flushes and saves any pending edits. Autosave is not a domain entity.
 _Avoid_: Manual save, draft mode
 
 ## Example Dialogue
@@ -172,6 +172,12 @@ Domain expert: No. Main content tabs are for opened notes and media assets.
 
 Dev: What happens when the user selects a note that is already open?
 Domain expert: Focus its existing main content tab instead of opening a duplicate tab.
+
+Dev: What happens to open note tabs when the user switches to Files Mode or Keep Mode?
+Domain expert: The open note tabs remain in the background. The app remembers the active workspace state for each mode independently, so switching back to Notes Mode restores your note editor tabs exactly where you left them.
+
+Dev: Does switching modes trigger autosave?
+Domain expert: Yes. Any pending edits in the active editor or Keep card are flushed and saved immediately before switching modes or closing tabs.
 
 Dev: Should the whole open tab set survive refresh in MVP?
 Domain expert: No. Restore the active opened content, but the wider tab set may stay temporary.

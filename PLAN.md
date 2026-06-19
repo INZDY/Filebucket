@@ -24,7 +24,9 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Move the global search input from the sidebar browser to the center of the top header next to the app logo and name.
     *   Update `SidebarBrowser` to dynamically switch its content based on the selected mode.
     *   On mobile, hide the Sidebar Browser tree by default and render it as a sliding left Drawer overlay, triggered by a header hamburger button or swiping from the edge.
-*   **Verification**: Click each icon in the Activity Bar / Bottom Nav and verify the sidebar updates; verify the search bar renders centered; verify the left drawer slides out on mobile.
+    *   Implement **independent workspace state tracking per mode** (e.g., active editor tabs for Notes Mode, active file preview for Files Mode) so switching modes preserves workspace tabs in the background.
+    *   Hook up mode switching to **instantly flush and save** any pending autosave changes before the transition occurs.
+*   **Verification**: Click each icon in the Activity Bar / Bottom Nav and verify the sidebar updates; verify the search bar renders centered; verify the left drawer slides out on mobile. Verify swapping modes preserves open note tabs and triggers immediate autosave flush.
 
 ### Milestone 19: Google Keep Mode (Card Grid & Modal Editor)
 *   **Goal**: Create a rich, authentic Google Keep workspace for quick notes and scratchpads with mobile responsiveness.
@@ -55,7 +57,8 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Enforce boundaries (block note creation in Files, block folders in Quick Notes, block subfolders inside chat channels).
     *   Implement Contextual Export/Download actions (raw file, folder ZIP, note `.md`, chat transcript `.md` with message history).
     *   On mobile, adapt the Obsidian editor tabs: hide the scrollable tab bar, show the active note title with a tabs count button, and open a bottom sheet to switch tabs. Render the note outline as a sliding right drawer on mobile.
-*   **Verification**: Attempt to rename reserved folders, verify boundaries. Verify folder ZIP download compiles, chat transcript export works, and Obsidian mobile tab drawer switches tabs.
+    *   Implement **cross-mode link navigation**: clicking a media reference link (e.g. image or PDF link) inside a markdown note auto-switches the Activity Bar mode to Files Mode and opens the media preview while highlighting the file in the sidebar tree.
+*   **Verification**: Attempt to rename reserved folders, verify boundaries. Verify folder ZIP download compiles, chat transcript export works, and clicking a file reference inside a note switches modes and previews the media file.
 
 ### Milestone 22: Testing & Hardening
 *   **Goal**: Verify the stability, responsiveness, and performance of the hybrid vault system.
