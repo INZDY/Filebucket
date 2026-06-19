@@ -11,6 +11,7 @@ import { initializeUserVault } from "@/lib/user-init";
 import { SidebarBrowser } from "@/app/vault/sidebar-browser";
 import { ActiveWorkspace } from "@/app/vault/active-workspace";
 import { TrashWorkspace } from "@/app/vault/trash-workspace";
+import { KeepWorkspace } from "@/app/vault/keep-workspace";
 
 import { MainContentTabs } from "@/app/vault/main-content-tabs";
 import { ResizableVault } from "@/app/vault/resizable-vault";
@@ -576,6 +577,32 @@ export default async function Home({ searchParams }: HomeProps) {
     mediaAssets,
   });
 
+  const folderMapForKeep = new Map(folders.map((f) => [f.id, f]));
+  const keepNotes = notes.filter((note) => {
+    if (!keepRootId) return false;
+    let currentId = note.folderId;
+    while (currentId) {
+      if (currentId === keepRootId) return true;
+      const parent = folderMapForKeep.get(currentId);
+      currentId = parent ? parent.parentId : null;
+    }
+    return false;
+  }).map((note) => ({
+    id: note.id,
+    title: note.title,
+    body: note.body,
+    color: note.color,
+    isPinned: note.isPinned,
+    updatedAt: note.updatedAt,
+    tags: note.tags.map((nt) => ({
+      tag: {
+        id: nt.tag.id,
+        name: nt.tag.name,
+        slug: nt.tag.slug,
+      },
+    })),
+  }));
+
   return (
     <main className="h-screen overflow-hidden bg-[#0d0d11] text-slate-100">
       <GlobalLoader renderKey={renderKey} />
@@ -659,9 +686,13 @@ export default async function Home({ searchParams }: HomeProps) {
                       resolveDisplayMarkdown={resolveDisplayMarkdown}
                     />
                   ) : activeMode === "KEEP" ? (
-                    <div className="flex h-full items-center justify-center text-slate-400 text-sm font-medium">
-                      Keep Workspace Placeholder (Milestone 19)
-                    </div>
+                    <KeepWorkspace
+                      notes={keepNotes}
+                      keepRootId={keepRootId!}
+                      allTags={tags.map((t) => ({ id: t.id, name: t.name, slug: t.slug }))}
+                      activeTagSlug={activeTagSlug}
+                      query={query}
+                    />
                   ) : activeMode === "CHAT" ? (
                     <div className="flex h-full items-center justify-center text-slate-400 text-sm font-medium">
                       Chat Workspace Placeholder (Milestone 20)

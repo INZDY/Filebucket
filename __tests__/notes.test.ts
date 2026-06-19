@@ -7,6 +7,9 @@ import {
   trashNoteAction,
   restoreNoteAction,
   renameNoteAction,
+  createKeepNoteAction,
+  updateKeepNoteAction,
+  trashKeepNoteAction,
 } from "@/app/notes/actions";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
@@ -219,6 +222,78 @@ describe("Note Server Actions", () => {
         data: { title: "Renamed Note" },
       });
       expect(redirect).toHaveBeenCalledWith("/?note=note-123");
+    });
+  });
+
+  describe("Keep Note Actions", () => {
+    describe("createKeepNoteAction", () => {
+      it("should successfully create a Keep note under target folder", async () => {
+        vi.mocked(prisma.folder.findFirst).mockResolvedValue({ id: "keep-folder-123" } as any);
+        vi.mocked(prisma.note.create).mockResolvedValue({ id: "keep-note-456" } as any);
+
+        const result = await createKeepNoteAction({
+          folderId: "keep-folder-123",
+          title: "Keep Title",
+          body: "Keep Body",
+          color: "red",
+          isPinned: true,
+        });
+
+        expect(result).toEqual({ ok: true, note: expect.any(Object) });
+        expect(prisma.note.create).toHaveBeenCalledWith({
+          data: {
+            title: "Keep Title",
+            body: "Keep Body",
+            folderId: "keep-folder-123",
+            userId: mockUserId,
+            color: "red",
+            isPinned: true,
+          },
+        });
+      });
+    });
+
+    describe("updateKeepNoteAction", () => {
+      it("should successfully update Keep note color and pin status", async () => {
+        vi.mocked(prisma.note.findFirst).mockResolvedValue({ id: "keep-note-123" } as any);
+        vi.mocked(prisma.note.update).mockResolvedValue({ id: "keep-note-123", color: "blue" } as any);
+
+        const result = await updateKeepNoteAction("keep-note-123", {
+          color: "blue",
+          isPinned: false,
+        });
+
+        expect(result).toEqual({ ok: true, note: expect.any(Object) });
+        expect(prisma.note.update).toHaveBeenCalledWith({
+          where: { id: "keep-note-123" },
+          data: {
+            title: undefined,
+            body: undefined,
+            color: "blue",
+            isPinned: false,
+          },
+        });
+      });
+    });
+
+    describe("trashKeepNoteAction", () => {
+      it("should successfully trash Keep note", async () => {
+        vi.mocked(prisma.note.updateMany).mockResolvedValue({ count: 1 } as any);
+
+        const result = await trashKeepNoteAction("keep-note-123");
+
+        expect(result).toEqual({ ok: true });
+        expect(prisma.note.updateMany).toHaveBeenCalledWith({
+          where: {
+            id: "keep-note-123",
+            userId: mockUserId,
+            deletedAt: null,
+          },
+          data: {
+            deletedAt: expect.any(Date),
+          },
+        });
+      });
     });
   });
 });

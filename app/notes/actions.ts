@@ -377,3 +377,94 @@ export async function deleteNoteAction(formData: FormData) {
   revalidatePath("/");
   redirect("/?view=trash");
 }
+
+export async function createKeepNoteAction(data: {
+  folderId: string;
+  title: string;
+  body: string;
+  color?: string | null;
+  isPinned?: boolean;
+}) {
+  const session = await requireSession();
+
+  const folder = await prisma.folder.findFirst({
+    where: {
+      id: data.folderId,
+      userId: session.user.id,
+      deletedAt: null,
+    },
+  });
+
+  if (!folder) {
+    return { ok: false, error: "Folder not found." };
+  }
+
+  const newNote = await prisma.note.create({
+    data: {
+      title: data.title.trim() || "Untitled note",
+      body: data.body || "",
+      folderId: data.folderId,
+      userId: session.user.id,
+      color: data.color || null,
+      isPinned: data.isPinned || false,
+    },
+  });
+
+  revalidatePath("/");
+  return { ok: true, note: newNote };
+}
+
+export async function updateKeepNoteAction(
+  noteId: string,
+  data: {
+    title?: string;
+    body?: string;
+    isPinned?: boolean;
+    color?: string | null;
+  }
+) {
+  const session = await requireSession();
+
+  const note = await prisma.note.findFirst({
+    where: {
+      id: noteId,
+      userId: session.user.id,
+      deletedAt: null,
+    },
+  });
+
+  if (!note) {
+    return { ok: false, error: "Note not found." };
+  }
+
+  const updatedNote = await prisma.note.update({
+    where: { id: noteId },
+    data: {
+      title: data.title !== undefined ? data.title.trim() : undefined,
+      body: data.body !== undefined ? data.body : undefined,
+      isPinned: data.isPinned !== undefined ? data.isPinned : undefined,
+      color: data.color !== undefined ? data.color : undefined,
+    },
+  });
+
+  revalidatePath("/");
+  return { ok: true, note: updatedNote };
+}
+
+export async function trashKeepNoteAction(noteId: string) {
+  const session = await requireSession();
+
+  await prisma.note.updateMany({
+    where: {
+      id: noteId,
+      userId: session.user.id,
+      deletedAt: null,
+    },
+    data: {
+      deletedAt: new Date(),
+    },
+  });
+
+  revalidatePath("/");
+  return { ok: true };
+}
