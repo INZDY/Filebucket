@@ -7,13 +7,15 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 ## Redesign Milestones
 
 ### Milestone 17: Database Schema Extension & Seed Data
-*   **Goal**: Update the data model to support Keep card styling and Discord-style text channels.
+*   **Goal**: Update the data model to support Keep card styling, Discord-style text channels, and type-based folder categories.
 *   **Tasks**:
     *   Add `color` (String?) and `isPinned` (Boolean, default false) to the `Note` model in `prisma/schema.prisma`.
     *   Create the `ChatMessage` model with relations to `User` and `Folder`.
     *   Add `chatMessageId` (String?) and relation to `MediaAsset`.
-    *   Generate a database migration and update the database seeds/mocks to set up initial reserved folders (`Notes`, `Quick Notes`, `Chat Channels`) and a sample channel/quick note.
-*   **Verification**: Run Prisma client generation and check database connections; verify seeded data compiles.
+    *   Add `FolderType` enum (`GENERAL`, `NOTES_ROOT`, `KEEP_ROOT`, `CHAT_ROOT`) and a `type` column (default `GENERAL`) to the `Folder` model.
+    *   Generate a database migration and update the database seeds/mocks to set up initial reserved folders (`Notes`, `Quick Notes`, `Chat Channels`) tagged with their respective `FolderType`s, and seed initial sample data.
+    *   Implement user initialization logic: check for and auto-create the three root reserved folders on first page load or login callback.
+*   **Verification**: Run Prisma client generation and check database connections; verify seeded data compiles and check that the three reserved folders are created automatically for a new user.
 
 ### Milestone 18: Activity Bar Navigation & Dynamic Sidebar
 *   **Goal**: Implement the leftmost navigation strip, top-header search redesign, and dynamic view switching with mobile responsive layouts.
@@ -26,17 +28,18 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   On mobile, hide the Sidebar Browser tree by default and render it as a sliding left Drawer overlay, triggered by a header hamburger button or swiping from the edge.
     *   Implement **independent workspace state tracking per mode** (e.g., active editor tabs for Notes Mode, active file preview for Files Mode) so switching modes preserves workspace tabs in the background.
     *   Hook up mode switching to **instantly flush and save** any pending autosave changes before the transition occurs.
-*   **Verification**: Click each icon in the Activity Bar / Bottom Nav and verify the sidebar updates; verify the search bar renders centered; verify the left drawer slides out on mobile. Verify swapping modes preserves open note tabs and triggers immediate autosave flush.
+    *   Implement the **search overlay logic in the sidebar browser**: typing in the header search input temporarily displays a search results list in the sidebar with toggleable chips (`All`, `Files`, `Notes`, `Chats`) to filter results. Hitting backspace or clearing search returns the sidebar to the active mode.
+*   **Verification**: Click each icon in the Activity Bar / Bottom Nav and verify the sidebar updates; verify the search bar renders centered; verify the left drawer slides out on mobile. Verify swapping modes preserves open note tabs and triggers immediate autosave flush. Verify search input triggers search results in the sidebar with active filters.
 
 ### Milestone 19: Google Keep Mode (Card Grid & Modal Editor)
-*   **Goal**: Create a rich, authentic Google Keep workspace for quick notes and scratchpads with mobile responsiveness.
+*   **Goal**: Create a rich, authentic Google Keep workspace for quick notes and scratchpads with mobile responsiveness and smart save triggers.
 *   **Tasks**:
     *   Build a masonry/responsive card grid workspace in the Main Content Pane when in Keep mode (3-4 columns on desktop, 1 column stack on mobile).
-    *   Implement "Pinned" and "Others" sections.
+    *   Implement "Pinned" and "Others" sections. Sort cards within each section chronologically by `updatedAt desc` (no manual reordering).
     *   Build the top "Take a note..." inline creation bar with text and checklist options.
     *   Build a Card Edit Modal supporting title/body editing, interactive checklist toggles, card color picker, tags, and deletion. On mobile, render this modal as a fullscreen sheet overlay.
-    *   Hook up card changes to autosave.
-*   **Verification**: Create notes, pin/unpin cards, change colors, toggle checklists, and edit cards in the modal; verify mobile layout collapses to a 1-column stack and edits happen in fullscreen.
+    *   Implement **smart save triggers**: debounced autosave (1.5s delay) for card text inputs, and instant save (immediate database update) for clicking checklist checkboxes, card color options, pin/unpin toggles, or delete buttons.
+*   **Verification**: Create notes, pin/unpin cards, change colors, toggle checklists, and edit cards in the modal; verify mobile layout collapses to a 1-column stack and edits happen in fullscreen. Verify instant saves commit immediately and card text edits debounce.
 
 ### Milestone 20: Discord Mode (Chat Channel Stream)
 *   **Goal**: Create a chronological chat channel stream for short text messages and media captures with mobile viewport handling and Manga Reader integration.

@@ -125,8 +125,8 @@ A user-defined label applied to notes for secondary filtering. Tags are optional
 _Avoid_: Label, category, keyword
 
 **Search**:
-Whole-vault title and name matching across active folders, notes, and media assets. Search results replace the vault browser tree with compact matching rows that show visible names with location context while leaving opened main content tabs intact; searching inside note bodies is a later enhancement and should be called Full-Text Search when discussed.
-_Avoid_: Full-text search, global search
+Global real-time matching across the entire vault, triggered from a search bar in the center of the top header. Search indexes folder/file names, Obsidian note titles, Keep note titles and bodies, and chat message text. Typing a query temporarily overrides the active sidebar browser with a "Search Results" list containing quick filters (`All`, `Files`, `Notes`, `Chats`) while leaving the active workspace pane intact. Clicking a result switches the workspace mode to display the item, while clearing the query restores the sidebar to its pre-search state.
+_Avoid_: Sidebar search, local search, full-text document search
 
 **Contextual Export (Download)**:
 The ability to download files, folders, notes, or chat logs contextually rather than via a global vault-wide button. 
@@ -405,16 +405,19 @@ Dev: Does deleting a tag delete tagged notes?
 Domain expert: No. It removes the tag from active and trashed notes; the notes remain.
 
 Dev: A note titled `Ideas` contains the word `recipe`; should Search find it by `recipe`?
-Domain expert: Not unless `recipe` appears in the note title or folder name. That would require Full-Text Search.
+Domain expert: For Obsidian Notes, it will only search titles. For Keep Notes, it searches both title and body text. For Chat, it searches the message content text.
 
 Dev: Should Search find `meeting.m4a`?
-Domain expert: Yes. Media asset filenames are included in MVP Search.
+Domain expert: Yes. Media asset filenames are included in Search.
 
 Dev: If a user searches while browsing `Projects`, can results from `Finance` appear?
-Domain expert: Yes. MVP Search searches the whole vault by default.
+Domain expert: Yes. Search is global across all folders and modes by default.
 
 Dev: Should normal Search find a trashed note?
 Domain expert: No. Search includes active content by default.
+
+Dev: What happens in the UI when a user types in the header search input?
+Domain expert: The sidebar browser is temporarily overridden by the search results. Clearing search returns the sidebar to the active navigation mode.
 
 Dev: Is clicking a button to download Markdown files a backup?
 Domain expert: No, that is an export. Backup means the app preserves copies automatically or on a recurring schedule.
