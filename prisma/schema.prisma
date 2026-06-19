@@ -19,6 +19,7 @@ model User {
   notes         Note[]
   tags          Tag[]
   mediaAssets   MediaAsset[]
+  chatMessages  ChatMessage[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
@@ -61,15 +62,17 @@ model Folder {
   name      String
   userId    String
   parentId  String?
-  deletedAt DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  type        FolderType   @default(GENERAL)
+  deletedAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parent      Folder?      @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  children    Folder[]     @relation("FolderHierarchy")
-  notes       Note[]
-  mediaAssets MediaAsset[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent       Folder?       @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Folder[]      @relation("FolderHierarchy")
+  notes        Note[]
+  mediaAssets  MediaAsset[]
+  chatMessages ChatMessage[]
 
   @@index([userId, deletedAt])
   @@index([parentId])
@@ -84,6 +87,8 @@ model Note {
   deletedAt DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  color     String?
+  isPinned  Boolean   @default(false)
 
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   folder      Folder?      @relation(fields: [folderId], references: [id], onDelete: SetNull)
@@ -131,15 +136,41 @@ model MediaAsset {
   sizeBytes   Int
   width       Int?
   height      Int?
+  chatMessageId String?
   deletedAt   DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  note   Note?   @relation(fields: [noteId], references: [id], onDelete: SetNull)
-  folder Folder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note        Note?        @relation(fields: [noteId], references: [id], onDelete: SetNull)
+  folder      Folder?      @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  chatMessage ChatMessage? @relation(fields: [chatMessageId], references: [id], onDelete: SetNull)
 
   @@index([userId, deletedAt])
   @@index([noteId])
   @@index([folderId])
+  @@index([chatMessageId])
+}
+
+model ChatMessage {
+  id        String    @id @default(cuid())
+  content   String
+  userId    String
+  folderId  String
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder      Folder       @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  mediaAssets MediaAsset[]
+
+  @@index([folderId, createdAt])
+}
+
+enum FolderType {
+  GENERAL
+  NOTES_ROOT
+  KEEP_ROOT
+  CHAT_ROOT
 }
