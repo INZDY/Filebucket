@@ -1,69 +1,67 @@
-# Filebucket Plan & Roadmap
+# Filebucket Redesign Plan
 
-This plan details the completed milestones and the upcoming roadmap for the Filebucket project.
+This plan outlines the roadmap to transform Filebucket from a single-mode Obsidian-inspired vault into a personal file vault first, and a multi-style note application second (Obsidian, Google Keep, and Discord modes).
 
 ---
 
-## Completed Milestones
+## Redesign Milestones
 
-### Milestone 1: Global Theme & Aesthetics Redesign
-*   **Status:** Completed & Verified (June 2026).
-*   **Achievements:** Established the "Obsidian Glass" styling foundation, translucent glassmorphism, Outfit/Inter typography, and subtle micro-animations.
+### Milestone 17: Database Schema Extension & Seed Data
+*   **Goal**: Update the data model to support Keep card styling and Discord-style text channels.
+*   **Tasks**:
+    *   Add `color` (String?) and `isPinned` (Boolean, default false) to the `Note` model in `prisma/schema.prisma`.
+    *   Create the `ChatMessage` model with relations to `User` and `Folder`.
+    *   Add `chatMessageId` (String?) and relation to `MediaAsset`.
+    *   Generate a database migration and update the database seeds/mocks to set up initial reserved folders (`Notes`, `Quick Notes`, `Chat Channels`) and a sample channel/quick note.
+*   **Verification**: Run Prisma client generation and check database connections; verify seeded data compiles.
 
-### Milestone 2: Split-Screen Login & Landing Page
-*   **Status:** Completed & Verified (June 2026).
-*   **Achievements:** Implemented elegant feature landing panel on the left, and centered glassmorphic login card on the right.
+### Milestone 18: Activity Bar Navigation & Dynamic Sidebar
+*   **Goal**: Implement the leftmost navigation strip and dynamic view switching.
+*   **Tasks**:
+    *   Create an Activity Bar component containing icons for Files, Obsidian Notes, Quick Notes, and Chat Channels.
+    *   Update `SidebarBrowser` to dynamically switch its content based on the selected mode:
+        *   **Files Mode**: General Vault tree.
+        *   **Obsidian Mode**: `Notes/` subfolders/notes tree.
+        *   **Keep Mode**: Flat list of Tag filters for Keep cards.
+        *   **Chat Channels Mode**: Flat list of Chat Channels under the `Chat Channels/` folder.
+*   **Verification**: Click each icon in the Activity Bar and verify the sidebar updates to show the correct content tree/filters.
 
-### Milestone 3: Vault Browser Right-Click & Drag-and-Drop
-*   **Status:** Completed & Verified (June 2026).
-*   **Achievements:** Custom right-click context menus for folders/notes/media rows, and visual highlights for drag-and-drop actions.
+### Milestone 19: Google Keep Mode (Card Grid & Modal Editor)
+*   **Goal**: Create a rich, authentic Google Keep workspace for quick notes and scratchpads.
+*   **Tasks**:
+    *   Build a masonry/responsive card grid workspace in the Main Content Pane when in Keep mode.
+    *   Implement "Pinned" and "Others" sections.
+    *   Build the top "Take a note..." inline creation bar with text and checklist options.
+    *   Build a Card Edit Modal supporting title/body editing, interactive checklist toggles, card color picker, tags, and deletion.
+    *   Hook up card changes to autosave.
+*   **Verification**: Create notes, pin/unpin cards, change colors, toggle checklists, and edit cards in the modal; verify updates persist.
 
-### Milestone 4: Note Editor Polish & Header Tag Pills
-*   **Status:** Completed & Verified (June 2026).
-*   **Achievements:** Clean editor margins, and a Note Header tag selector with autocomplete.
+### Milestone 20: Discord Mode (Chat Channel Stream)
+*   **Goal**: Create a chronological chat channel stream for short text messages and media captures.
+*   **Tasks**:
+    *   Build the Chat Panel workspace in the Main Content Pane when in Chat Channels mode.
+    *   Render messages chronologically with timestamps and sender headers.
+    *   Implement auto-hyperlinking and basic link/attachment previews (images displayed inline, other files as downloadable cards).
+    *   Build a message input bar at the bottom with a file upload button (`+` icon) for attaching Media Assets.
+    *   Allow message deletion on hover.
+*   **Verification**: Type and send messages, upload images, click links, and delete messages; verify that attachments are created as `MediaAsset`s linked to the chat message.
 
-### Milestone 5: PDF & TXT File Previews
-*   **Status:** Completed & Verified (June 2026).
-*   **Achievements:** Integrated in-app iframe PDF rendering and raw TXT file streaming/display.
+### Milestone 21: General File Storage & Boundary Validation
+*   **Goal**: Enforce system folder rules and lock down the general file explorer.
+*   **Tasks**:
+    *   Make `Notes/`, `Quick Notes/`, and `Chat Channels/` reserved folders at the vault root. Disable rename, move, and delete actions on them.
+    *   Show custom, styled icons in the vault browser for reserved folders.
+    *   Enforce boundaries:
+        *   Block note creation in Files Mode (Files Mode only allows folders/media assets).
+        *   Enforce that all notes created under Obsidian Mode go inside `Notes/`.
+        *   Block folder creation inside `Quick Notes/`.
+        *   Block subfolders inside chat channels under `Chat Channels/`.
+*   **Verification**: Attempt to rename reserved folders, create notes in Files root, or create folders in Quick Notes; verify all are rejected with clear error messages.
 
-### Milestone 6: Hardening & Test Verification
-*   **Status:** Completed & Verified (June 2026).
-*   **Achievements:** Established Vitest/JSDOM testing suites with 40+ tests.
-
-### Milestone 7: UI Compaction, Trash Unification & Permanent Deletion
-*   **Status:** Completed & Verified (June 2026).
-*   **Achievements:** noteActionsMenu, sidebar creation toolbar, unified trash list, read-only trash previews, and permanent deletion with S3/R2 cleanups.
-
-### Milestone 8: Serverless Database & Migration Setup
-*   **Status:** Completed & Verified (June 2026).
-*   **Achievements:** Configured serverless-compatible database access via `@prisma/adapter-pg` and set up automated Prisma client generation in the build step.
-
-### Milestone 9: Hardening Authentication & Session Safety
-*   **Status:** Completed & Verified (June 2026).
-*   **Achievements:** Implemented single-user admin restrictions on Google/GitHub OAuth logins for production, disabling credentials login in production, and configured NextAuth with `trustHost` for serverless hosts.
-
-### Milestone 10: Private Media Delivery & Storage Hardening
-*   **Status:** Completed & Verified (June 2026).
-*   **Achievements:** Offloaded public R2 bucket requirements. Replaced direct public URLs with short-lived presigned download URLs served via the secure `/api/media?key=...` endpoint, adding support for range requests.
-
-### Milestone 11: Production Deployment & Verification
-*   **Status:** Completed & Verified (June 2026).
-### Milestone 12: Progressive Web App (PWA) Manifest & Icons
-*   **Status:** Completed & Verified (June 2026).
-*   **Achievements:** Integrated PWA manifest metadata, custom icons, and viewport theme coloring.
-
-### Milestone 13: Service Worker & Hybrid Caching
-*   **Status:** Completed & Verified (June 2026).
-*   **Achievements:** Registered a Service Worker (`sw.js`) utilizing Stale-While-Revalidate caching for layout assets and Network-First caching for API transactions.
-
-### Milestone 14: Subtle Tactile Response Animations
-*   **Status:** Completed & Verified (June 2026).
-*   **Achievements:** Implemented global click feedback scales and sliding mobile drawers using pure Tailwind transitions.
-
-### Milestone 15: Folder-Based Manga Reader Overlay
-*   **Status:** Completed & Verified (June 2026).
-*   **Achievements:** Developed fullscreen overlay supporting paged horizontal LTR/RTL and continuous vertical Webtoon layouts.
-
-### Milestone 16: Client-Side ZIP/CBZ Manga Extraction
-*   **Status:** Completed & Verified (June 2026).
-*   **Achievements:** Added client-side decompression using JSZip, natural alphanumeric page sorting, and resolved IntersectionObserver lazy-loading issues.
+### Milestone 22: Testing & Hardening
+*   **Goal**: Verify the stability, responsiveness, and performance of the hybrid vault system.
+*   **Tasks**:
+    *   Write Vitest component and logic tests covering view mode switching, validation constraints, and database relations.
+    *   Verify drag-and-drop actions are locked down correctly for reserved folders.
+    *   Ensure PWA offline caching works for the new routes and APIs.
+*   **Verification**: All tests pass.

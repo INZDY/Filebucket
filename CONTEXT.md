@@ -1,14 +1,35 @@
 # Filebucket
 
-**MVP Status: Completed. All core vault browser, editor, media integration, trash/restore, and export features are fully implemented and verified.**
+**Redesign Status: In Progress. Redesigning Filebucket as a personal file vault first, and a multi-style note application second (Obsidian, Google Keep, and Discord modes).**
 
-Filebucket is a personal hosted file-and-note vault. It is Obsidian-inspired in its Markdown-first vault experience and quiet workbench feel, while keeping Filebucket-specific vault, media, and hosted-app cues; the first redesigned workspace can use one coherent dark mode before broader theme support. MVP does not include backlinks, graph view, plugins, themes, or local-folder sync. This glossary defines the product language used when discussing the domain.
+Filebucket is a personal hosted file vault first, and a note-taking application second. It supports three distinct note-taking experiences organized under dedicated folders, while the rest of the vault operates as general file storage:
+1. **Obsidian Mode**: Long-form markdown notes and nested folders under the reserved `Notes/` folder.
+2. **Google Keep Mode**: Quick note cards and checklists in a flat grid under the reserved `Quick Notes/` folder.
+3. **Discord Mode**: Chronological message streams with media and link attachments under channels in the reserved `Chat Channels/` folder.
+
+This glossary defines the product language used when discussing the domain.
 
 ## Language
 
 **Vault**:
-One user's private Filebucket space. For MVP, each user has exactly one vault, and vaults are not separately created, renamed, switched, or managed. The vault root can directly contain folders, notes, and media assets, and follows the same visible-name uniqueness rules as folders.
+One user's private Filebucket space. Each user has exactly one vault. The vault root serves as the General File Storage and contains files, folders, and the three reserved system folders: `Notes/`, `Quick Notes/`, and `Chat Channels/`.
 _Avoid_: Workspace, drive, library, team space
+
+**General File Storage**:
+The primary mode of the vault, active at the root level and inside any non-reserved folder. It functions as a normal file manager containing subfolders and media assets (images, PDFs, audio, archives, etc.), but does not directly contain Obsidian notes, Keep notes, or chat channels.
+_Avoid_: File vault, root directory, public folder
+
+**Keep Note**:
+A specialized note that exists only as a direct child of the reserved `Quick Notes/` folder. It is rendered in a grid layout, supports background card colors, can be pinned/unpinned, and can be viewed/edited as a checklist or a simple scratchpad.
+_Avoid_: Sticky note, keep card, board item
+
+**Chat Channel**:
+A folder that exists only as a direct child of the reserved `Chat Channels/` folder. It represents a Discord-style container for a stream of chat messages.
+_Avoid_: Chat room, text channel, conversation
+
+**Chat Message**:
+A single chronological entry within a Chat Channel. It contains text, hyperlinks, and optional Media Asset attachments (such as screenshots or uploaded files).
+_Avoid_: Chat post, message row, channel text
 
 **Vault Browser**:
 The navigation surface for browsing folders, nested folders, notes, and media assets in a vault as one mixed tree with terse explorer-style rows. Its compact creation, search, filter, and grouped upload/import controls stay reachable while the tree or result rows scroll beneath them; grouped upload/import opens a small choice before the selected file flow. The vault root should appear as `Vault` in the vault browser, while compact location breadcrumbs belong where context matters, such as active content headers or result rows, using labels such as `Vault / Projects / Plan`. Search and tag filtering filter or replace the vault browser contents, while selecting a folder sets the active creation location without replacing already opened note or media content in the main content pane. Within a location, folders sort before note and media rows, which then sort case-insensitively using natural alphanumeric sorting by visible name (e.g. `f2` sorts before `f10` rather than alphabetical). The final redesigned browser should not keep a separate folder-content section below the folder tree; folder contents belong in the mixed tree itself, with search and tag modes temporarily replacing that tree as compact result rows. An opened note or media asset should read as the strong selection state; the active creation folder may use a quieter marker. Detailed inputs show only when needed. Row actions can live in a compact overflow menu, with right-click context menus serving as a primary desktop interaction path. Folder expansion state may persist locally when practical; the initial tree can show the expanded vault root with top-level folders collapsed unless opened content needs its ancestor path revealed. An empty tree area should stay neutral while toolbar creation remains available. On narrow layouts, it may move behind a browser toggle so opened content remains primary; on desktop, its pane may be resized. The surrounding app chrome should stay slim, with account actions in a compact menu, so the vault workspace remains primary. The vault browser is UI language, not a separate domain entity.
@@ -19,15 +40,15 @@ The authenticated person who owns one private vault. Users are isolated from eac
 _Avoid_: Admin, member, account, owner
 
 **Folder**:
-A user-created container inside a vault for organizing notes and media. Folders may contain other folders, and MVP workflows support creating folders in the vault root or inside any folder. A folder should not normally contain two child folders with the same case-insensitive name, or two visible notes or media assets with the same exported filename; a note title maps to a Markdown filename for this rule, so `Plan` and `Plan.md` collide. New folder creation should use a readable suffix such as `New folder 2` when the default name would collide, then allow immediate inline Rename. Folder names use a separate namespace from notes and media assets, so a folder named `Plan` and a note titled `Plan` can coexist as `Plan/` and `Plan.md`. Exported filename uniqueness is case-insensitive, so `Plan`, `plan`, and `PLAN` collide.
+A user-created container inside a vault for organizing files, notes, or chat channels. In General File Storage and Obsidian Mode, folders may contain subfolders. The three root folders `Notes/`, `Quick Notes/`, and `Chat Channels/` are reserved system folders and cannot be moved, renamed, or deleted. Folders inside `Chat Channels/` represent Chat Channels and cannot contain subfolders. Folder creation inside `Quick Notes/` is blocked. A folder should not normally contain two child folders with the same case-insensitive name, or two visible notes or media assets with the same exported filename. New folder creation should use a readable suffix such as `New folder 2` on collision, then allow immediate inline Rename.
 _Avoid_: Directory, collection, project
 
 **Note**:
-A Markdown document owned by a user and stored in a folder or the vault root. Notes are the primary content in Filebucket; every note is Markdown content and should not be described as a plain text upload. A note has a separate title; the first Markdown heading is content, not the note's identity. Active note context may show a compact vault location near the title. Note editing should use one rendered Markdown editing surface rather than separate raw Markdown write and preview modes for the first redesign, and Markdown formatting may normalize when saved. The rendered editor should cover practical note Markdown such as headings, paragraphs, emphasis, lists, task checkboxes, links, blockquotes, inline code, code blocks, and tables. Formatting controls may start as a minimal toolbar and should be removable if they distract from writing; first-class controls should focus on heading level, bold, italic, link, unordered list, ordered list, task list, and code block. A note title normally becomes its exported Markdown filename, but users do not need to type the `.md` extension. New note creation should use a readable suffix such as `Untitled 2` when the default title would collide, then immediately open the note and focus the title. Importing a `.md` file creates a note whose title defaults to the imported filename without `.md`, using a readable suffix on collision, and whose body is the imported Markdown content. MVP import does not parse frontmatter; frontmatter remains in the note body and the rendered editor must handle it acceptably. Regular Markdown links and wiki-style links are allowed as text, but MVP does not resolve note-to-note links, autocomplete wiki-style links, maintain backlinks, or show graph relationships. Raw HTML should not execute or render unsafely in MVP. Markdown task checkboxes should render for MVP; interactive toggling is a follow-up, and checkboxes are not a separate task system.
+An Obsidian-style Markdown document owned by a user and stored inside the reserved `Notes/` folder or its subfolders (for quick/checklist notes, see Keep Note). Notes are the primary text content for Obsidian Mode. A note has a separate title; the first Markdown heading is content, not the note's identity. Active note context may show a compact vault location near the title. Note editing uses one rendered Markdown editing surface rather than separate raw Markdown write and preview modes, and Markdown formatting may normalize when saved. The rendered editor covers headings, paragraphs, emphasis, lists, task checkboxes, links, blockquotes, inline code, code blocks, and tables. Formatting controls start as a minimal toolbar and can be toggled. A note title normally becomes its exported Markdown filename. New note creation uses a readable suffix such as `Untitled 2` on collision, then immediately opens the note and focuses the title. Importing a `.md` file creates a note whose title defaults to the imported filename without `.md`, using a readable suffix on collision. Import does not parse frontmatter; frontmatter remains in the note body. Regular Markdown links and wiki-style links are plain text; Filebucket does not resolve note-to-note links, autocomplete links, maintain backlinks, or show graph relationships. Raw HTML does not execute or render unsafely. Markdown task checkboxes render; interactive toggling is a follow-up.
 _Avoid_: Page, document, file note
 
 **Media Asset**:
-An uploaded item in the vault, such as an image, audio clip, video, PDF, TXT file, or other attachment. Media assets are first-class vault content: they can appear in folders or the vault root, be opened directly for media preview when supported, and optionally be referenced from notes. Active media context may show a compact vault location near the filename. Media asset names include their file extensions as visible filenames. A media asset must be placed in a folder or the vault root; note references are usage only, never placement. Images uploaded inline from the note editor default to a visible vault-level `Assets` folder created when needed; an existing root folder with the same case-insensitive name is reused with its visible capitalization preserved. `Assets` remains an ordinary visible folder even when Filebucket uses it as that default target. Upload progress should stay lightweight and local to the initiating surface, and failed uploads should remain visible with retry rather than disappearing silently. If upload would collide with an existing visible exported filename, Filebucket should suggest or use a readable suffix such as `photo 2.png`.
+An uploaded item in the vault, such as an image, audio clip, video, PDF, TXT file, or other attachment. Media assets are first-class vault content: they can appear in General File Storage, inside `Notes/` folders, or be attached as files in Chat Messages. Active media context shows a compact vault location near the filename. Media asset names include their file extensions as visible filenames. Images uploaded inline from the Obsidian note editor default to a visible `Notes/Assets/` folder created when needed. Upload progress stays lightweight, and failed uploads remain visible with retry. If upload would collide with an existing visible filename, Filebucket suggests or uses a readable suffix such as `photo 2.png`.
 _Avoid_: File, blob, upload
 
 **Media Reference**:
@@ -121,19 +142,19 @@ Dev: When this user signs in, which vault do they see?
 Domain expert: Their own vault. Users do not switch between vaults, and they cannot browse another user's vault.
 
 Dev: Can a note or media asset sit directly in the vault root?
-Domain expert: Yes. The vault root can contain folders, notes, and media assets.
+Domain expert: Only media assets (files) and folders can sit directly in the vault root. Obsidian Notes must sit under `Notes/`, Keep Notes under `Quick Notes/`, and Chat Channels under `Chat Channels/`.
 
 Dev: Can the vault root contain note `Plan` and media asset `Plan.md`?
-Domain expert: No. The vault root follows the same visible-name uniqueness rules as folders.
+Domain expert: No, Obsidian notes cannot sit at the vault root. They must be inside `Notes/`.
 
-Dev: Where does a user browse notes and media assets?
-Domain expert: In the vault browser mixed tree. Opening a note or media asset uses the main content pane.
+Dev: Where does a user browse files and notes?
+Domain expert: In the vault browser tree. Selecting a folder or file switches the view mode and active editor/viewer in the main content pane.
 
 Dev: What happens when a user selects a folder in the vault browser?
-Domain expert: The folder is the active creation location while the main content pane keeps already opened note or media content visible.
+Domain expert: The folder becomes the active creation location. If it is within `Notes/`, the creation buttons target Obsidian notes. If it is in the general storage, they target files/subfolders.
 
 Dev: Where does new content go after the user selects a folder?
-Domain expert: Into that active folder; if no folder is active, create it in the vault root.
+Domain expert: Into that active folder. If no folder is active: files are created in the vault root, Obsidian notes are created in the root of `Notes/`, Keep notes are created in `Quick Notes/`, and Chat Channels are created under `Chat Channels/`.
 
 Dev: What if the user selects a folder before opening any note or media?
 Domain expert: The main content pane may stay empty because folders are browsing locations, not opened content.
