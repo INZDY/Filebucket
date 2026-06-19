@@ -68,7 +68,7 @@ Behavior where a user views or plays a media asset directly in Filebucket withou
 _Avoid_: Download, external viewer, attachment only
 
 **Manga Reader**:
-A fullscreen overlay utility launched from an image media preview that enables sequential image reading. It can paginate through loose images inside a folder or dynamically extract images from an uploaded ZIP or CBZ archive.
+A fullscreen overlay utility launched from an image media preview or chat attachment that enables sequential image reading. It can paginate through loose images inside a folder, decompress and display images from an uploaded ZIP or CBZ archive (restoring the user's reading progress from local storage), or sequence chronologically through all loose images posted in a Chat Channel's history.
 _Avoid_: Comic viewer, book reader, gallery preview
 
 **Webtoon Mode**:

@@ -39,7 +39,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Create notes, pin/unpin cards, change colors, toggle checklists, and edit cards in the modal; verify mobile layout collapses to a 1-column stack and edits happen in fullscreen.
 
 ### Milestone 20: Discord Mode (Chat Channel Stream)
-*   **Goal**: Create a chronological chat channel stream for short text messages and media captures with mobile viewport handling.
+*   **Goal**: Create a chronological chat channel stream for short text messages and media captures with mobile viewport handling and Manga Reader integration.
 *   **Tasks**:
     *   Build the Chat Panel workspace in the Main Content Pane when in Chat Channels mode.
     *   Render messages chronologically with timestamps and sender headers.
@@ -47,7 +47,8 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Build a message input bar at the bottom with a file upload button (`+` icon). On mobile, ensure the input stays visible, docked above the Bottom Navigation Bar, and pushes up when the virtual keyboard is open.
     *   Allow message deletion on hover (or long-press context menu on mobile).
     *   On mobile, support swipe-right to open the channels list drawer.
-*   **Verification**: Type and send messages, upload images, click links, and delete messages; verify mobile keyboard alignment and edge swiping.
+    *   Integrate **Manga Reader overlay with chat media**: clicking a chat image or a ZIP/CBZ archive decompress it in-browser, restores page progress from `localStorage` (using the media asset ID), and supports swiping chronologically through all loose images uploaded to the channel history.
+*   **Verification**: Type and send messages, upload images, click links, and delete messages; verify mobile keyboard alignment and edge swiping. Verify clicking an image or ZIP chat attachment opens the Manga Reader, sequences through the feed history, and resumes progress from `localStorage`.
 
 ### Milestone 21: General File Storage & Boundary Validation
 *   **Goal**: Enforce system folder rules, lock down the general file explorer, enable context-specific downloads, and adapt Obsidian tabs/outline for mobile.
