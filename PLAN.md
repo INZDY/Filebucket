@@ -7,6 +7,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 ## Redesign Milestones
 
 ### Milestone 17: Database Schema Extension & Seed Data
+*   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Update the data model to support Keep card styling, Discord-style text channels, and type-based folder categories.
 *   **Tasks**:
     *   Add `color` (String?) and `isPinned` (Boolean, default false) to the `Note` model in `prisma/schema.prisma`.
