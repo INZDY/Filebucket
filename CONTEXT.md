@@ -124,9 +124,13 @@ _Avoid_: Label, category, keyword
 Whole-vault title and name matching across active folders, notes, and media assets. Search results replace the vault browser tree with compact matching rows that show visible names with location context while leaving opened main content tabs intact; searching inside note bodies is a later enhancement and should be called Full-Text Search when discussed.
 _Avoid_: Full-text search, global search
 
-**Export**:
-A user-initiated download of active vault content in a portable format, requiring explicit confirmation before the download starts. MVP Export is a vault-level action suitable for the compact account or app menu rather than the vault browser toolbar. It produces one downloadable ZIP archive that preserves folder structure, writes notes as Markdown files, keeps media assets as files in their vault folder locations, rewrites Filebucket image references in Markdown notes to relative exported paths when possible, and includes a metadata manifest for extra Filebucket details such as tags, media references, media asset IDs, and original names if sanitized; it does not include Trash by default. The MVP metadata manifest is useful export metadata, not yet a stable ZIP re-import or restore contract. Export must write the stored Markdown body as Filebucket saved it, without injecting the note title as a heading. Export must avoid duplicate filenames inside each exported folder for notes and media assets, using readable automatic suffixes when needed, and may sanitize unsafe filename characters while preserving visible titles as closely as possible.
-_Avoid_: Backup, sync, archive
+**Contextual Export (Download)**:
+The ability to download files, folders, notes, or chat logs contextually rather than via a global vault-wide button. 
+- **Files & Media Assets**: Can be downloaded individually in their raw formats.
+- **Folders**: Can be downloaded as a ZIP archive of their contents (preserving subfolder structure and renaming collisions cleanly).
+- **Notes & Keep Notes**: Can be exported/downloaded as individual `.md` Markdown files.
+- **Chat Channels**: Can be exported as a formatted `.md` transcript document detailing message history, with associated attachments zipped or linked.
+_Avoid_: Global export, backup, sync, archive
 
 **Backup**:
 An automated or recurring preservation process for vault content. Backup is a later automation concept, not the same thing as a user-initiated export.
@@ -405,20 +409,20 @@ Domain expert: No. Search includes active content by default.
 Dev: Is clicking a button to download Markdown files a backup?
 Domain expert: No, that is an export. Backup means the app preserves copies automatically or on a recurring schedule.
 
-Dev: What should MVP Export download?
-Domain expert: One ZIP archive containing the folder structure, Markdown notes, media assets, and metadata manifest.
+Dev: How does a user export their notes or files?
+Domain expert: Users can download individual files or notes, export specific folders as a ZIP archive, or export chat channels as transcripts from their respective context menus.
 
-Dev: Should Export include notes in Trash?
-Domain expert: Not by default. Export should represent active vault content unless an explicit include-Trash option is added later.
+Dev: Should downloading a folder include its notes in Trash?
+Domain expert: No, it should represent active folder content. Trashed items are moved to the Trash view and are not mixed with active folder contents.
 
 Dev: What should an exported note look like outside Filebucket?
-Domain expert: It should be a Markdown file inside the exported folder structure, with metadata used only for extra Filebucket details.
+Domain expert: It should be a standard `.md` Markdown file.
 
-Dev: What happens to Filebucket image references during Export?
-Domain expert: Rewrite them to relative paths pointing to the exported media files when possible.
+Dev: What happens to image references in an exported folder or note?
+Domain expert: They point to the referenced media assets, using relative paths when folders are downloaded as ZIPs.
 
-Dev: Should Export add `# Trip Plan` to a note body?
-Domain expert: No. Export writes the Markdown body as Filebucket saved it; the note title becomes the filename.
+Dev: Should downloading a note add its title as an `# H1` heading to the file body?
+Domain expert: No. The download writes the Markdown body exactly as saved; the note title is used as the filename.
 
 Dev: What if two exported things would have the same filename in one folder?
 Domain expert: Export should keep names readable and add automatic suffixes, such as `Plan.md` and `Plan 2.md`.

@@ -16,15 +16,17 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Run Prisma client generation and check database connections; verify seeded data compiles.
 
 ### Milestone 18: Activity Bar Navigation & Dynamic Sidebar
-*   **Goal**: Implement the leftmost navigation strip and dynamic view switching.
+*   **Goal**: Implement the leftmost navigation strip, top-header search redesign, and dynamic view switching.
 *   **Tasks**:
     *   Create an Activity Bar component containing icons for Files, Obsidian Notes, Quick Notes, and Chat Channels.
+    *   Remove the global "Export Vault" button from the top-header.
+    *   Move the global search input from the sidebar browser to the center of the top header next to the app logo and name.
     *   Update `SidebarBrowser` to dynamically switch its content based on the selected mode:
         *   **Files Mode**: General Vault tree.
         *   **Obsidian Mode**: `Notes/` subfolders/notes tree.
         *   **Keep Mode**: Flat list of Tag filters for Keep cards.
         *   **Chat Channels Mode**: Flat list of Chat Channels under the `Chat Channels/` folder.
-*   **Verification**: Click each icon in the Activity Bar and verify the sidebar updates to show the correct content tree/filters.
+*   **Verification**: Click each icon in the Activity Bar and verify the sidebar updates to show the correct content tree/filters; verify the search bar renders centered in the top header and performs global queries.
 
 ### Milestone 19: Google Keep Mode (Card Grid & Modal Editor)
 *   **Goal**: Create a rich, authentic Google Keep workspace for quick notes and scratchpads.
@@ -47,7 +49,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Type and send messages, upload images, click links, and delete messages; verify that attachments are created as `MediaAsset`s linked to the chat message.
 
 ### Milestone 21: General File Storage & Boundary Validation
-*   **Goal**: Enforce system folder rules and lock down the general file explorer.
+*   **Goal**: Enforce system folder rules, lock down the general file explorer, and enable context-specific downloads.
 *   **Tasks**:
     *   Make `Notes/`, `Quick Notes/`, and `Chat Channels/` reserved folders at the vault root. Disable rename, move, and delete actions on them.
     *   Show custom, styled icons in the vault browser for reserved folders.
@@ -56,7 +58,12 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
         *   Enforce that all notes created under Obsidian Mode go inside `Notes/`.
         *   Block folder creation inside `Quick Notes/`.
         *   Block subfolders inside chat channels under `Chat Channels/`.
-*   **Verification**: Attempt to rename reserved folders, create notes in Files root, or create folders in Quick Notes; verify all are rejected with clear error messages.
+    *   Implement Contextual Export/Download actions:
+        *   Right-click file row -> Download raw file.
+        *   Right-click folder row -> Download folder contents zipped.
+        *   Right-click note row -> Download note as `.md` file.
+        *   Right-click Chat Channel folder -> Export Chat Transcript as `.md` file with message history and links.
+*   **Verification**: Attempt to rename reserved folders, create notes in Files root, or create folders in Quick Notes; verify all are rejected with clear error messages. Verify folder ZIP download compiles and chat transcript export works.
 
 ### Milestone 22: Testing & Hardening
 *   **Goal**: Verify the stability, responsiveness, and performance of the hybrid vault system.
