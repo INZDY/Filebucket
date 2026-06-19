@@ -6,6 +6,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { storageEngine } from "@/lib/storage";
 import { getMediaAssetUrl } from "@/lib/utils";
+import { initializeUserVault } from "@/lib/user-init";
 
 import { SidebarBrowser } from "@/app/vault/sidebar-browser";
 import { ActiveWorkspace } from "@/app/vault/active-workspace";
@@ -164,6 +165,7 @@ function getMediaPreviewKind(contentType: string) {
 
 export default async function Home({ searchParams }: HomeProps) {
   const session = await requireSession();
+  await initializeUserVault(session.user.id);
   const params = await searchParams;
   const isTrashView = params?.view === "trash";
   const query = String(params?.q ?? "").trim();
