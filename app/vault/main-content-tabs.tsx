@@ -20,18 +20,29 @@ type MainContentTabsProps = {
   existingIds?: string[];
   fallbackHref: string;
   children: ReactNode;
+  activeMode?: "FILES" | "NOTES" | "KEEP" | "CHAT";
 };
 
-export function MainContentTabs({ activeTab, existingIds, fallbackHref, children }: MainContentTabsProps) {
+export function MainContentTabs({
+  activeTab,
+  existingIds,
+  fallbackHref,
+  children,
+  activeMode = "FILES",
+}: MainContentTabsProps) {
   const router = useRouter();
-  const [tabs, setTabs] = useState<ContentTab[]>([]);
+  const [tabsByMode, setTabsByMode] = useState<Record<"FILES" | "NOTES", ContentTab[]>>({
+    FILES: [],
+    NOTES: [],
+  });
 
   useEffect(() => {
-    if (!activeTab) {
+    if (!activeTab || (activeMode !== "FILES" && activeMode !== "NOTES")) {
       return;
     }
 
-    setTabs((currentTabs) => {
+    setTabsByMode((prev) => {
+      const currentTabs = prev[activeMode];
       const existingIndex = currentTabs.findIndex((tab) => {
         if (activeTab.type === "media") {
           return tab.type === "media";
@@ -40,34 +51,48 @@ export function MainContentTabs({ activeTab, existingIds, fallbackHref, children
       });
 
       if (existingIndex === -1) {
-        return [...currentTabs, activeTab];
+        return {
+          ...prev,
+          [activeMode]: [...currentTabs, activeTab],
+        };
       }
 
-      return currentTabs.map((tab, index) => index === existingIndex ? activeTab : tab);
+      return {
+        ...prev,
+        [activeMode]: currentTabs.map((tab, index) => index === existingIndex ? activeTab : tab),
+      };
     });
-  }, [activeTab]);
+  }, [activeTab, activeMode]);
 
   useEffect(() => {
     if (existingIds) {
-      setTabs((currentTabs) => currentTabs.filter((tab) => existingIds.includes(tab.id)));
+      setTabsByMode((prev) => ({
+        FILES: prev.FILES.filter((tab) => existingIds.includes(tab.id)),
+        NOTES: prev.NOTES.filter((tab) => existingIds.includes(tab.id)),
+      }));
     }
   }, [existingIds]);
 
   function closeTab(tabToClose: ContentTab) {
-    setTabs((currentTabs) =>
-      currentTabs.filter((tab) => tab.id !== tabToClose.id || tab.type !== tabToClose.type),
-    );
+    if (activeMode !== "FILES" && activeMode !== "NOTES") return;
+
+    setTabsByMode((prev) => ({
+      ...prev,
+      [activeMode]: prev[activeMode].filter((tab) => tab.id !== tabToClose.id || tab.type !== tabToClose.type),
+    }));
 
     if (activeTab?.id === tabToClose.id && activeTab.type === tabToClose.type) {
       router.push(fallbackHref);
     }
   }
 
+  const currentTabs = activeMode === "FILES" || activeMode === "NOTES" ? tabsByMode[activeMode] : [];
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {tabs.length > 0 ? (
+      {currentTabs.length > 0 ? (
         <div className="flex min-h-11 items-end overflow-x-auto border-b border-slate-800 bg-[#151820] px-2 pt-2">
-          {tabs.map((tab) => {
+          {currentTabs.map((tab) => {
             const isActive = activeTab?.id === tab.id && activeTab.type === tab.type;
             const Icon = tab.type === "note" ? FileText : tab.type === "folder" ? Folder : ImagePlus;
 

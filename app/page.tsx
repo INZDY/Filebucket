@@ -15,7 +15,10 @@ import { TrashWorkspace } from "@/app/vault/trash-workspace";
 import { MainContentTabs } from "@/app/vault/main-content-tabs";
 import { ResizableVault } from "@/app/vault/resizable-vault";
 import { GlobalLoader } from "@/components/global-loader";
-import { ExportButton } from "@/components/export-button";
+import { SearchInput } from "@/components/search-input";
+import { HeaderHamburger } from "@/components/header-hamburger";
+import { ActivityBar } from "@/components/activity-bar";
+import { resolveViewMode } from "@/lib/mode";
 
 type HomeProps = {
   searchParams?: Promise<{
@@ -556,12 +559,30 @@ export default async function Home({ searchParams }: HomeProps) {
       ])
     : null;
 
+  const notesRoot = folders.find((f) => f.type === "NOTES_ROOT");
+  const keepRoot = folders.find((f) => f.type === "KEEP_ROOT");
+  const chatRoot = folders.find((f) => f.type === "CHAT_ROOT");
+
+  const notesRootId = notesRoot?.id ?? null;
+  const keepRootId = keepRoot?.id ?? null;
+  const chatRootId = chatRoot?.id ?? null;
+
+  const activeMode = resolveViewMode({
+    selectedFolderId: params?.folder ?? null,
+    selectedNoteId: params?.note ?? null,
+    selectedMediaId: params?.media ?? null,
+    folders,
+    notes,
+    mediaAssets,
+  });
+
   return (
     <main className="h-screen overflow-hidden bg-[#0d0d11] text-slate-100">
       <GlobalLoader renderKey={renderKey} />
       <div className="flex h-screen flex-col overflow-hidden">
-        <header className="flex min-h-14 flex-col gap-3 border-b border-slate-800/40 bg-[#101015]/60 backdrop-blur-md px-4 py-2.5 md:flex-row md:items-center md:justify-between md:px-5">
+        <header className="flex min-h-14 flex-col gap-3 border-b border-slate-800/40 bg-[#101015]/60 backdrop-blur-md px-4 py-2.5 md:flex-row md:items-center md:px-5">
           <div className="flex min-w-0 items-center gap-3">
+            <HeaderHamburger />
             <div className="flex h-9 w-9 items-center justify-center rounded-md bg-purple-600/20 border border-purple-500/30 text-purple-400 shadow-[0_0_10px_rgba(139,92,246,0.15)]">
               <Cloud className="h-5 w-5" />
             </div>
@@ -571,117 +592,139 @@ export default async function Home({ searchParams }: HomeProps) {
             </div>
           </div>
 
-          <ExportButton email={session.email} />
+          <div className="flex-1 max-w-md mx-auto w-full md:ml-12 md:mr-auto">
+            <SearchInput defaultValue={query} disabled={isTrashView} />
+          </div>
+
+          <div className="hidden md:block w-28" />
         </header>
 
-        <ResizableVault
-          browser={
-            <SidebarBrowser
-              userId={session.user.id}
-              isTrashView={isTrashView}
-              query={query}
-              activeTagSlug={activeTagSlug}
-              activeTag={activeTag}
-              selectedFolder={selectedFolder}
-              selectedNote={selectedNote}
-              selectedMedia={selectedMedia}
-              selectedDeletedFolder={selectedDeletedFolder}
-              selectedDeletedNote={selectedDeletedNote}
-              selectedDeletedMedia={selectedDeletedMedia}
-              folders={folders}
-              deletedFolders={deletedFolders}
-              deletedNotes={deletedNotes}
-              deletedMediaAssets={deletedMediaAssets}
-              tags={tags}
-              notes={notes}
-              mediaAssets={mediaAssets}
-              folderTrail={folderTrail}
-              folderDestinations={folderDestinations}
-              matchingFolders={matchingFolders}
-              isFilteredView={isFilteredView}
-              isVaultRootActive={isVaultRootActive}
-              browserTitle={browserTitle}
-              trashCount={trashCount}
-              returnTo={returnTo}
-            />
-          }
-          content={
-            <section
-              key="vault-content-pane"
-              className="h-full min-h-0 overflow-hidden bg-[#111318] text-slate-100"
-            >
-              <MainContentTabs
-                activeTab={activeContentTab}
-                existingIds={existingIds}
-                fallbackHref={contentFallbackHref}
+        <div className="flex flex-col-reverse md:flex-row flex-1 min-h-0 overflow-hidden">
+          <ActivityBar
+            activeMode={activeMode}
+            notesRootId={notesRootId}
+            keepRootId={keepRootId}
+            chatRootId={chatRootId}
+          />
+          <ResizableVault
+            browser={
+              <SidebarBrowser
+                userId={session.user.id}
+                isTrashView={isTrashView}
+                query={query}
+                activeTagSlug={activeTagSlug}
+                activeTag={activeTag}
+                selectedFolder={selectedFolder}
+                selectedNote={selectedNote}
+                selectedMedia={selectedMedia}
+                selectedDeletedFolder={selectedDeletedFolder}
+                selectedDeletedNote={selectedDeletedNote}
+                selectedDeletedMedia={selectedDeletedMedia}
+                folders={folders}
+                deletedFolders={deletedFolders}
+                deletedNotes={deletedNotes}
+                deletedMediaAssets={deletedMediaAssets}
+                tags={tags}
+                notes={notes}
+                mediaAssets={mediaAssets}
+                folderTrail={folderTrail}
+                folderDestinations={folderDestinations}
+                matchingFolders={matchingFolders}
+                isFilteredView={isFilteredView}
+                isVaultRootActive={isVaultRootActive}
+                browserTitle={browserTitle}
+                trashCount={trashCount}
+                returnTo={returnTo}
+                activeMode={activeMode}
+              />
+            }
+            content={
+              <section
+                key="vault-content-pane"
+                className="h-full min-h-0 overflow-hidden bg-[#111318] text-slate-100"
               >
-                {isTrashView ? (
-                  <TrashWorkspace
-                    selectedDeletedNote={selectedDeletedNote}
-                    selectedDeletedMedia={selectedDeletedMedia}
-                    selectedDeletedFolder={selectedDeletedFolder}
-                    deletedFolderContents={deletedFolderContents}
-                    textPreviewContent={textPreviewContent}
-                    resolveDisplayMarkdown={resolveDisplayMarkdown}
-                  />
-                ) : (
-                  <ActiveWorkspace
-                    selectedNote={
-                      selectedNote
-                        ? {
-                            ...selectedNote,
-                            body: resolveDisplayMarkdown(selectedNote.body),
-                          }
-                        : null
-                    }
-                    selectedMedia={selectedMedia}
-                    selectedFolder={selectedFolder}
-                    folderTrail={folderTrail}
-                    folderDestinations={folderDestinations}
-                    imageMediaAssets={imageMediaAssets.map((mediaAsset) => ({
-                      id: mediaAsset.id,
-                      filename: mediaAsset.filename,
-                      location: mediaAsset.folder?.name ?? "Vault",
-                      url: getMediaAssetUrl(mediaAsset.r2Key) ?? "",
-                    }))}
-                    tags={tags.map((t) => ({ id: t.id, name: t.name, slug: t.slug }))}
-                    textPreviewContent={textPreviewContent}
-                    hasVaultContent={hasVaultContent}
-                    browserTitle={browserTitle}
-                    allMediaAssets={mediaAssets}
-                  />
-                )}
-              </MainContentTabs>
-            </section>
-          }
-          outline={selectedNote && !isTrashView ? (
-            <aside
-              key={`note-outline-${selectedNote.id}`}
-              className="flex h-full min-h-0 flex-col border-l border-slate-800 bg-[#171a20] text-slate-100"
-            >
-              <div className="border-b border-slate-800 px-4 py-4">
-                <h2 className="text-sm font-semibold text-slate-100">Note Outline</h2>
-              </div>
-              <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-                {noteOutline.length > 0 ? (
-                  <div className="space-y-1">
-                    {noteOutline.map((heading) => (
-                      <div
-                        key={heading.id}
-                        className="truncate rounded-md px-2 py-1.5 text-sm text-slate-400"
-                        style={{ paddingLeft: `${8 + (heading.depth - 1) * 12}px` }}
-                      >
-                        {heading.title}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="px-2 py-1.5 text-sm text-slate-500">No headings</p>
-                )}
-              </div>
-            </aside>
-          ) : null}
-        />
+                <MainContentTabs
+                  activeTab={activeContentTab}
+                  existingIds={existingIds}
+                  fallbackHref={contentFallbackHref}
+                  activeMode={activeMode}
+                >
+                  {isTrashView ? (
+                    <TrashWorkspace
+                      selectedDeletedNote={selectedDeletedNote}
+                      selectedDeletedMedia={selectedDeletedMedia}
+                      selectedDeletedFolder={selectedDeletedFolder}
+                      deletedFolderContents={deletedFolderContents}
+                      textPreviewContent={textPreviewContent}
+                      resolveDisplayMarkdown={resolveDisplayMarkdown}
+                    />
+                  ) : activeMode === "KEEP" ? (
+                    <div className="flex h-full items-center justify-center text-slate-400 text-sm font-medium">
+                      Keep Workspace Placeholder (Milestone 19)
+                    </div>
+                  ) : activeMode === "CHAT" ? (
+                    <div className="flex h-full items-center justify-center text-slate-400 text-sm font-medium">
+                      Chat Workspace Placeholder (Milestone 20)
+                    </div>
+                  ) : (
+                    <ActiveWorkspace
+                      selectedNote={
+                        selectedNote
+                          ? {
+                              ...selectedNote,
+                              body: resolveDisplayMarkdown(selectedNote.body),
+                            }
+                          : null
+                      }
+                      selectedMedia={selectedMedia}
+                      selectedFolder={selectedFolder}
+                      folderTrail={folderTrail}
+                      folderDestinations={folderDestinations}
+                      imageMediaAssets={imageMediaAssets.map((mediaAsset) => ({
+                        id: mediaAsset.id,
+                        filename: mediaAsset.filename,
+                        location: mediaAsset.folder?.name ?? "Vault",
+                        url: getMediaAssetUrl(mediaAsset.r2Key) ?? "",
+                      }))}
+                      tags={tags.map((t) => ({ id: t.id, name: t.name, slug: t.slug }))}
+                      textPreviewContent={textPreviewContent}
+                      hasVaultContent={hasVaultContent}
+                      browserTitle={browserTitle}
+                      allMediaAssets={mediaAssets}
+                    />
+                  )}
+                </MainContentTabs>
+              </section>
+            }
+            outline={selectedNote && !isTrashView ? (
+              <aside
+                key={`note-outline-${selectedNote.id}`}
+                className="flex h-full min-h-0 flex-col border-l border-slate-800 bg-[#171a20] text-slate-100"
+              >
+                <div className="border-b border-slate-800 px-4 py-4">
+                  <h2 className="text-sm font-semibold text-slate-100">Note Outline</h2>
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+                  {noteOutline.length > 0 ? (
+                    <div className="space-y-1">
+                      {noteOutline.map((heading) => (
+                        <div
+                          key={heading.id}
+                          className="truncate rounded-md px-2 py-1.5 text-sm text-slate-400"
+                          style={{ paddingLeft: `${8 + (heading.depth - 1) * 12}px` }}
+                        >
+                          {heading.title}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="px-2 py-1.5 text-sm text-slate-500">No headings</p>
+                  )}
+                </div>
+              </aside>
+            ) : null}
+          />
+        </div>
       </div>
     </main>
   );

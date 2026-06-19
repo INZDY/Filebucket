@@ -19,6 +19,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Run Prisma client generation and check database connections; verify seeded data compiles and check that the three reserved folders are created automatically for a new user.
 
 ### Milestone 18: Activity Bar Navigation & Dynamic Sidebar
+*   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Implement the leftmost navigation strip, top-header search redesign, and dynamic view switching with mobile responsive layouts.
 *   **Tasks**:
     *   Create an Activity Bar component containing icons for Files, Obsidian Notes, Quick Notes, and Chat Channels.

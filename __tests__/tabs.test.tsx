@@ -100,4 +100,66 @@ describe("MainContentTabs", () => {
     });
     document.body.removeChild(container);
   });
+
+  it("should preserve independent workspace tabs when switching modes", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    const fileTab = {
+      id: "media-1",
+      type: "media" as const,
+      title: "File.png",
+      href: "/?media=media-1",
+    };
+
+    const noteTab = {
+      id: "note-1",
+      type: "note" as const,
+      title: "Note.md",
+      href: "/?note=note-1",
+    };
+
+    // Render in FILES mode with fileTab
+    await act(async () => {
+      root.render(
+        <MainContentTabs activeTab={fileTab} activeMode="FILES" fallbackHref="/">
+          <div>Content</div>
+        </MainContentTabs>
+      );
+    });
+
+    expect(container.textContent).toContain("File.png");
+    expect(container.textContent).not.toContain("Note.md");
+
+    // Switch to NOTES mode, render noteTab
+    await act(async () => {
+      root.render(
+        <MainContentTabs activeTab={noteTab} activeMode="NOTES" fallbackHref="/">
+          <div>Content</div>
+        </MainContentTabs>
+      );
+    });
+
+    expect(container.textContent).not.toContain("File.png");
+    expect(container.textContent).toContain("Note.md");
+
+    // Switch back to FILES mode
+    await act(async () => {
+      root.render(
+        <MainContentTabs activeMode="FILES" fallbackHref="/">
+          <div>Content</div>
+        </MainContentTabs>
+      );
+    });
+
+    expect(container.textContent).toContain("File.png");
+    expect(container.textContent).not.toContain("Note.md");
+
+    // Clean up
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
 });

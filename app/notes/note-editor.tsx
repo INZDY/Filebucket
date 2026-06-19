@@ -313,6 +313,33 @@ function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assign
     return () => window.clearTimeout(timeout);
   }, [body, hasChanges, save, title]);
 
+  const unmountSaveRef = useRef({
+    noteId: note.id,
+    titleRef,
+    bodyRef,
+    savedTitleRef,
+    savedBodyRef,
+  });
+
+  useEffect(() => {
+    unmountSaveRef.current.noteId = note.id;
+  }, [note.id]);
+
+  useEffect(() => {
+    const saveRef = unmountSaveRef.current;
+    return () => {
+      const { noteId, titleRef: tRef, bodyRef: bRef, savedTitleRef: sTitleRef, savedBodyRef: sBodyRef } = saveRef;
+      const currentTitle = tRef.current.trim() || "Untitled note";
+      const currentBody = bRef.current;
+
+      if (currentTitle !== sTitleRef.current || currentBody !== sBodyRef.current) {
+        updateNoteAction(noteId, currentTitle, currentBody).catch((err) => {
+          console.error("Failed to autosave note on unmount:", err);
+        });
+      }
+    };
+  }, []);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-[#0d0d11]">
       {/* Editor Header panel */}

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   ArchiveRestore,
   ArrowLeft,
@@ -15,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ClientForm } from "@/components/client-form";
 import { ConfirmForm } from "@/components/confirm-form";
-import { SearchInput } from "@/components/search-input";
 import { BrowserToolbar } from "./browser-toolbar";
 import { BrowserTree } from "./browser-tree";
 import { cn } from "@/lib/utils";
@@ -43,6 +45,7 @@ type FolderEntry = {
   id: string;
   name: string;
   parentId: string | null;
+  type?: string;
   _count?: {
     children?: number;
     mediaAssets?: number;
@@ -108,6 +111,7 @@ interface SidebarBrowserProps {
   browserTitle: string;
   trashCount: number;
   returnTo: string;
+  activeMode: "FILES" | "NOTES" | "KEEP" | "CHAT";
 }
 
 export function SidebarBrowser({
@@ -136,8 +140,67 @@ export function SidebarBrowser({
   selectedNote,
   tags,
   trashCount,
+  activeMode,
 }: SidebarBrowserProps) {
   
+  const [searchFilter, setSearchFilter] = useState<"ALL" | "FILES" | "NOTES" | "CHATS">("ALL");
+
+  useEffect(() => {
+    setSearchFilter("ALL");
+  }, [query]);
+
+  const folderMap = new Map(folders.map((f) => [f.id, f]));
+  function getItemMode(folderId: string | null): "FILES" | "NOTES" | "KEEP" | "CHAT" {
+    if (!folderId) return "FILES";
+    let current = folderMap.get(folderId);
+    while (current) {
+      if (current.type === "NOTES_ROOT") return "NOTES";
+      if (current.type === "KEEP_ROOT") return "KEEP";
+      if (current.type === "CHAT_ROOT") return "CHAT";
+      current = current.parentId ? folderMap.get(current.parentId) : undefined;
+    }
+    return "FILES";
+  }
+
+  // 1. Files mode data
+  const filesFolders = folders.filter((f) => getItemMode(f.id) === "FILES");
+  const filesNotes = notes.filter((n) => getItemMode(n.folderId) === "FILES");
+  const filesMedia = mediaAssets.filter((m) => getItemMode(m.folderId) === "FILES");
+
+  // 2. Notes mode data
+  const notesRootId = folders.find((f) => f.type === "NOTES_ROOT")?.id ?? null;
+  const notesFolders = folders.filter((f) => getItemMode(f.id) === "NOTES" && f.id !== notesRootId);
+  const notesNotes = notes.filter((n) => getItemMode(n.folderId) === "NOTES");
+
+  // 3. Chat mode data
+  const chatRootId = folders.find((f) => f.type === "CHAT_ROOT")?.id ?? null;
+  const chatFolders = folders.filter((f) => f.parentId === chatRootId);
+
+  // 4. Filter search results
+  const filteredMatchingFolders = matchingFolders.filter((f) => {
+    const mode = getItemMode(f.id);
+    if (searchFilter === "FILES") return mode === "FILES";
+    if (searchFilter === "NOTES") return mode === "NOTES" || mode === "KEEP";
+    if (searchFilter === "CHATS") return mode === "CHAT";
+    return true;
+  });
+
+  const filteredNotes = notes.filter((n) => {
+    const mode = getItemMode(n.folderId);
+    if (searchFilter === "FILES") return mode === "FILES";
+    if (searchFilter === "NOTES") return mode === "NOTES" || mode === "KEEP";
+    if (searchFilter === "CHATS") return mode === "CHAT";
+    return true;
+  });
+
+  const filteredMediaAssets = mediaAssets.filter((m) => {
+    const mode = getItemMode(m.folderId);
+    if (searchFilter === "FILES") return mode === "FILES";
+    if (searchFilter === "NOTES") return mode === "NOTES" || mode === "KEEP";
+    if (searchFilter === "CHATS") return mode === "CHAT";
+    return true;
+  });
+
   const getContentHref = ({
     folderId,
     mediaId,
@@ -199,42 +262,46 @@ export function SidebarBrowser({
           </div>
         </div>
 
-        <BrowserToolbar folderId={selectedFolder?.id ?? null} disabled={isTrashView} />
+        {/* Toolbar: only for files and notes modes */}
+        {(activeMode === "FILES" || activeMode === "NOTES") && (
+          <BrowserToolbar folderId={selectedFolder?.id ?? null} disabled={isTrashView} />
+        )}
 
-        <SearchInput defaultValue={query} disabled={isTrashView} />
+        {/* Badge Tags list: only for files and notes modes */}
+        {(activeMode === "FILES" || activeMode === "NOTES") && (
+          <div className="flex flex-wrap gap-2">
+            {tags.length > 0 ? (
+              tags.map((tag) => {
+                const tagParams = new URLSearchParams();
 
-        <div className="flex flex-wrap gap-2">
-          {tags.length > 0 ? (
-            tags.map((tag) => {
-              const tagParams = new URLSearchParams();
+                if (query) {
+                  tagParams.set("q", query);
+                }
 
-              if (query) {
-                tagParams.set("q", query);
-              }
+                if (activeTagSlug !== tag.slug) {
+                  tagParams.set("tag", tag.slug);
+                }
 
-              if (activeTagSlug !== tag.slug) {
-                tagParams.set("tag", tag.slug);
-              }
+                const href = tagParams.toString() ? `/?${tagParams.toString()}` : "/";
 
-              const href = tagParams.toString() ? `/?${tagParams.toString()}` : "/";
-
-              return (
-                <Link key={tag.id} href={href}>
-                  <Badge
-                    className="gap-1 hover:bg-primary hover:text-primary-foreground"
-                    variant={activeTagSlug === tag.slug ? "default" : "outline"}
-                  >
-                    <Tags className="h-3 w-3" />
-                    {tag.name}
-                    <span className="text-[10px] opacity-70">{tag._count.notes}</span>
-                  </Badge>
-                </Link>
-              );
-            })
-          ) : (
-            <p className="text-xs text-slate-500">No tags yet</p>
-          )}
-        </div>
+                return (
+                  <Link key={tag.id} href={href}>
+                    <Badge
+                      className="gap-1 hover:bg-primary hover:text-primary-foreground"
+                      variant={activeTagSlug === tag.slug ? "default" : "outline"}
+                    >
+                      <Tags className="h-3 w-3" />
+                      {tag.name}
+                      <span className="text-[10px] opacity-70">{tag._count.notes}</span>
+                    </Badge>
+                  </Link>
+                );
+              })
+            ) : (
+              <p className="text-xs text-slate-500">No tags yet</p>
+            )}
+          </div>
+        )}
 
         {activeTag ? (
           <div className="flex flex-col gap-2 rounded-md border border-slate-700 bg-[#111318] p-2">
@@ -254,6 +321,28 @@ export function SidebarBrowser({
             </ClientForm>
           </div>
         ) : null}
+
+        {/* Search chips overlay in sidebar browser */}
+        {query && (
+          <div className="flex flex-wrap gap-1.5 border-t border-slate-800/60 pt-3">
+            {(["ALL", "FILES", "NOTES", "CHATS"] as const).map((filter) => (
+              <Button
+                key={filter}
+                size="sm"
+                variant={searchFilter === filter ? "default" : "outline"}
+                className={cn(
+                  "h-7 px-2.5 text-xs rounded-full",
+                  searchFilter === filter
+                    ? "bg-purple-600 hover:bg-purple-700 text-white font-medium"
+                    : "text-slate-400 border-slate-800 bg-transparent hover:bg-slate-800 hover:text-slate-200"
+                )}
+                onClick={() => setSearchFilter(filter)}
+              >
+                {filter === "ALL" ? "All" : filter === "FILES" ? "Files" : filter === "NOTES" ? "Notes" : "Chats"}
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
@@ -263,7 +352,7 @@ export function SidebarBrowser({
               <p className="px-3 py-1 text-xs font-semibold uppercase text-slate-500">
                 {browserTitle}
               </p>
-              {matchingFolders
+              {filteredMatchingFolders
                 .slice()
                 .sort((a, b) => compareAlphanumeric(a.name, b.name))
                 .map((folder) => (
@@ -279,7 +368,7 @@ export function SidebarBrowser({
                     </span>
                   </Link>
                 ))}
-              {notes
+              {filteredNotes
                 .slice()
                 .sort((a, b) => compareAlphanumeric(a.title, b.title))
                 .map((note) => (
@@ -305,7 +394,7 @@ export function SidebarBrowser({
                     </span>
                   </Link>
                 ))}
-              {mediaAssets
+              {filteredMediaAssets
                 .slice()
                 .sort((a, b) => compareAlphanumeric(a.filename, b.filename))
                 .map((mediaAsset) => (
@@ -330,15 +419,80 @@ export function SidebarBrowser({
                     </span>
                   </Link>
                 ))}
-              {matchingFolders.length === 0 && notes.length === 0 && mediaAssets.length === 0 ? (
+              {filteredMatchingFolders.length === 0 && filteredNotes.length === 0 && filteredMediaAssets.length === 0 ? (
                 <div className="px-3 py-5 text-sm text-slate-500">No matching vault content</div>
               ) : null}
             </nav>
+          ) : activeMode === "KEEP" ? (
+            /* Render Keep tags list vertical menu */
+            <nav className="space-y-1.5" aria-label="Keep tags">
+              <div className="mb-2 px-3">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Tags</span>
+              </div>
+              {tags.length > 0 ? (
+                tags.map((tag) => {
+                  const isActive = activeTagSlug === tag.slug;
+                  const tagParams = new URLSearchParams();
+                  if (query) {
+                    tagParams.set("q", query);
+                  }
+                  if (!isActive) {
+                    tagParams.set("tag", tag.slug);
+                  }
+                  const keepRootId = folders.find((f) => f.type === "KEEP_ROOT")?.id;
+                  if (keepRootId) {
+                    tagParams.set("folder", keepRootId);
+                  }
+                  return (
+                    <Link
+                      key={tag.id}
+                      className={cn(
+                        "flex h-9 items-center gap-2 rounded-md px-3 text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50",
+                        isActive && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20"
+                      )}
+                      href={`/?${tagParams.toString()}`}
+                    >
+                      <Tags className="h-4 w-4 shrink-0 text-slate-400" />
+                      <span className="min-w-0 flex-1 truncate">{tag.name}</span>
+                      <span className="text-xs text-slate-500">{tag._count.notes}</span>
+                    </Link>
+                  );
+                })
+              ) : (
+                <div className="px-3 py-4 text-xs text-slate-500 text-center">
+                  No tags yet
+                </div>
+              )}
+            </nav>
+          ) : activeMode === "NOTES" ? (
+            <BrowserTree
+              folders={notesFolders}
+              notes={notesNotes}
+              mediaAssets={[]}
+              selectedFolderId={selectedFolder?.id ?? null}
+              selectedNoteId={selectedNote?.id ?? null}
+              selectedMediaId={selectedMedia?.id ?? null}
+              folderDestinations={folderDestinations}
+              isVaultRootActive={isVaultRootActive}
+              rootFolderId={notesRootId}
+            />
+          ) : activeMode === "CHAT" ? (
+            <BrowserTree
+              folders={chatFolders}
+              notes={[]}
+              mediaAssets={[]}
+              selectedFolderId={selectedFolder?.id ?? null}
+              selectedNoteId={selectedNote?.id ?? null}
+              selectedMediaId={selectedMedia?.id ?? null}
+              folderDestinations={folderDestinations}
+              isVaultRootActive={isVaultRootActive}
+              rootFolderId={chatRootId}
+            />
           ) : (
             <BrowserTree
-              folders={folders}
-              notes={notes}
-              mediaAssets={mediaAssets}
+              folders={filesFolders}
+              notes={filesNotes}
+              mediaAssets={filesMedia}
               selectedFolderId={selectedFolder?.id ?? null}
               selectedNoteId={selectedNote?.id ?? null}
               selectedMediaId={selectedMedia?.id ?? null}

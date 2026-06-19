@@ -39,6 +39,7 @@ type BrowserTreeProps = {
     name: string;
   }[];
   isVaultRootActive: boolean;
+  rootFolderId?: string | null;
 };
 
 export function BrowserTree({
@@ -50,6 +51,7 @@ export function BrowserTree({
   selectedFolderId,
   selectedMediaId,
   selectedNoteId,
+  rootFolderId = null,
 }: BrowserTreeProps) {
   const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set());
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null); // 'root' or folder ID
@@ -282,7 +284,13 @@ export function BrowserTree({
   }
 
   // Prevent flash or hydration error with localStorage expanded state
-  const treeNodes = isMounted ? renderVaultTree(null, 1) : [];
+  const treeNodes = isMounted ? renderVaultTree(rootFolderId, 1) : [];
+  const rootFolderName = rootFolderId
+    ? (folders.find((f) => f.id === rootFolderId)?.name ?? "Folder")
+    : "Vault";
+  const isRootActive = rootFolderId
+    ? selectedFolderId === rootFolderId
+    : isVaultRootActive;
 
   return (
     <div className="flex flex-col gap-1">
@@ -293,21 +301,21 @@ export function BrowserTree({
           dragOverFolderId === "root" && "bg-purple-950/20 border border-dashed border-purple-500",
         )}
         onDragLeave={handleDragLeave}
-        onDragOver={(e) => handleDragOver(null, e)}
-        onDrop={(e) => handleDrop(null, e)}
+        onDragOver={(e) => handleDragOver(rootFolderId, e)}
+        onDrop={(e) => handleDrop(rootFolderId, e)}
       >
         <Button
           asChild
           variant="ghost"
           className={cn(
             "h-10 w-full justify-start px-3 text-slate-200 hover:bg-slate-800 hover:text-slate-50",
-            isVaultRootActive && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
+            isRootActive && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
           )}
         >
-          <Link href="/">
+          <Link href={rootFolderId ? `/?folder=${rootFolderId}` : "/"}>
             <Folder className="h-4 w-4 text-slate-400" />
-            <span className="min-w-0 flex-1 truncate text-left font-medium">Vault</span>
-            <span className="text-xs text-slate-500">{getLocationItemCount(null)}</span>
+            <span className="min-w-0 flex-1 truncate text-left font-medium">{rootFolderName}</span>
+            <span className="text-xs text-slate-500">{getLocationItemCount(rootFolderId)}</span>
           </Link>
         </Button>
       </div>

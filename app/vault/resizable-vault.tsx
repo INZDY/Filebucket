@@ -35,6 +35,12 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
     }
   }, [isNarrow]);
 
+  useEffect(() => {
+    const handleOpen = () => setIsBrowserOpen(true);
+    window.addEventListener("open-sidebar", handleOpen);
+    return () => window.removeEventListener("open-sidebar", handleOpen);
+  }, []);
+
   if (isNarrow) {
     return (
       <div className="relative min-h-0 flex-1 overflow-hidden bg-[#111318]">
