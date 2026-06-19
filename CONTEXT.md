@@ -20,7 +20,7 @@ The primary mode of the vault, active at the root level and inside any non-reser
 _Avoid_: File vault, root directory, public folder
 
 **Keep Note**:
-A specialized note that exists only as a direct child of the reserved `Quick Notes/` folder. It is rendered in a grid layout, supports background card colors, can be pinned/unpinned, and can be viewed/edited as a checklist or a simple scratchpad.
+A specialized note that exists only as a direct child of the reserved `Quick Notes/` folder. It is rendered in a grid layout, supports background card colors, can be pinned/unpinned, and can be viewed/edited as a checklist (storing items as standard Markdown checkboxes `- [ ]` / `- [x]`) or a simple scratchpad.
 _Avoid_: Sticky note, keep card, board item
 
 **Chat Channel**:
@@ -28,7 +28,7 @@ A folder that exists only as a direct child of the reserved `Chat Channels/` fol
 _Avoid_: Chat room, text channel, conversation
 
 **Chat Message**:
-A single chronological entry within a Chat Channel. It contains text, hyperlinks, and optional Media Asset attachments (such as screenshots or uploaded files).
+A single chronological entry within a Chat Channel. It contains text, hyperlinks, and optional Media Asset attachments stored in a dedicated `Chat Channels/Attachments/` folder at the vault root.
 _Avoid_: Chat post, message row, channel text
 
 **Vault Browser**:

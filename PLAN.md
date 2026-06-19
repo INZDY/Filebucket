@@ -38,6 +38,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Implement "Pinned" and "Others" sections. Sort cards within each section chronologically by `updatedAt desc` (no manual reordering).
     *   Build the top "Take a note..." inline creation bar with text and checklist options.
     *   Build a Card Edit Modal supporting title/body editing, interactive checklist toggles, card color picker, tags, and deletion. On mobile, render this modal as a fullscreen sheet overlay.
+    *   Implement **Markdown Checklist Sync**: Parse the note's text body (standard Markdown checkboxes `- [ ]` / `- [x]`) into editable list inputs in the UI, and serialize changes back to Markdown format on save.
     *   Implement **smart save triggers**: debounced autosave (1.5s delay) for card text inputs, and instant save (immediate database update) for clicking checklist checkboxes, card color options, pin/unpin toggles, or delete buttons.
 *   **Verification**: Create notes, pin/unpin cards, change colors, toggle checklists, and edit cards in the modal; verify mobile layout collapses to a 1-column stack and edits happen in fullscreen. Verify instant saves commit immediately and card text edits debounce.
 
@@ -48,6 +49,8 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Render messages chronologically with timestamps and sender headers.
     *   Implement auto-hyperlinking and basic link/attachment previews (images displayed inline, other files as downloadable cards).
     *   Build a message input bar at the bottom with a file upload button (`+` icon). On mobile, ensure the input stays visible, docked above the Bottom Navigation Bar, and pushes up when the virtual keyboard is open.
+    *   Store uploaded chat attachments in a dedicated folder **`Chat Channels/Attachments/`** at the vault root and link them as `MediaAsset` records to the chat message.
+    *   Enforce **strict session ownership scoping** on all chat message query and creation APIs (`userId === session.user.id`).
     *   Allow message deletion on hover (or long-press context menu on mobile).
     *   On mobile, support swipe-right to open the channels list drawer.
     *   Integrate **Manga Reader overlay with chat media**: clicking a chat image or a ZIP/CBZ archive decompress it in-browser, restores page progress from `localStorage` (using the media asset ID), and supports swiping chronologically through all loose images uploaded to the channel history.
