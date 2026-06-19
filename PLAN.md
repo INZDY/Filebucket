@@ -16,54 +16,46 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Run Prisma client generation and check database connections; verify seeded data compiles.
 
 ### Milestone 18: Activity Bar Navigation & Dynamic Sidebar
-*   **Goal**: Implement the leftmost navigation strip, top-header search redesign, and dynamic view switching.
+*   **Goal**: Implement the leftmost navigation strip, top-header search redesign, and dynamic view switching with mobile responsive layouts.
 *   **Tasks**:
     *   Create an Activity Bar component containing icons for Files, Obsidian Notes, Quick Notes, and Chat Channels.
+    *   On mobile viewports, move the Activity Bar to a thumb-accessible Bottom Navigation Bar.
     *   Remove the global "Export Vault" button from the top-header.
     *   Move the global search input from the sidebar browser to the center of the top header next to the app logo and name.
-    *   Update `SidebarBrowser` to dynamically switch its content based on the selected mode:
-        *   **Files Mode**: General Vault tree.
-        *   **Obsidian Mode**: `Notes/` subfolders/notes tree.
-        *   **Keep Mode**: Flat list of Tag filters for Keep cards.
-        *   **Chat Channels Mode**: Flat list of Chat Channels under the `Chat Channels/` folder.
-*   **Verification**: Click each icon in the Activity Bar and verify the sidebar updates to show the correct content tree/filters; verify the search bar renders centered in the top header and performs global queries.
+    *   Update `SidebarBrowser` to dynamically switch its content based on the selected mode.
+    *   On mobile, hide the Sidebar Browser tree by default and render it as a sliding left Drawer overlay, triggered by a header hamburger button or swiping from the edge.
+*   **Verification**: Click each icon in the Activity Bar / Bottom Nav and verify the sidebar updates; verify the search bar renders centered; verify the left drawer slides out on mobile.
 
 ### Milestone 19: Google Keep Mode (Card Grid & Modal Editor)
-*   **Goal**: Create a rich, authentic Google Keep workspace for quick notes and scratchpads.
+*   **Goal**: Create a rich, authentic Google Keep workspace for quick notes and scratchpads with mobile responsiveness.
 *   **Tasks**:
-    *   Build a masonry/responsive card grid workspace in the Main Content Pane when in Keep mode.
+    *   Build a masonry/responsive card grid workspace in the Main Content Pane when in Keep mode (3-4 columns on desktop, 1 column stack on mobile).
     *   Implement "Pinned" and "Others" sections.
     *   Build the top "Take a note..." inline creation bar with text and checklist options.
-    *   Build a Card Edit Modal supporting title/body editing, interactive checklist toggles, card color picker, tags, and deletion.
+    *   Build a Card Edit Modal supporting title/body editing, interactive checklist toggles, card color picker, tags, and deletion. On mobile, render this modal as a fullscreen sheet overlay.
     *   Hook up card changes to autosave.
-*   **Verification**: Create notes, pin/unpin cards, change colors, toggle checklists, and edit cards in the modal; verify updates persist.
+*   **Verification**: Create notes, pin/unpin cards, change colors, toggle checklists, and edit cards in the modal; verify mobile layout collapses to a 1-column stack and edits happen in fullscreen.
 
 ### Milestone 20: Discord Mode (Chat Channel Stream)
-*   **Goal**: Create a chronological chat channel stream for short text messages and media captures.
+*   **Goal**: Create a chronological chat channel stream for short text messages and media captures with mobile viewport handling.
 *   **Tasks**:
     *   Build the Chat Panel workspace in the Main Content Pane when in Chat Channels mode.
     *   Render messages chronologically with timestamps and sender headers.
     *   Implement auto-hyperlinking and basic link/attachment previews (images displayed inline, other files as downloadable cards).
-    *   Build a message input bar at the bottom with a file upload button (`+` icon) for attaching Media Assets.
-    *   Allow message deletion on hover.
-*   **Verification**: Type and send messages, upload images, click links, and delete messages; verify that attachments are created as `MediaAsset`s linked to the chat message.
+    *   Build a message input bar at the bottom with a file upload button (`+` icon). On mobile, ensure the input stays visible, docked above the Bottom Navigation Bar, and pushes up when the virtual keyboard is open.
+    *   Allow message deletion on hover (or long-press context menu on mobile).
+    *   On mobile, support swipe-right to open the channels list drawer.
+*   **Verification**: Type and send messages, upload images, click links, and delete messages; verify mobile keyboard alignment and edge swiping.
 
 ### Milestone 21: General File Storage & Boundary Validation
-*   **Goal**: Enforce system folder rules, lock down the general file explorer, and enable context-specific downloads.
+*   **Goal**: Enforce system folder rules, lock down the general file explorer, enable context-specific downloads, and adapt Obsidian tabs/outline for mobile.
 *   **Tasks**:
     *   Make `Notes/`, `Quick Notes/`, and `Chat Channels/` reserved folders at the vault root. Disable rename, move, and delete actions on them.
     *   Show custom, styled icons in the vault browser for reserved folders.
-    *   Enforce boundaries:
-        *   Block note creation in Files Mode (Files Mode only allows folders/media assets).
-        *   Enforce that all notes created under Obsidian Mode go inside `Notes/`.
-        *   Block folder creation inside `Quick Notes/`.
-        *   Block subfolders inside chat channels under `Chat Channels/`.
-    *   Implement Contextual Export/Download actions:
-        *   Right-click file row -> Download raw file.
-        *   Right-click folder row -> Download folder contents zipped.
-        *   Right-click note row -> Download note as `.md` file.
-        *   Right-click Chat Channel folder -> Export Chat Transcript as `.md` file with message history and links.
-*   **Verification**: Attempt to rename reserved folders, create notes in Files root, or create folders in Quick Notes; verify all are rejected with clear error messages. Verify folder ZIP download compiles and chat transcript export works.
+    *   Enforce boundaries (block note creation in Files, block folders in Quick Notes, block subfolders inside chat channels).
+    *   Implement Contextual Export/Download actions (raw file, folder ZIP, note `.md`, chat transcript `.md` with message history).
+    *   On mobile, adapt the Obsidian editor tabs: hide the scrollable tab bar, show the active note title with a tabs count button, and open a bottom sheet to switch tabs. Render the note outline as a sliding right drawer on mobile.
+*   **Verification**: Attempt to rename reserved folders, verify boundaries. Verify folder ZIP download compiles, chat transcript export works, and Obsidian mobile tab drawer switches tabs.
 
 ### Milestone 22: Testing & Hardening
 *   **Goal**: Verify the stability, responsiveness, and performance of the hybrid vault system.
