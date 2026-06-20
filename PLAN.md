@@ -73,6 +73,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Attempt to rename reserved folders, verify boundaries. Verify folder ZIP download compiles, chat transcript export works, and clicking a file reference inside a note switches modes and previews the media file.
 
 ### Milestone 22: Testing & Hardening
+*   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Verify the stability, responsiveness, and performance of the hybrid vault system.
 *   **Tasks**:
     *   Write Vitest component and logic tests covering view mode switching, validation constraints, and database relations.
