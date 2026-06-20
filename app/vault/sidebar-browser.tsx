@@ -162,9 +162,9 @@ export function SidebarBrowser({
   }
 
   // 1. Files mode data
-  const filesFolders = folders.filter((f) => getItemMode(f.id) === "FILES");
-  const filesNotes = notes.filter((n) => getItemMode(n.folderId) === "FILES");
-  const filesMedia = mediaAssets.filter((m) => getItemMode(m.folderId) === "FILES");
+  const filesFolders = folders;
+  const filesNotes = notes;
+  const filesMedia = mediaAssets;
 
   // 2. Notes mode data
   const notesRootId = folders.find((f) => f.type === "NOTES_ROOT")?.id ?? null;

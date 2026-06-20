@@ -24,7 +24,7 @@ export function BrowserToolbar({ folderId, disabled = false, activeMode }: Brows
     <div className="space-y-2">
       <div className="flex items-center gap-1.5">
         {/* New Note Action */}
-        {activeMode !== "CHAT" && (
+        {activeMode === "NOTES" && (
           <form action={createNoteAction}>
             <input type="hidden" name="folderId" value={folderId ?? ""} />
             <Button
@@ -56,12 +56,12 @@ export function BrowserToolbar({ folderId, disabled = false, activeMode }: Brows
         </Button>
 
         {/* Upload Media Action */}
-        {activeMode !== "CHAT" && (
+        {(activeMode === "FILES" || activeMode === "NOTES") && (
           <MediaUploadControl disabled={disabled} folderId={folderId} />
         )}
 
         {/* Import Notes Action */}
-        {activeMode !== "CHAT" && (
+        {activeMode === "NOTES" && (
           <>
             <form ref={importFormRef} action={importMarkdownNotesAction} className="hidden">
               <input type="hidden" name="folderId" value={folderId ?? ""} />

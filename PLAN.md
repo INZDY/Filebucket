@@ -92,7 +92,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Visual inspection of the Activity Bar / Bottom Nav in all viewports. Verify width reduction, tightened spacing, and mode-specific colored squircle active states (no pips). Verify the Trash button renders in the new location and glows Rose Red when active.
 
 ### Milestone 24: Files Mode Global Explorer & Toolbar Filtering
-*   **Status**: Pending (June 2026).
+*   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Enable inline exploration of reserved folders inside Files Mode and filter toolbar actions per mode.
 *   **Tasks**:
     *   **Files Mode reserved folders visibility:** Modify the folder list filter for Files Mode so that the reserved folders `Notes/`, `Quick Notes/`, and `Chat Channels/` appear at the root of the file explorer tree.
