@@ -31,8 +31,28 @@ async function getActiveFolder(userId: string, folderId: string) {
       id: true,
       name: true,
       parentId: true,
+      type: true,
     },
   });
+}
+
+async function getFolderMode(userId: string, folderId: string | null): Promise<"FILES" | "NOTES" | "KEEP" | "CHAT"> {
+  if (!folderId) return "FILES";
+  let current = await prisma.folder.findFirst({
+    where: { id: folderId, userId, deletedAt: null },
+    select: { id: true, parentId: true, type: true }
+  });
+  while (current) {
+    if (current.type === "NOTES_ROOT") return "NOTES";
+    if (current.type === "KEEP_ROOT") return "KEEP";
+    if (current.type === "CHAT_ROOT") return "CHAT";
+    if (!current.parentId) break;
+    current = await prisma.folder.findFirst({
+      where: { id: current.parentId, userId, deletedAt: null },
+      select: { id: true, parentId: true, type: true }
+    });
+  }
+  return "FILES";
 }
 
 export async function createFolderAction(formData: FormData) {
@@ -45,9 +65,23 @@ export async function createFolderAction(formData: FormData) {
     return;
   }
 
-  if (parentId && !await getActiveFolder(session.user.id, parentId)) {
-    revalidatePath("/");
-    return;
+  if (parentId) {
+    const parent = await getActiveFolder(session.user.id, parentId);
+    if (!parent) {
+      revalidatePath("/");
+      return;
+    }
+    const mode = await getFolderMode(session.user.id, parentId);
+    // Block folder creation in KEEP mode (Quick Notes)
+    if (mode === "KEEP") {
+      revalidatePath("/");
+      return;
+    }
+    // Block subfolder creation in CHAT mode unless the parent is the root Chat Channels folder
+    if (mode === "CHAT" && parent.type !== "CHAT_ROOT") {
+      revalidatePath("/");
+      return;
+    }
   }
 
   const validation = await namespaceManager.validate(session.user.id, parentId, {
@@ -84,7 +118,7 @@ export async function renameFolderAction(formData: FormData) {
 
   const folder = await getActiveFolder(session.user.id, folderId);
 
-  if (!folder) {
+  if (!folder || folder.type !== "GENERAL") {
     revalidatePath("/");
     return;
   }
@@ -124,7 +158,7 @@ export async function moveFolderAction(formData: FormData) {
     parentId ? getActiveFolder(session.user.id, parentId) : Promise.resolve(null),
   ]);
 
-  if (!folder || (parentId && !parent)) {
+  if (!folder || folder.type !== "GENERAL" || (parentId && !parent)) {
     revalidatePath("/");
     return;
   }
@@ -154,6 +188,12 @@ export async function trashFolderAction(formData: FormData) {
   const folderId = readFolderId(formData);
 
   if (!folderId) {
+    revalidatePath("/");
+    return;
+  }
+
+  const folder = await getActiveFolder(session.user.id, folderId);
+  if (!folder || folder.type !== "GENERAL") {
     revalidatePath("/");
     return;
   }
@@ -249,7 +289,7 @@ export async function deleteFolderAction(formData: FormData) {
     }
   });
 
-  if (!folder) {
+  if (!folder || folder.type !== "GENERAL") {
     revalidatePath("/");
     return;
   }

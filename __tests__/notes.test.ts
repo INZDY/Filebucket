@@ -60,7 +60,7 @@ describe("Note Server Actions", () => {
   describe("createNoteAction", () => {
     it("should successfully create a new note with a unique name and suffix on collision", async () => {
       // Mock folders checking
-      vi.mocked(prisma.folder.findFirst).mockResolvedValue({ id: "folder-123" } as any);
+      vi.mocked(prisma.folder.findFirst).mockResolvedValue({ id: "folder-123", type: "NOTES_ROOT", parentId: null } as any);
       // Mock sibling name checking: "Untitled note.md" collides, but "Untitled note 2.md" is free
       vi.mocked(prisma.note.findMany).mockResolvedValue([
         { title: "Untitled note" },
@@ -84,10 +84,30 @@ describe("Note Server Actions", () => {
       });
       expect(redirect).toHaveBeenCalledWith("/?folder=folder-123&note=note-456");
     });
+
+    it("should block note creation in FILES mode (root folder or general folders)", async () => {
+      vi.mocked(prisma.folder.findFirst).mockResolvedValue({ id: "folder-123", type: "GENERAL", parentId: null } as any);
+
+      const formData = new FormData();
+      formData.append("folderId", "folder-123");
+
+      await createNoteAction(formData);
+
+      expect(prisma.note.create).not.toHaveBeenCalled();
+    });
+
+    it("should block note creation at vault root (null folderId)", async () => {
+      const formData = new FormData();
+
+      await createNoteAction(formData);
+
+      expect(prisma.note.create).not.toHaveBeenCalled();
+    });
   });
 
   describe("importMarkdownNotesAction", () => {
     it("should import files and redirect to the first imported note", async () => {
+      vi.mocked(prisma.folder.findFirst).mockResolvedValue({ id: "folder-123", type: "NOTES_ROOT", parentId: null } as any);
       vi.mocked(prisma.note.findMany).mockResolvedValue([]);
       vi.mocked(prisma.mediaAsset.findMany).mockResolvedValue([]);
       vi.mocked(prisma.note.create).mockResolvedValue({ id: "imported-1" } as any);
@@ -96,6 +116,7 @@ describe("Note Server Actions", () => {
 
       const formData = new FormData();
       formData.append("files", file);
+      formData.append("folderId", "folder-123");
 
       await importMarkdownNotesAction(formData);
 
@@ -103,12 +124,35 @@ describe("Note Server Actions", () => {
         data: {
           title: "imported-file",
           body: "# Imported content",
-          folderId: undefined,
+          folderId: "folder-123",
           userId: mockUserId,
         },
         select: { id: true },
       });
-      expect(redirect).toHaveBeenCalledWith("/?note=imported-1");
+      expect(redirect).toHaveBeenCalledWith("/?folder=folder-123&note=imported-1");
+    });
+
+    it("should block note import in FILES mode", async () => {
+      vi.mocked(prisma.folder.findFirst).mockResolvedValue({ id: "folder-123", type: "GENERAL", parentId: null } as any);
+
+      const file = new File(["# Content"], "file.md", { type: "text/markdown" });
+      const formData = new FormData();
+      formData.append("files", file);
+      formData.append("folderId", "folder-123");
+
+      await importMarkdownNotesAction(formData);
+
+      expect(prisma.note.create).not.toHaveBeenCalled();
+    });
+
+    it("should block note import at vault root (null folderId)", async () => {
+      const file = new File(["# Content"], "file.md", { type: "text/markdown" });
+      const formData = new FormData();
+      formData.append("files", file);
+
+      await importMarkdownNotesAction(formData);
+
+      expect(prisma.note.create).not.toHaveBeenCalled();
     });
   });
 

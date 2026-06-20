@@ -73,7 +73,7 @@ describe("ZIP Export Route Handler", () => {
   it("should return 401 Unauthorized if no active session", async () => {
     vi.mocked(getSession).mockResolvedValue(null);
 
-    const res = await GET();
+    const res = await GET(new Request("http://localhost/api/export"));
     expect(res.status).toBe(401);
     const body = await res.text();
     expect(body).toBe("Unauthorized");
@@ -174,7 +174,7 @@ describe("ZIP Export Route Handler", () => {
       return Buffer.from(encoder.encode(text));
     });
 
-    const response = await GET();
+    const response = await GET(new Request("http://localhost/api/export"));
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("application/zip");
     expect(response.headers.get("Content-Disposition")).toBe('attachment; filename="filebucket-export.zip"');
@@ -241,7 +241,7 @@ describe("ZIP Export Route Handler", () => {
     // Mock storageEngine downloadFile throw error
     vi.mocked(storageEngine.downloadFile).mockRejectedValue(new Error("Connection refused"));
 
-    const response = await GET();
+    const response = await GET(new Request("http://localhost/api/export"));
     expect(response.status).toBe(200);
 
     const arrayBuffer = await response.arrayBuffer();

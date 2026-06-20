@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Move, Trash2 } from "lucide-react";
+import { MoreHorizontal, Move, Trash2, Download } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { moveNoteAction, trashNoteAction } from "@/app/notes/actions";
@@ -114,6 +114,16 @@ export function NoteActionsMenu({ destinations, note }: NoteActionsMenuProps) {
               >
                 <Move className="h-4 w-4" />
                 Move
+              </Button>
+              <Button
+                asChild
+                className="h-9 w-full justify-start px-2 text-slate-100 hover:bg-slate-800"
+                variant="ghost"
+              >
+                <a href={`/api/export?noteId=${note.id}`} download>
+                  <Download className="mr-2 h-4 w-4" />
+                  Export as Markdown
+                </a>
               </Button>
               <form action={trashNoteAction}>
                 <input type="hidden" name="noteId" value={note.id} />

@@ -21,7 +21,13 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 1023px)");
-    const update = () => setIsNarrow(media.matches);
+    const update = () => {
+      const matches = media.matches;
+      setIsNarrow(matches);
+      if (matches) {
+        setIsOutlineOpen(false);
+      }
+    };
 
     update();
     media.addEventListener("change", update);
@@ -55,6 +61,21 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
         >
           <PanelLeft className="h-4 w-4" />
         </Button>
+
+        {hasOutline && (
+          <Button
+            aria-label="Open note outline"
+            className="fixed right-3 top-20 z-40 border-slate-700 bg-[#191c22]/95 text-slate-100 shadow-lg hover:bg-[#242832]"
+            onClick={() => setIsOutlineOpen(true)}
+            size="icon"
+            type="button"
+            variant="outline"
+          >
+            <PanelLeft className="h-4 w-4 rotate-180" />
+          </Button>
+        )}
+
+        {/* Sidebar Browser Drawer */}
         <div
           className={cn(
             "fixed inset-0 z-50 bg-black/55 transition-opacity duration-300 ease-in-out",
@@ -84,6 +105,40 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
             <div className="h-[calc(100%-3rem)] min-h-0">{browser}</div>
           </div>
         </div>
+
+        {/* Note Outline Drawer */}
+        {hasOutline && (
+          <div
+            className={cn(
+              "fixed inset-0 z-50 bg-black/55 transition-opacity duration-300 ease-in-out",
+              isOutlineOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+            )}
+            onClick={() => setIsOutlineOpen(false)}
+          >
+            <div
+              className={cn(
+                "absolute right-0 h-full w-[min(300px,80vw)] border-l border-slate-800 bg-[#171a20] shadow-2xl transition-transform duration-300 ease-in-out transform flex flex-col",
+                isOutlineOpen ? "translate-x-0" : "translate-x-full"
+              )}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex h-12 items-center justify-between border-b border-slate-800 px-4 shrink-0">
+                <span className="text-sm font-semibold text-slate-100">Note Outline</span>
+                <Button
+                  aria-label="Close note outline"
+                  className="text-slate-300 hover:bg-slate-800 hover:text-slate-50"
+                  onClick={() => setIsOutlineOpen(false)}
+                  size="icon"
+                  type="button"
+                  variant="ghost"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex-1 min-h-0 overflow-y-auto">{outline}</div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

@@ -162,4 +162,52 @@ describe("MainContentTabs", () => {
     });
     document.body.removeChild(container);
   });
+
+  it("should render mobile active note title and tabs button, and open bottom sheet switcher on click", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    const activeTabNote = {
+      id: "note-1",
+      type: "note" as const,
+      title: "My Mobile Note",
+      href: "/?note=note-1",
+    };
+
+    await act(async () => {
+      root.render(
+        <MainContentTabs activeTab={activeTabNote} fallbackHref="/">
+          <div>Content</div>
+        </MainContentTabs>
+      );
+    });
+
+    // Check that mobile tab header is rendered
+    expect(container.textContent).toContain("My Mobile Note");
+    expect(container.textContent).toContain("Tabs");
+
+    // Initially, bottom sheet has opacity-0 pointer-events-none class (closed)
+    const backdrop = container.querySelector(".fixed.inset-0.z-50.bg-black\\/60");
+    expect(backdrop).not.toBeNull();
+    expect(backdrop?.className).toContain("opacity-0");
+
+    // Click the Tabs button
+    const tabsBtn = Array.from(container.querySelectorAll("button")).find(btn => btn.textContent?.includes("Tabs"));
+    expect(tabsBtn).not.toBeUndefined();
+
+    await act(async () => {
+      tabsBtn?.click();
+    });
+
+    // Now, bottom sheet should have opacity-100 class (opened)
+    expect(backdrop?.className).toContain("opacity-100");
+    expect(container.textContent).toContain("Open Tabs (1)");
+
+    // Clean up
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
 });

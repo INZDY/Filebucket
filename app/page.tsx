@@ -719,6 +719,7 @@ export default async function Home({ searchParams }: HomeProps) {
                         filename: mediaAsset.filename,
                         location: mediaAsset.folder?.name ?? "Vault",
                         url: getMediaAssetUrl(mediaAsset.r2Key) ?? "",
+                        folderId: mediaAsset.folderId,
                       }))}
                       tags={tags.map((t) => ({ id: t.id, name: t.name, slug: t.slug }))}
                       textPreviewContent={textPreviewContent}

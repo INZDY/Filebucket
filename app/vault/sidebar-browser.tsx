@@ -470,6 +470,7 @@ export function SidebarBrowser({
             </nav>
           ) : activeMode === "NOTES" ? (
             <BrowserTree
+              mode="NOTES"
               folders={notesFolders}
               notes={notesNotes}
               mediaAssets={[]}
@@ -482,6 +483,7 @@ export function SidebarBrowser({
             />
           ) : activeMode === "CHAT" ? (
             <BrowserTree
+              mode="CHAT"
               folders={chatFolders}
               notes={[]}
               mediaAssets={[]}
@@ -494,6 +496,7 @@ export function SidebarBrowser({
             />
           ) : (
             <BrowserTree
+              mode="FILES"
               folders={filesFolders}
               notes={filesNotes}
               mediaAssets={filesMedia}

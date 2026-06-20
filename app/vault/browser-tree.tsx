@@ -20,6 +20,7 @@ type BrowserTreeProps = {
     id: string;
     name: string;
     parentId: string | null;
+    type?: string;
   }[];
   notes: {
     id: string;
@@ -40,6 +41,7 @@ type BrowserTreeProps = {
   }[];
   isVaultRootActive: boolean;
   rootFolderId?: string | null;
+  mode?: "FILES" | "NOTES" | "KEEP" | "CHAT";
 };
 
 export function BrowserTree({
@@ -52,6 +54,7 @@ export function BrowserTree({
   selectedMediaId,
   selectedNoteId,
   rootFolderId = null,
+  mode = "FILES",
 }: BrowserTreeProps) {
   const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set());
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null); // 'root' or folder ID
@@ -223,6 +226,7 @@ export function BrowserTree({
               name: folder.name,
               count: childrenCount,
               parentId: folder.parentId,
+              type: folder.type,
             }}
             hasChildren={hasChildren}
             href={`/?folder=${folder.id}`}
@@ -233,6 +237,7 @@ export function BrowserTree({
             onDragOver={(e) => handleDragOver(folder.id, e)}
             onDrop={(e) => handleDrop(folder.id, e)}
             onToggle={() => toggleFolder(folder.id)}
+            isChatChannel={mode === "CHAT"}
           />,
           // Only render children if folder is expanded
           ...(isExpanded ? renderVaultTree(folder.id, depth + 1) : []),

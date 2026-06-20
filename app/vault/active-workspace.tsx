@@ -71,7 +71,7 @@ interface ActiveWorkspaceProps {
   selectedFolder: FolderEntry | null;
   folderTrail: FolderEntry[];
   folderDestinations: { id: string; name: string }[];
-  imageMediaAssets: { id: string; filename: string; location: string; url: string }[];
+  imageMediaAssets: { id: string; filename: string; location: string; url: string; folderId: string | null }[];
   tags: TagEntry[];
   textPreviewContent: string;
   hasVaultContent: boolean;

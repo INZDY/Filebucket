@@ -22,12 +22,37 @@ async function getActiveFolder(userId: string, folderId: string) {
   });
 }
 
+async function getFolderMode(userId: string, folderId: string | null): Promise<"FILES" | "NOTES" | "KEEP" | "CHAT"> {
+  if (!folderId) return "FILES";
+  let current = await prisma.folder.findFirst({
+    where: { id: folderId, userId, deletedAt: null },
+    select: { id: true, parentId: true, type: true }
+  });
+  while (current) {
+    if (current.type === "NOTES_ROOT") return "NOTES";
+    if (current.type === "KEEP_ROOT") return "KEEP";
+    if (current.type === "CHAT_ROOT") return "CHAT";
+    if (!current.parentId) break;
+    current = await prisma.folder.findFirst({
+      where: { id: current.parentId, userId, deletedAt: null },
+      select: { id: true, parentId: true, type: true }
+    });
+  }
+  return "FILES";
+}
+
 export async function createNoteAction(formData: FormData) {
   const session = await requireSession();
   const folderId = readId(formData, "folderId") || null;
   const folder = folderId ? await getActiveFolder(session.user.id, folderId) : null;
 
   if (folderId && !folder) {
+    revalidatePath("/");
+    return;
+  }
+
+  const mode = await getFolderMode(session.user.id, folderId);
+  if (mode !== "NOTES" && mode !== "KEEP") {
     revalidatePath("/");
     return;
   }
@@ -55,6 +80,12 @@ export async function importMarkdownNotesAction(formData: FormData) {
   const folder = folderId ? await getActiveFolder(session.user.id, folderId) : null;
 
   if (folderId && !folder) {
+    revalidatePath("/");
+    return;
+  }
+
+  const mode = await getFolderMode(session.user.id, folderId);
+  if (mode !== "NOTES" && mode !== "KEEP") {
     revalidatePath("/");
     return;
   }

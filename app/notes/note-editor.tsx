@@ -4,6 +4,7 @@ import { Crepe, CrepeFeature } from "@milkdown/crepe";
 import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react";
 import { ImagePlus, Save, Plus, Tag } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 
 import { updateNoteAction } from "@/app/notes/actions";
 import { getPresignedUploadUrlAction, createMediaAssetAction } from "@/app/media/actions";
@@ -24,6 +25,7 @@ type NoteEditorProps = {
     filename: string;
     location: string;
     url: string;
+    folderId: string | null;
   }[];
   allTags: {
     id: string;
@@ -62,6 +64,23 @@ export function NoteEditor({ imageMediaAssets, note, updatedAt, allTags, assigne
 }
 
 function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assignedTags }: NoteEditorProps) {
+  const router = useRouter();
+
+  const handleLinkClick = useCallback((href: string, event: React.MouseEvent) => {
+    const matchingAsset = imageMediaAssets.find(
+      (asset) => asset.url === href || href.includes(asset.id)
+    );
+
+    if (matchingAsset) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const targetHref = matchingAsset.folderId
+        ? `/?folder=${matchingAsset.folderId}&media=${matchingAsset.id}`
+        : `/?media=${matchingAsset.id}`;
+      router.push(targetHref);
+    }
+  }, [imageMediaAssets, router]);
   const [mediaAssets, setMediaAssets] = useState(imageMediaAssets);
   const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [tagQuery, setTagQuery] = useState("");
@@ -234,6 +253,7 @@ function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assign
         filename: result.filename,
         location: "Assets",
         url: result.url!,
+        folderId: result.folderId,
       };
 
       const updatedAssets = [...mediaAssets, newAsset];
@@ -507,6 +527,7 @@ function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assign
         key={`${note.id}:${editorRevision}`}
         markdown={editorInitialMarkdown}
         onMarkdownChange={updateBody}
+        onLinkClick={handleLinkClick}
       />
     </div>
   );
@@ -515,9 +536,11 @@ function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assign
 function CrepeEditor({
   markdown,
   onMarkdownChange,
+  onLinkClick,
 }: {
   markdown: string;
   onMarkdownChange: (markdown: string) => void;
+  onLinkClick?: (href: string, event: React.MouseEvent) => void;
 }) {
   useEditor(
     (root) => {
@@ -542,7 +565,18 @@ function CrepeEditor({
   );
 
   return (
-    <div className="filebucket-crepe min-h-0 flex-1 overflow-y-auto bg-[#0d0d11]">
+    <div 
+      className="filebucket-crepe min-h-0 flex-1 overflow-y-auto bg-[#0d0d11]"
+      onClick={(e) => {
+        const anchor = (e.target as HTMLElement).closest("a");
+        if (anchor && onLinkClick) {
+          const href = anchor.getAttribute("href");
+          if (href) {
+            onLinkClick(href, e);
+          }
+        }
+      }}
+    >
       <Milkdown />
     </div>
   );

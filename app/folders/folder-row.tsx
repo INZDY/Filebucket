@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, Folder, FolderOpen, MoreHorizontal, Move, Pencil, Trash2 } from "lucide-react";
+import { BookOpen, StickyNote, MessageSquare, ChevronDown, ChevronRight, Folder, FolderOpen, MoreHorizontal, Move, Pencil, Trash2, Download } from "lucide-react";
 
 import {
   moveFolderAction,
@@ -19,6 +19,7 @@ type FolderRowProps = {
     name: string;
     count: number;
     parentId: string | null;
+    type?: string;
   };
   href: string;
   isActive: boolean;
@@ -34,6 +35,7 @@ type FolderRowProps = {
   onDragOver?: (e: React.DragEvent) => void;
   onDragLeave?: () => void;
   onDrop?: (e: React.DragEvent) => void;
+  isChatChannel?: boolean;
 };
 
 type MenuMode = "actions" | "move" | "rename";
@@ -57,6 +59,7 @@ export function FolderRow({
   onDragOver,
   onDragLeave,
   onDrop,
+  isChatChannel = false,
 }: FolderRowProps) {
   const [menu, setMenu] = useState<MenuState>(null);
 
@@ -102,6 +105,11 @@ export function FolderRow({
       onDragLeave={onDragLeave}
       onDrop={onDrop}
       onContextMenu={(event) => {
+        const isReserved = folder.type === "NOTES_ROOT" || folder.type === "KEEP_ROOT" || folder.type === "CHAT_ROOT";
+        if (isReserved) {
+          event.preventDefault();
+          return;
+        }
         if (menu?.mode === "rename") return;
         event.preventDefault();
         event.stopPropagation();
@@ -159,14 +167,19 @@ export function FolderRow({
             className="flex min-w-0 flex-1 items-center gap-2 pr-3 py-2"
             href={href}
           >
-            {isExpanded ? <FolderOpen className="h-4 w-4 shrink-0 text-slate-300" /> : <Folder className="h-4 w-4 shrink-0 text-slate-400" />}
+            {(() => {
+              if (folder.type === "NOTES_ROOT") return <BookOpen className="h-4 w-4 shrink-0 text-purple-400" />;
+              if (folder.type === "KEEP_ROOT") return <StickyNote className="h-4 w-4 shrink-0 text-yellow-500" />;
+              if (folder.type === "CHAT_ROOT") return <MessageSquare className="h-4 w-4 shrink-0 text-purple-400" />;
+              return isExpanded ? <FolderOpen className="h-4 w-4 shrink-0 text-slate-300" /> : <Folder className="h-4 w-4 shrink-0 text-slate-400" />;
+            })()}
             <span className="min-w-0 flex-1 truncate text-left">{folder.name}</span>
             <span className="text-xs text-slate-500">{folder.count}</span>
           </Link>
         </div>
       )}
 
-      {menu?.mode !== "rename" && (
+      {menu?.mode !== "rename" && !(folder.type === "NOTES_ROOT" || folder.type === "KEEP_ROOT" || folder.type === "CHAT_ROOT") && (
         <Button
           aria-label={`Folder actions for ${folder.name}`}
           className="mr-1 h-8 w-8 text-slate-400 opacity-100 hover:bg-slate-700 hover:text-slate-100 lg:opacity-0 lg:group-hover:opacity-100"
@@ -239,6 +252,29 @@ export function FolderRow({
                 <Move className="h-4 w-4" />
                 Move
               </Button>
+              {isChatChannel ? (
+                <Button
+                  asChild
+                  className="h-9 w-full justify-start px-2 text-slate-100 hover:bg-slate-800"
+                  variant="ghost"
+                >
+                  <a href={`/api/export?chatFolderId=${folder.id}`} download>
+                    <Download className="h-4 w-4" />
+                    Export Transcript
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  asChild
+                  className="h-9 w-full justify-start px-2 text-slate-100 hover:bg-slate-800"
+                  variant="ghost"
+                >
+                  <a href={`/api/export?folderId=${folder.id}`} download>
+                    <Download className="h-4 w-4" />
+                    Export as ZIP
+                  </a>
+                </Button>
+              )}
               <form action={trashFolderAction}>
                 <input type="hidden" name="folderId" value={folder.id} />
                 <Button className="h-9 w-full justify-start px-2" type="submit" variant="ghost">
