@@ -80,3 +80,38 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Verify drag-and-drop actions are locked down correctly for reserved folders.
     *   Ensure PWA offline caching works for the new routes and APIs.
 *   **Verification**: All tests pass.
+
+### Milestone 23: Activity Bar Redesign & Trash Relocation
+*   **Status**: Completed & Verified (June 2026).
+*   **Goal**: Redesign the leftmost navigation strip and mobile bottom bar for mode-specific styling, squircle selection shapes, and relocate Trash.
+*   **Tasks**:
+    *   **Activity Bar Dimensions:** Reduce Activity Bar width (from `md:w-16` to `md:w-12` or `md:w-14` on desktop) and vertical gap between buttons (from `md:gap-5` to `md:gap-3` and reduced padding).
+    *   **Selection Highlights:** Implement Option A color-coded active states (Blue for Files, Purple for Notes, Amber for Keep, Indigo for Chat, and Rose Red for Trash). 
+    *   **Highlight Shape:** Remove the active indicator pips (desktop left pip, mobile top pip) and style active icons using a rounded-squircle (`rounded-xl` / glass border) with a soft colored glow drop shadow.
+    *   **Trash Placement:** Remove the Trash button from the bottom of the sidebar browser component. Position it at the bottom of the vertical Activity Bar (desktop) separated by a spacer/divider, and as the rightmost button on the mobile Bottom Navigation Bar.
+*   **Verification**: Visual inspection of the Activity Bar / Bottom Nav in all viewports. Verify width reduction, tightened spacing, and mode-specific colored squircle active states (no pips). Verify the Trash button renders in the new location and glows Rose Red when active.
+
+### Milestone 24: Files Mode Global Explorer & Toolbar Filtering
+*   **Status**: Pending (June 2026).
+*   **Goal**: Enable inline exploration of reserved folders inside Files Mode and filter toolbar actions per mode.
+*   **Tasks**:
+    *   **Files Mode reserved folders visibility:** Modify the folder list filter for Files Mode so that the reserved folders `Notes/`, `Quick Notes/`, and `Chat Channels/` appear at the root of the file explorer tree.
+    *   **Inline Expansion:** Support expanding the `Notes/` and `Chat Channels/` folders inline in Files Mode to let the user browse subfolders and media files directly in the Files tree.
+    *   **Contextual Mode-Switching Clicks:** Clicking a `.md` note inside `Notes/` switches the mode to Obsidian Mode and opens the note; clicking `Quick Notes/` or any Keep Note switches to Keep Mode; clicking a Chat Channel folder inside `Chat Channels/` switches to Chat Mode.
+    *   **Action Toolbar Filtering:**
+        *   In Files Mode, hide the "Create Note" and "Import Notes" buttons. Show only "Create Folder" and "Upload Media" to block note creation in Files Mode.
+        *   In Obsidian Mode, show all action buttons (Create Note, Create Folder, Upload Media, Import Notes).
+        *   In Chat Mode, show only the "Create Folder" button (configured as "New Channel").
+        *   In Keep Mode, ensure the toolbar remains hidden.
+*   **Verification**: Enter Files Mode and verify `Notes/`, `Quick Notes/`, and `Chat Channels/` are displayed. Expand `Notes/` and verify subfolders are visible inline. Click a note and verify it switches active modes to Obsidian and opens the note. Verify the action toolbar dynamically filters buttons on mode switch.
+
+### Milestone 25: Cross-Mode Move Enforcement & Boundary Hardening
+*   **Status**: Pending (June 2026).
+*   **Goal**: Prevent domain data contamination by enforcing boundary moves between modes at the API and drag-and-drop levels.
+*   **Tasks**:
+    *   **Folder Boundaries:** Prevent moving folders between Files Mode and `Notes/` subfolders. Block cross-mode folder drops and API actions.
+    *   **Note Boundaries:** Prevent moving notes out of the `Notes/` directory structure. Block note moves to Files Mode.
+    *   **Media Asset Free movement:** Ensure media assets (files) are allowed to be moved back and forth between Files Mode and `Notes/` subfolders (to support attachments organization).
+    *   **Keep & Chat Silos:** Block all boundary moves on Keep notes and Chat Channels/attachments to lock them within their respective root directories.
+*   **Verification**: Attempt drag-and-drop actions that violate these boundaries (e.g., dropping a folder from Files into Notes or vice versa) and verify they are rejected. Attempt moving a note out of Notes and verify it is blocked. Verify moving media assets still works.
+

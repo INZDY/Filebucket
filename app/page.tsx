@@ -569,14 +569,16 @@ export default async function Home({ searchParams }: HomeProps) {
   const keepRootId = keepRoot?.id ?? null;
   const chatRootId = chatRoot?.id ?? null;
 
-  const activeMode = resolveViewMode({
-    selectedFolderId: params?.folder ?? null,
-    selectedNoteId: params?.note ?? null,
-    selectedMediaId: params?.media ?? null,
-    folders,
-    notes,
-    mediaAssets,
-  });
+  const activeMode = isTrashView
+    ? "TRASH" as const
+    : resolveViewMode({
+        selectedFolderId: params?.folder ?? null,
+        selectedNoteId: params?.note ?? null,
+        selectedMediaId: params?.media ?? null,
+        folders,
+        notes,
+        mediaAssets,
+      });
 
   const folderMapForKeep = new Map(folders.map((f) => [f.id, f]));
   const keepNotes = notes.filter((note) => {

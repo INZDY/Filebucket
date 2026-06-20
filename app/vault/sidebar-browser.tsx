@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import {
-  ArchiveRestore,
   ArrowLeft,
   FileText,
   Folder,
@@ -710,23 +709,6 @@ export function SidebarBrowser({
             </nav>
           </div>
         )}
-      </div>
-
-      <div className="border-t border-slate-800 px-4 py-4">
-        <Button
-          asChild
-          variant={isTrashView ? "secondary" : "ghost"}
-          className={cn(
-            "h-10 w-full justify-start px-3",
-            isTrashView && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
-          )}
-        >
-          <Link href="/?view=trash">
-            <ArchiveRestore className="h-4 w-4" />
-            <span className="flex-1 text-left">Trash</span>
-            <span className="text-xs text-muted-foreground">{trashCount}</span>
-          </Link>
-        </Button>
       </div>
     </aside>
   );

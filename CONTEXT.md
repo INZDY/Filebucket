@@ -109,7 +109,7 @@ Behavior that irreversibly removes trashed content from the vault. Permanently d
 _Avoid_: Trash, archive, remove
 
 **Move**:
-Behavior that changes the parent location of a folder, note, or media asset inside the same vault, including moving content into the vault root. Moving preserves the content's identity, tags, media references, and trash state. A folder cannot be moved into itself or any descendant folder. The mixed vault browser should support drag-and-drop move onto folders or the vault root, with menu-based Move as a fallback. Invalid or colliding drops should be rejected clearly, leave content in place, and not silently auto-rename.
+Behavior that changes the parent location of a folder, note, or media asset inside the same vault, including moving content into the vault root. Moving preserves the content's identity, tags, media references, and trash state. A folder cannot be moved into itself or any descendant folder. To prevent domain corruption, move operations are restricted across mode boundaries: Notes cannot be moved out of the reserved `Notes/` folder; folders cannot be moved between General File Storage and any reserved folder; Keep Notes cannot be moved out of `Quick Notes/`; Chat Channels and messages/attachments are locked inside `Chat Channels/`. Media assets (supporting files) are the only items that can be moved between General File Storage and `Notes/` folders. The mixed vault browser should support drag-and-drop move onto folders or the vault root, with menu-based Move as a fallback. Invalid or colliding drops should be rejected clearly, leave content in place, and not silently auto-rename.
 _Avoid_: Copy, duplicate, relocate
 
 **Rename**:
