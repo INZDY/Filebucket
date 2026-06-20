@@ -175,6 +175,16 @@ export async function moveFolderAction(formData: FormData) {
     }
   }
 
+  const [currentMode, targetMode] = await Promise.all([
+    getFolderMode(session.user.id, folder.parentId),
+    getFolderMode(session.user.id, parentId),
+  ]);
+
+  if (currentMode !== targetMode) {
+    revalidatePath("/");
+    return;
+  }
+
   const validation = await namespaceManager.validate(session.user.id, parentId, {
     id: folder.id,
     type: "Folder",

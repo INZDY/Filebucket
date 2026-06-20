@@ -106,7 +106,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Enter Files Mode and verify `Notes/`, `Quick Notes/`, and `Chat Channels/` are displayed. Expand `Notes/` and verify subfolders are visible inline. Click a note and verify it switches active modes to Obsidian and opens the note. Verify the action toolbar dynamically filters buttons on mode switch.
 
 ### Milestone 25: Cross-Mode Move Enforcement & Boundary Hardening
-*   **Status**: Pending (June 2026).
+*   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Prevent domain data contamination by enforcing boundary moves between modes at the API and drag-and-drop levels.
 *   **Tasks**:
     *   **Folder Boundaries:** Prevent moving folders between Files Mode and `Notes/` subfolders. Block cross-mode folder drops and API actions.

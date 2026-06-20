@@ -22,6 +22,25 @@ async function getActiveFolder(userId: string, folderId: string) {
   });
 }
 
+async function getFolderMode(userId: string, folderId: string | null): Promise<"FILES" | "NOTES" | "KEEP" | "CHAT"> {
+  if (!folderId) return "FILES";
+  let current = await prisma.folder.findFirst({
+    where: { id: folderId, userId, deletedAt: null },
+    select: { id: true, parentId: true, type: true }
+  });
+  while (current) {
+    if (current.type === "NOTES_ROOT") return "NOTES";
+    if (current.type === "KEEP_ROOT") return "KEEP";
+    if (current.type === "CHAT_ROOT") return "CHAT";
+    if (!current.parentId) break;
+    current = await prisma.folder.findFirst({
+      where: { id: current.parentId, userId, deletedAt: null },
+      select: { id: true, parentId: true, type: true }
+    });
+  }
+  return "FILES";
+}
+
 export async function moveMediaAssetAction(formData: FormData) {
   const session = await requireSession();
   const mediaAssetId = readId(formData, "mediaAssetId");
@@ -52,12 +71,23 @@ export async function moveMediaAssetAction(formData: FormData) {
       select: {
         id: true,
         filename: true,
+        folderId: true,
       },
     }),
     folderId ? getActiveFolder(session.user.id, folderId) : Promise.resolve(null),
   ]);
 
   if (!mediaAsset || (folderId && !folder)) {
+    revalidatePath("/");
+    return;
+  }
+
+  const [currentMode, targetMode] = await Promise.all([
+    getFolderMode(session.user.id, mediaAsset.folderId),
+    getFolderMode(session.user.id, folderId),
+  ]);
+
+  if (currentMode === "KEEP" || currentMode === "CHAT" || targetMode === "KEEP" || targetMode === "CHAT") {
     revalidatePath("/");
     return;
   }

@@ -60,6 +60,19 @@ export function BrowserTree({
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null); // 'root' or folder ID
   const [isMounted, setIsMounted] = useState(false);
 
+  const folderMap = new Map(folders.map((f) => [f.id, f]));
+  function getItemMode(folderId: string | null): "FILES" | "NOTES" | "KEEP" | "CHAT" {
+    if (!folderId) return "FILES";
+    let current = folderMap.get(folderId);
+    while (current) {
+      if (current.type === "NOTES_ROOT") return "NOTES";
+      if (current.type === "KEEP_ROOT") return "KEEP";
+      if (current.type === "CHAT_ROOT") return "CHAT";
+      current = current.parentId ? folderMap.get(current.parentId) : undefined;
+    }
+    return "FILES";
+  }
+
   // Grouping helpers
   const foldersByParent = new Map<string | null, typeof folders>();
   folders.forEach((f) => {
@@ -173,6 +186,43 @@ export function BrowserTree({
       if (data.type === "folder" && isDescendant(data.id, targetFolderId)) {
         alert("Cannot move a folder inside itself or its sub-folders.");
         return;
+      }
+
+      // Boundary Validation
+      const targetMode = getItemMode(targetFolderId);
+
+      if (data.type === "folder") {
+        const draggedFolder = folders.find((f) => f.id === data.id);
+        if (draggedFolder) {
+          const currentMode = getItemMode(draggedFolder.parentId);
+          if (currentMode !== targetMode) {
+            alert("Folders cannot be moved across mode boundaries.");
+            return;
+          }
+        }
+      } else if (data.type === "note") {
+        const draggedNote = notes.find((n) => n.id === data.id);
+        const currentMode = draggedNote ? getItemMode(draggedNote.folderId) : "FILES";
+        if (targetMode !== "NOTES" && targetMode !== "KEEP") {
+          alert("Notes must reside within the Notes or Quick Notes directories.");
+          return;
+        }
+        if (currentMode !== "FILES" && currentMode !== targetMode) {
+          alert("Notes cannot be moved across Obsidian and Keep mode boundaries.");
+          return;
+        }
+      } else if (data.type === "media") {
+        const draggedMedia = mediaAssets.find((m) => m.id === data.id);
+        const currentMode = draggedMedia ? getItemMode(draggedMedia.folderId) : "FILES";
+        if (
+          currentMode === "KEEP" ||
+          currentMode === "CHAT" ||
+          targetMode === "KEEP" ||
+          targetMode === "CHAT"
+        ) {
+          alert("Chat attachments and Keep media files are locked within their respective roots.");
+          return;
+        }
       }
 
       const formData = new FormData();

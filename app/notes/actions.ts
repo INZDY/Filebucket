@@ -213,6 +213,7 @@ export async function moveNoteAction(formData: FormData) {
       select: {
         id: true,
         title: true,
+        folderId: true,
       },
     }),
     folderId ? getActiveFolder(session.user.id, folderId) : Promise.resolve(null),
@@ -223,8 +224,17 @@ export async function moveNoteAction(formData: FormData) {
     return;
   }
 
-  const mode = await getFolderMode(session.user.id, folderId);
-  if (mode !== "NOTES" && mode !== "KEEP") {
+  const [currentMode, targetMode] = await Promise.all([
+    getFolderMode(session.user.id, note.folderId),
+    getFolderMode(session.user.id, folderId),
+  ]);
+
+  if (targetMode !== "NOTES" && targetMode !== "KEEP") {
+    revalidatePath("/");
+    return;
+  }
+
+  if (currentMode !== "FILES" && currentMode !== targetMode) {
     revalidatePath("/");
     return;
   }
