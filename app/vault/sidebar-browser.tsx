@@ -110,7 +110,7 @@ interface SidebarBrowserProps {
   browserTitle: string;
   trashCount: number;
   returnTo: string;
-  activeMode: "FILES" | "NOTES" | "KEEP" | "CHAT";
+  activeMode: "FILES" | "NOTES" | "KEEP" | "CHAT" | "TRASH";
 }
 
 export function SidebarBrowser({

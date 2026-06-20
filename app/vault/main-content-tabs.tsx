@@ -20,7 +20,7 @@ type MainContentTabsProps = {
   existingIds?: string[];
   fallbackHref: string;
   children: ReactNode;
-  activeMode?: "FILES" | "NOTES" | "KEEP" | "CHAT";
+  activeMode?: "FILES" | "NOTES" | "KEEP" | "CHAT" | "TRASH";
 };
 
 export function MainContentTabs({
