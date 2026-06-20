@@ -12,6 +12,7 @@ import { SidebarBrowser } from "@/app/vault/sidebar-browser";
 import { ActiveWorkspace } from "@/app/vault/active-workspace";
 import { TrashWorkspace } from "@/app/vault/trash-workspace";
 import { KeepWorkspace } from "@/app/vault/keep-workspace";
+import { ChatWorkspace } from "@/app/vault/chat-workspace";
 
 import { MainContentTabs } from "@/app/vault/main-content-tabs";
 import { ResizableVault } from "@/app/vault/resizable-vault";
@@ -694,9 +695,11 @@ export default async function Home({ searchParams }: HomeProps) {
                       query={query}
                     />
                   ) : activeMode === "CHAT" ? (
-                    <div className="flex h-full items-center justify-center text-slate-400 text-sm font-medium">
-                      Chat Workspace Placeholder (Milestone 20)
-                    </div>
+                    <ChatWorkspace
+                      activeChannel={selectedFolder}
+                      sessionUserId={session.user.id}
+                      chatRootId={chatRootId!}
+                    />
                   ) : (
                     <ActiveWorkspace
                       selectedNote={

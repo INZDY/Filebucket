@@ -12,9 +12,10 @@ import { Input } from "@/components/ui/input";
 type BrowserToolbarProps = {
   folderId: string | null;
   disabled?: boolean;
+  activeMode?: "FILES" | "NOTES" | "KEEP" | "CHAT";
 };
 
-export function BrowserToolbar({ folderId, disabled = false }: BrowserToolbarProps) {
+export function BrowserToolbar({ folderId, disabled = false, activeMode }: BrowserToolbarProps) {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const importFormRef = useRef<HTMLFormElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -23,20 +24,22 @@ export function BrowserToolbar({ folderId, disabled = false }: BrowserToolbarPro
     <div className="space-y-2">
       <div className="flex items-center gap-1.5">
         {/* New Note Action */}
-        <form action={createNoteAction}>
-          <input type="hidden" name="folderId" value={folderId ?? ""} />
-          <Button
-            aria-label="Create note"
-            className="h-9 w-9 border-slate-700 bg-[#1f242c] text-slate-300 hover:bg-slate-800 hover:text-slate-50"
-            disabled={disabled}
-            size="icon"
-            type="submit"
-            variant="outline"
-            title="New note"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </form>
+        {activeMode !== "CHAT" && (
+          <form action={createNoteAction}>
+            <input type="hidden" name="folderId" value={folderId ?? ""} />
+            <Button
+              aria-label="Create note"
+              className="h-9 w-9 border-slate-700 bg-[#1f242c] text-slate-300 hover:bg-slate-800 hover:text-slate-50"
+              disabled={disabled}
+              size="icon"
+              type="submit"
+              variant="outline"
+              title="New note"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </form>
+        )}
 
         {/* New Folder Action Toggle */}
         <Button
@@ -47,38 +50,44 @@ export function BrowserToolbar({ folderId, disabled = false }: BrowserToolbarPro
           size="icon"
           type="button"
           variant="outline"
-          title="New folder"
+          title={activeMode === "CHAT" ? "New channel" : "New folder"}
         >
           <FolderPlus className="h-4 w-4" />
         </Button>
 
         {/* Upload Media Action */}
-        <MediaUploadControl disabled={disabled} folderId={folderId} />
+        {activeMode !== "CHAT" && (
+          <MediaUploadControl disabled={disabled} folderId={folderId} />
+        )}
 
         {/* Import Notes Action */}
-        <form ref={importFormRef} action={importMarkdownNotesAction} className="hidden">
-          <input type="hidden" name="folderId" value={folderId ?? ""} />
-          <input
-            ref={importInputRef}
-            accept=".md,text/markdown"
-            multiple
-            name="files"
-            type="file"
-            onChange={() => importFormRef.current?.requestSubmit()}
-          />
-        </form>
-        <Button
-          aria-label="Import notes"
-          className="h-9 w-9 border-slate-700 bg-[#1f242c] text-slate-300 hover:bg-slate-800 hover:text-slate-50"
-          disabled={disabled}
-          onClick={() => importInputRef.current?.click()}
-          size="icon"
-          type="button"
-          variant="outline"
-          title="Import Markdown notes"
-        >
-          <Download className="h-4 w-4" />
-        </Button>
+        {activeMode !== "CHAT" && (
+          <>
+            <form ref={importFormRef} action={importMarkdownNotesAction} className="hidden">
+              <input type="hidden" name="folderId" value={folderId ?? ""} />
+              <input
+                ref={importInputRef}
+                accept=".md,text/markdown"
+                multiple
+                name="files"
+                type="file"
+                onChange={() => importFormRef.current?.requestSubmit()}
+              />
+            </form>
+            <Button
+              aria-label="Import notes"
+              className="h-9 w-9 border-slate-700 bg-[#1f242c] text-slate-300 hover:bg-slate-800 hover:text-slate-50"
+              disabled={disabled}
+              onClick={() => importInputRef.current?.click()}
+              size="icon"
+              type="button"
+              variant="outline"
+              title="Import Markdown notes"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          </>
+        )}
       </div>
 
       {/* Inline Folder Creation Form */}

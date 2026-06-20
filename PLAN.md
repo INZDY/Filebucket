@@ -46,6 +46,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Create notes, pin/unpin cards, change colors, toggle checklists, and edit cards in the modal; verify mobile layout collapses to a 1-column stack and edits happen in fullscreen. Verify instant saves commit immediately and card text edits debounce.
 
 ### Milestone 20: Discord Mode (Chat Channel Stream)
+*   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Create a chronological chat channel stream for short text messages and media captures with mobile viewport handling and Manga Reader integration.
 *   **Tasks**:
     *   Build the Chat Panel workspace in the Main Content Pane when in Chat Channels mode.

@@ -262,9 +262,13 @@ export function SidebarBrowser({
           </div>
         </div>
 
-        {/* Toolbar: only for files and notes modes */}
-        {(activeMode === "FILES" || activeMode === "NOTES") && (
-          <BrowserToolbar folderId={selectedFolder?.id ?? null} disabled={isTrashView} />
+        {/* Toolbar: files, notes, and chat modes */}
+        {(activeMode === "FILES" || activeMode === "NOTES" || (activeMode === "CHAT" && (!selectedFolder || selectedFolder.id === chatRootId))) && (
+          <BrowserToolbar
+            folderId={activeMode === "CHAT" ? chatRootId : (selectedFolder?.id ?? null)}
+            disabled={isTrashView}
+            activeMode={activeMode}
+          />
         )}
 
         {/* Badge Tags list: only for files and notes modes */}

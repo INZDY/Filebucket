@@ -6,6 +6,7 @@ import {
   getPresignedUploadUrlAction,
   createMediaAssetAction,
   renameMediaAssetAction,
+  createChatAttachmentAction,
 } from "@/app/media/actions";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
@@ -344,4 +345,32 @@ describe("Media Server Actions", () => {
       expect(revalidatePath).toHaveBeenCalledWith("/");
     });
   });
+
+  describe("createChatAttachmentAction", () => {
+    it("should find or create Chat Channels/Attachments folder and save media asset", async () => {
+      vi.mocked(prisma.folder.findFirst)
+        .mockResolvedValueOnce({ id: "chat-root-id", name: "Chat Channels", type: "CHAT_ROOT" } as any)
+        .mockResolvedValueOnce({ id: "attachments-folder-id", name: "Attachments", parentId: "chat-root-id" } as any);
+
+      vi.mocked(prisma.note.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.mediaAsset.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.mediaAsset.create).mockImplementation(async ({ data }: any) => ({
+        id: "media-chat-1",
+        ...data,
+      }));
+
+      const res = await createChatAttachmentAction({
+        filename: "screenshot.png",
+        contentType: "image/png",
+        sizeBytes: 2048,
+        r2Key: "vaults/user-123/uuid-screenshot.png",
+      });
+
+      expect(res.id).toBe("media-chat-1");
+      expect(res.folderId).toBe("attachments-folder-id");
+      expect(res.filename).toBe("screenshot.png");
+      expect(res.url).toBe("https://cdn.filebucket.local/vaults/user-123/uuid-screenshot.png");
+    });
+  });
 });
+

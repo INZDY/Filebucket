@@ -256,6 +256,79 @@ export async function createMediaAssetAction(data: {
   return { id: mediaAsset.id, folderId: mediaAsset.folderId, filename: mediaAsset.filename, url };
 }
 
+export async function createChatAttachmentAction(data: {
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+  r2Key: string;
+}) {
+  const session = await requireSession();
+  const userId = session.user.id;
+
+  // 1. Find or create the Chat Channels root folder for this user
+  let chatRoot = await prisma.folder.findFirst({
+    where: {
+      userId,
+      type: "CHAT_ROOT",
+      parentId: null,
+      deletedAt: null,
+    },
+  });
+  if (!chatRoot) {
+    chatRoot = await prisma.folder.create({
+      data: {
+        name: "Chat Channels",
+        type: "CHAT_ROOT",
+        userId,
+        parentId: null,
+      },
+    });
+  }
+
+  // 2. Find or create the Attachments folder under Chat Channels
+  let attachmentsFolder = await prisma.folder.findFirst({
+    where: {
+      userId,
+      parentId: chatRoot.id,
+      name: "Attachments",
+      deletedAt: null,
+    },
+  });
+  if (!attachmentsFolder) {
+    attachmentsFolder = await prisma.folder.create({
+      data: {
+        name: "Attachments",
+        type: "GENERAL",
+        userId,
+        parentId: chatRoot.id,
+      },
+    });
+  }
+
+  const finalFilename = await namespaceManager.resolve(userId, attachmentsFolder.id, {
+    type: "MediaAsset",
+    name: data.filename,
+  });
+
+  const mediaAsset = await prisma.mediaAsset.create({
+    data: {
+      userId,
+      filename: finalFilename,
+      contentType: data.contentType,
+      sizeBytes: data.sizeBytes,
+      r2Key: data.r2Key,
+      folderId: attachmentsFolder.id,
+    },
+  });
+
+  const baseUrl = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, "") || "";
+  const url = `${baseUrl}/${mediaAsset.r2Key.split("/").map(encodeURIComponent).join("/")}`;
+
+  revalidatePath("/");
+  return { id: mediaAsset.id, folderId: mediaAsset.folderId, filename: mediaAsset.filename, url };
+}
+
+
 export async function renameMediaAssetAction(formData: FormData) {
   const session = await requireSession();
   const mediaAssetId = readId(formData, "mediaAssetId");

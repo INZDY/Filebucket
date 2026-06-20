@@ -29,6 +29,7 @@ export type MangaReaderProps = {
   title: string;
   pages: ReaderPage[];
   initialPageIndex?: number;
+  onPageChange?: (index: number) => void;
 };
 
 export function MangaReader({
@@ -37,6 +38,7 @@ export function MangaReader({
   title,
   pages,
   initialPageIndex = 0,
+  onPageChange,
 }: MangaReaderProps) {
   const [pageIndex, setPageIndex] = useState(initialPageIndex);
   const [layoutMode, setLayoutMode] = useState<"webtoon" | "paged-ltr" | "paged-rtl">("paged-ltr");
@@ -75,6 +77,11 @@ export function MangaReader({
   useEffect(() => {
     setPageIndex(initialPageIndex);
   }, [initialPageIndex]);
+
+  // Notify page changes
+  useEffect(() => {
+    onPageChange?.(pageIndex);
+  }, [pageIndex, onPageChange]);
 
   // Handle exiting fullscreen when closed
   useEffect(() => {
