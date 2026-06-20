@@ -223,6 +223,12 @@ export async function moveNoteAction(formData: FormData) {
     return;
   }
 
+  const mode = await getFolderMode(session.user.id, folderId);
+  if (mode !== "NOTES" && mode !== "KEEP") {
+    revalidatePath("/");
+    return;
+  }
+
   const validation = await namespaceManager.validate(session.user.id, folder?.id ?? null, {
     id: note.id,
     type: "Note",

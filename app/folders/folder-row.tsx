@@ -99,7 +99,7 @@ export function FolderRow({
         isActive && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
         isDragOver && "bg-purple-950/20 border border-dashed border-purple-500",
       )}
-      draggable
+      draggable={!(folder.type === "NOTES_ROOT" || folder.type === "KEEP_ROOT" || folder.type === "CHAT_ROOT")}
       onDragStart={handleDragStart}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}

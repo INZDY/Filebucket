@@ -195,7 +195,9 @@ describe("Note Server Actions", () => {
   describe("moveNoteAction", () => {
     it("should move note to target folder successfully", async () => {
       vi.mocked(prisma.note.findFirst).mockResolvedValue({ id: "note-123", title: "Note" } as any);
-      vi.mocked(prisma.folder.findFirst).mockResolvedValue({ id: "folder-789" } as any);
+      vi.mocked(prisma.folder.findFirst)
+        .mockResolvedValueOnce({ id: "folder-789", type: "NOTES_ROOT" } as any)
+        .mockResolvedValueOnce({ id: "folder-789", type: "NOTES_ROOT" } as any);
       vi.mocked(prisma.note.findMany).mockResolvedValue([]);
       vi.mocked(prisma.mediaAsset.findMany).mockResolvedValue([]);
 
@@ -210,6 +212,37 @@ describe("Note Server Actions", () => {
         data: { folderId: "folder-789" },
       });
       expect(redirect).toHaveBeenCalledWith("/?folder=folder-789&note=note-123");
+    });
+
+    it("should block moving note to a folder in FILES mode", async () => {
+      vi.mocked(prisma.note.findFirst).mockResolvedValue({ id: "note-123", title: "Note" } as any);
+      vi.mocked(prisma.folder.findFirst)
+        .mockResolvedValueOnce({ id: "folder-files", type: "GENERAL", parentId: null } as any) // getActiveFolder
+        .mockResolvedValueOnce({ id: "folder-files", type: "GENERAL", parentId: null } as any); // getFolderMode (resolves to FILES)
+
+      const formData = new FormData();
+      formData.append("noteId", "note-123");
+      formData.append("folderId", "folder-files");
+
+      await moveNoteAction(formData);
+
+      expect(prisma.note.update).not.toHaveBeenCalled();
+    });
+
+    it("should block moving note to a folder in CHAT mode", async () => {
+      vi.mocked(prisma.note.findFirst).mockResolvedValue({ id: "note-123", title: "Note" } as any);
+      vi.mocked(prisma.folder.findFirst)
+        .mockResolvedValueOnce({ id: "folder-chat", type: "GENERAL", parentId: "chat-root" } as any) // getActiveFolder
+        .mockResolvedValueOnce({ id: "folder-chat", type: "GENERAL", parentId: "chat-root" } as any) // getFolderMode loop 1
+        .mockResolvedValueOnce({ id: "chat-root", type: "CHAT_ROOT", parentId: null } as any); // getFolderMode loop 2
+
+      const formData = new FormData();
+      formData.append("noteId", "note-123");
+      formData.append("folderId", "folder-chat");
+
+      await moveNoteAction(formData);
+
+      expect(prisma.note.update).not.toHaveBeenCalled();
     });
   });
 

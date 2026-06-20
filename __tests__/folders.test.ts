@@ -230,6 +230,38 @@ describe("Folder Server Actions", () => {
 
       expect(prisma.folder.update).not.toHaveBeenCalled();
     });
+
+    it("should block move if target parent resolves to KEEP mode", async () => {
+      vi.mocked(prisma.folder.findFirst)
+        .mockResolvedValueOnce({ id: "folder-123", name: "Folder", parentId: null, type: "GENERAL" } as any) // target
+        .mockResolvedValueOnce({ id: "keep-folder", name: "Keep Subfolder", parentId: "keep-root-id", type: "GENERAL" } as any) // parent
+        .mockResolvedValueOnce({ id: "keep-folder", name: "Keep Subfolder", parentId: "keep-root-id", type: "GENERAL" } as any) // getFolderMode loop 1
+        .mockResolvedValueOnce({ id: "keep-root-id", name: "Quick Notes", parentId: null, type: "KEEP_ROOT" } as any); // getFolderMode loop 2
+
+      const formData = new FormData();
+      formData.append("folderId", "folder-123");
+      formData.append("parentId", "keep-folder");
+
+      await moveFolderAction(formData);
+
+      expect(prisma.folder.update).not.toHaveBeenCalled();
+    });
+
+    it("should block move if target parent resolves to CHAT mode and is not chat root", async () => {
+      vi.mocked(prisma.folder.findFirst)
+        .mockResolvedValueOnce({ id: "folder-123", name: "Folder", parentId: null, type: "GENERAL" } as any) // target
+        .mockResolvedValueOnce({ id: "chat-channel", name: "#general", parentId: "chat-root-id", type: "GENERAL" } as any) // parent
+        .mockResolvedValueOnce({ id: "chat-channel", name: "#general", parentId: "chat-root-id", type: "GENERAL" } as any) // getFolderMode loop 1
+        .mockResolvedValueOnce({ id: "chat-root-id", name: "Chat Channels", parentId: null, type: "CHAT_ROOT" } as any); // getFolderMode loop 2
+
+      const formData = new FormData();
+      formData.append("folderId", "folder-123");
+      formData.append("parentId", "chat-channel");
+
+      await moveFolderAction(formData);
+
+      expect(prisma.folder.update).not.toHaveBeenCalled();
+    });
   });
 
   describe("trashFolderAction", () => {

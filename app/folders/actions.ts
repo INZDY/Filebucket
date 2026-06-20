@@ -163,6 +163,18 @@ export async function moveFolderAction(formData: FormData) {
     return;
   }
 
+  if (parentId) {
+    const mode = await getFolderMode(session.user.id, parentId);
+    if (mode === "KEEP") {
+      revalidatePath("/");
+      return;
+    }
+    if (mode === "CHAT" && parent?.type !== "CHAT_ROOT") {
+      revalidatePath("/");
+      return;
+    }
+  }
+
   const validation = await namespaceManager.validate(session.user.id, parentId, {
     id: folder.id,
     type: "Folder",
