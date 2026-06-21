@@ -12,6 +12,9 @@ import {
   BookOpen,
   ArrowUpDown,
   Loader2,
+  ArrowRight,
+  ArrowLeft,
+  ArrowLeftRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -208,7 +211,7 @@ export function MangaReader({
           >
             <X className="h-4 w-4" />
           </Button>
-          <div className="min-w-0">
+          <div className="min-w-0 max-w-[70px] min-[380px]:max-w-[120px] sm:max-w-xs md:max-w-md">
             <h2 className="truncate text-sm font-semibold text-slate-200" title={title}>
               {title}
             </h2>
@@ -235,8 +238,8 @@ export function MangaReader({
               variant="ghost"
               size="sm"
             >
-              <BookOpen className="h-3.5 w-3.5" />
-              LTR
+              <ArrowRight className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">LTR</span>
             </Button>
             <Button
               className={cn(
@@ -249,8 +252,8 @@ export function MangaReader({
               variant="ghost"
               size="sm"
             >
-              <BookOpen className="h-3.5 w-3.5 scale-x-[-1]" />
-              RTL
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">RTL</span>
             </Button>
             <Button
               className={cn(
@@ -264,7 +267,7 @@ export function MangaReader({
               size="sm"
             >
               <ArrowUpDown className="h-3.5 w-3.5" />
-              Webtoon
+              <span className="hidden sm:inline">Webtoon</span>
             </Button>
           </div>
 
@@ -298,18 +301,40 @@ export function MangaReader({
 
           {/* Fit Toggles */}
           {layoutMode !== "webtoon" && (
-            <select
-              className="h-8 rounded-md border border-slate-800/60 bg-slate-900/80 px-2 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-purple-600"
-              value={fitMode}
-              onChange={(e) => {
-                setFitMode(e.target.value as "height" | "width" | "original");
-                resetZoom();
-              }}
-            >
-              <option value="height">Fit Height</option>
-              <option value="width">Fit Width</option>
-              <option value="original">Original</option>
-            </select>
+            <>
+              {/* Desktop select */}
+              <select
+                className="hidden sm:inline-block h-8 rounded-md border border-slate-800/60 bg-slate-900/80 px-2 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-purple-600"
+                value={fitMode}
+                onChange={(e) => {
+                  setFitMode(e.target.value as "height" | "width" | "original");
+                  resetZoom();
+                }}
+              >
+                <option value="height">Fit Height</option>
+                <option value="width">Fit Width</option>
+                <option value="original">Original</option>
+              </select>
+
+              {/* Mobile toggler */}
+              <Button
+                className="inline-flex sm:hidden h-8 w-8 text-slate-400 hover:bg-slate-800 hover:text-slate-100 active:scale-95"
+                onClick={() => {
+                  setFitMode(fitMode === "height" ? "width" : "height");
+                  resetZoom();
+                }}
+                size="icon"
+                variant="ghost"
+                type="button"
+                title={`Switch to Fit ${fitMode === "height" ? "Width" : "Height"}`}
+              >
+                {fitMode === "height" ? (
+                  <ArrowLeftRight className="h-3.5 w-3.5" />
+                ) : (
+                  <ArrowUpDown className="h-3.5 w-3.5" />
+                )}
+              </Button>
+            </>
           )}
 
           <Button

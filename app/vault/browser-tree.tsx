@@ -370,7 +370,6 @@ export function BrowserTree({
           <Link href={rootFolderId ? `/?folder=${rootFolderId}` : "/"}>
             <Folder className="h-4 w-4 text-slate-400" />
             <span className="min-w-0 flex-1 truncate text-left font-medium">{rootFolderName}</span>
-            <span className="text-xs text-slate-500">{getLocationItemCount(rootFolderId)}</span>
           </Link>
         </Button>
       </div>

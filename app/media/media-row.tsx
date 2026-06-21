@@ -86,7 +86,7 @@ export function MediaRow({
           className="flex flex-1 items-center gap-2 px-2"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
-          style={{ paddingLeft: `${12 + depth * 16}px` }}
+          style={{ paddingLeft: `${28 + depth * 16}px` }}
         >
           <input type="hidden" name="mediaAssetId" value={mediaAsset.id} />
           <Input
@@ -109,7 +109,7 @@ export function MediaRow({
         <Link
           className="flex min-w-0 flex-1 items-center gap-2 pr-3"
           href={href}
-          style={{ paddingLeft: `${12 + depth * 16}px` }}
+          style={{ paddingLeft: `${28 + depth * 16}px` }}
         >
           <ImagePlus className="h-4 w-4 shrink-0 text-slate-400" />
           <span className="min-w-0 flex-1 truncate">{mediaAsset.filename}</span>

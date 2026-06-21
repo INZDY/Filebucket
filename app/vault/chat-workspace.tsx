@@ -72,6 +72,7 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isAtRoot = !activeChannel || activeChannel.id === chatRootId;
 
@@ -107,6 +108,26 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
     }
   }, [messages]);
 
+  // Auto-expand textarea content input
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "40px";
+      const nextHeight = Math.min(textarea.scrollHeight, 144);
+      textarea.style.height = `${nextHeight}px`;
+    }
+  }, [content]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter") {
+      const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 640;
+      if (!isMobileViewport && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    }
+  };
+
   // 3. Format Date / Timestamp
   function formatTimestamp(dateStr: string) {
     const d = new Date(dateStr);
@@ -134,8 +155,8 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
   }
 
   // 5. Send message (upload attachments first if any)
-  async function handleSend(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSend(e?: React.FormEvent) {
+    e?.preventDefault();
     if (isAtRoot || isSending) return;
     if (!content.trim() && pendingFiles.length === 0) return;
 
@@ -523,12 +544,15 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
             </Button>
 
             {/* Input message content box */}
-            <Input
+            <textarea
+              ref={textareaRef}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder={`Message ${activeChannel.name}`}
-              className="h-10 flex-1 border-slate-800 bg-[#171a20] text-sm text-slate-100 placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-purple-500/50"
+              className="flex-1 min-h-[40px] max-h-36 py-2 px-3 border border-slate-800 rounded-md bg-[#171a20] text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500/50 resize-none overflow-y-auto"
               disabled={isSending}
+              rows={1}
+              onKeyDown={handleKeyDown}
             />
 
             {/* Send submit button */}

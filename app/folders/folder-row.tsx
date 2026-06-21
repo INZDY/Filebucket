@@ -174,7 +174,6 @@ export function FolderRow({
               return isExpanded ? <FolderOpen className="h-4 w-4 shrink-0 text-slate-300" /> : <Folder className="h-4 w-4 shrink-0 text-slate-400" />;
             })()}
             <span className="min-w-0 flex-1 truncate text-left">{folder.name}</span>
-            <span className="text-xs text-slate-500">{folder.count}</span>
           </Link>
         </div>
       )}

@@ -118,4 +118,94 @@ describe("ChatWorkspace UI Component", () => {
     });
     document.body.removeChild(container);
   });
+
+  it("should submit the form on Enter key press but insert newline on Shift+Enter", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    let fetchCalled = false;
+    global.fetch = vi.fn().mockImplementation((url, init) => {
+      if (url === "/api/chat" && init?.method === "POST") {
+        fetchCalled = true;
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            id: "msg-2",
+            content: "hello",
+            userId: mockUserId,
+            folderId: mockChannel.id,
+            createdAt: new Date().toISOString(),
+            mediaAssets: [],
+            user: { name: "Test User", email: "test@example.com" }
+          }),
+        } as any);
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve([]) } as any);
+    });
+
+    await act(async () => {
+      root.render(
+        <ChatWorkspace
+          activeChannel={mockChannel}
+          sessionUserId={mockUserId}
+          chatRootId={mockChatRootId}
+        />
+      );
+    });
+
+    const textarea = container.querySelector("textarea");
+    expect(textarea).not.toBeNull();
+
+    // Simulate typing text
+    await act(async () => {
+      const nativeValueSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLTextAreaElement.prototype,
+        "value"
+      )?.set;
+      nativeValueSetter?.call(textarea, "hello");
+      textarea!.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    // Simulate Shift+Enter keydown
+    const shiftEnterEvent = new KeyboardEvent("keydown", {
+      key: "Enter",
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    await act(async () => {
+      textarea!.dispatchEvent(shiftEnterEvent);
+    });
+    
+    // Shift+Enter should NOT have triggered the submit fetch
+    expect(fetchCalled).toBe(false);
+
+    // Simulate Enter keydown (desktop submit)
+    const enterEvent = new KeyboardEvent("keydown", {
+      key: "Enter",
+      shiftKey: false,
+      bubbles: true,
+      cancelable: true,
+    });
+    
+    // Mock window.innerWidth to be desktop (>= 640px)
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+
+    await act(async () => {
+      textarea!.dispatchEvent(enterEvent);
+    });
+
+    // Restore innerWidth
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: originalInnerWidth });
+
+    // Enter without Shift on desktop should trigger form submit
+    expect(fetchCalled).toBe(true);
+
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
 });

@@ -12,6 +12,7 @@ import {
   Plus, 
   Check
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -345,7 +346,7 @@ export function KeepWorkspace({ notes, keepRootId, allTags }: KeepWorkspaceProps
         {pinnedNotes.length > 0 && (
           <div className="space-y-3">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 px-1">Pinned</span>
-            <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4 [column-fill:_balance] w-full">
+            <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4 [column-fill:_balance] w-full">
               {pinnedNotes.map((note) => (
                 <KeepCard 
                   key={note.id} 
@@ -366,7 +367,7 @@ export function KeepWorkspace({ notes, keepRootId, allTags }: KeepWorkspaceProps
             <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 px-1">Others</span>
           )}
           {otherNotes.length > 0 ? (
-            <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4 [column-fill:_balance] w-full">
+            <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4 [column-fill:_balance] w-full">
               {otherNotes.map((note) => (
                 <KeepCard 
                   key={note.id} 
@@ -430,16 +431,30 @@ function KeepCard({
     await updateKeepNoteAction(note.id, { body: finalBody });
   }
 
+  const colorFades: Record<string, string> = {
+    default: "from-[#16171d] via-[#16171d]/60 to-transparent",
+    red: "from-[#221015] via-[#221015]/60 to-transparent",
+    orange: "from-[#221712] via-[#221712]/60 to-transparent",
+    yellow: "from-[#222212] via-[#222212]/60 to-transparent",
+    green: "from-[#102215] via-[#102215]/60 to-transparent",
+    teal: "from-[#102222] via-[#102222]/60 to-transparent",
+    blue: "from-[#101b2a] via-[#101b2a]/60 to-transparent",
+    indigo: "from-[#131428] via-[#131428]/60 to-transparent",
+    purple: "from-[#1c102a] via-[#1c102a]/60 to-transparent",
+    pink: "from-[#2a1020] via-[#2a1020]/60 to-transparent",
+  };
+  const fadeClass = colorFades[note.color || "default"] || colorFades.default;
+
   return (
     <div 
       onClick={() => onEdit(note)}
       className={cn(
-        "break-inside-avoid w-full border rounded-xl p-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-lg relative group/card flex flex-col justify-between min-h-24",
+        "break-inside-avoid w-full border rounded-xl p-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-lg relative group/card flex flex-col justify-between min-h-24 max-h-72 overflow-hidden",
         colorOpt.bgClass,
         colorOpt.borderClass
       )}
     >
-      <div className="space-y-2.5">
+      <div className="space-y-2.5 z-0">
         <div className="flex justify-between items-start gap-2">
           <h3 className="font-bold text-slate-100 text-sm leading-tight line-clamp-2">{note.title}</h3>
           <Button
@@ -460,20 +475,32 @@ function KeepCard({
 
         {/* Note Body content */}
         {!isChecklist ? (
-          <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap line-clamp-8">
-            {note.body}
-          </p>
+          <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <p className="mb-1.5 last:mb-0 text-sm leading-relaxed">{children}</p>,
+                ul: ({ children }) => <ul className="list-disc list-inside ml-2 mb-2 text-sm">{children}</ul>,
+                ol: ({ children }) => <ol className="list-decimal list-inside ml-2 mb-2 text-sm">{children}</ol>,
+                li: ({ children }) => <li className="mb-0.5">{children}</li>,
+                h1: ({ children }) => <h1 className="text-base font-bold mb-1 mt-2">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-sm font-bold mb-1 mt-1.5">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-xs font-bold mb-0.5 mt-1">{children}</h3>,
+              }}
+            >
+              {note.body}
+            </ReactMarkdown>
+          </div>
         ) : (
           // Checklist view on card
           <div className="space-y-1 max-h-52 overflow-hidden pr-0.5">
             {items.map((item, idx) => (
-              <div key={item.id} className="flex items-center gap-1.5 text-xs text-slate-300">
+              <div key={item.id} className="flex items-center gap-1.5 text-sm text-slate-300">
                 <input
                   type="checkbox"
                   checked={item.checked}
                   onClick={(e) => handleCheckboxToggle(idx, !item.checked, e)}
                   onChange={() => {}} // Controlled by onClick
-                  className="rounded border-slate-700 bg-transparent text-purple-600 focus:ring-purple-600/35 h-3 w-3"
+                  className="rounded border-slate-700 bg-transparent text-purple-600 focus:ring-purple-600/35 h-3.5 w-3.5"
                 />
                 <span className={cn("truncate flex-1", item.checked && "line-through text-slate-500")}>
                   {item.text}
@@ -498,9 +525,15 @@ function KeepCard({
         )}
       </div>
 
+      {/* Fade-out overlay at the bottom of the card */}
+      <div className={cn(
+        "absolute bottom-0 left-0 right-0 h-16 pointer-events-none rounded-b-xl bg-gradient-to-t z-10 transition-all duration-200",
+        fadeClass
+      )} />
+
       {/* Card Action footer bar */}
       <div 
-        className="flex items-center justify-start gap-1 mt-4 pt-2 border-t border-slate-800/10 opacity-100 lg:opacity-0 group-hover/card:opacity-100 transition-opacity relative"
+        className="flex items-center justify-start gap-1 mt-4 pt-2 border-t border-slate-800/10 opacity-100 lg:opacity-0 group-hover/card:opacity-100 transition-opacity relative z-20"
         onClick={(e) => e.stopPropagation()} // Prevent modal open
       >
         <div className="relative">
@@ -713,7 +746,7 @@ function KeepEditModal({
       <div 
         ref={modalRef}
         className={cn(
-          "w-full h-full sm:h-auto sm:max-h-[85vh] sm:max-w-xl sm:rounded-xl border shadow-2xl flex flex-col justify-between transition-all",
+          "w-full h-full sm:h-auto sm:max-h-[95vh] sm:max-w-xl sm:rounded-xl border shadow-2xl flex flex-col justify-between transition-all",
           colorOpt.bgClass,
           colorOpt.borderClass
         )}
@@ -747,12 +780,12 @@ function KeepEditModal({
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder="Note"
-              rows={6}
+              rows={12}
               className="w-full bg-transparent border-0 outline-none text-sm placeholder:text-slate-500 resize-none leading-relaxed focus:ring-0 focus:outline-none"
             />
           ) : (
             // Checklist editor
-            <div className="space-y-1.5 max-h-[40vh] overflow-y-auto pr-1">
+            <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1">
               {checklistItems.map((item, idx) => (
                 <div key={item.id} className="flex items-center gap-2">
                   <input

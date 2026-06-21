@@ -51,16 +51,6 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
     return (
       <div className="relative min-h-0 flex-1 overflow-hidden bg-[#111318]">
         <div className="min-h-0 h-full">{content}</div>
-        <Button
-          aria-label="Open vault browser"
-          className="fixed left-3 top-20 z-40 border-slate-700 bg-[#191c22]/95 text-slate-100 shadow-lg hover:bg-[#242832]"
-          onClick={() => setIsBrowserOpen(true)}
-          size="icon"
-          type="button"
-          variant="outline"
-        >
-          <PanelLeft className="h-4 w-4" />
-        </Button>
 
         {hasOutline && (
           <Button

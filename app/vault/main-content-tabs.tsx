@@ -31,36 +31,32 @@ export function MainContentTabs({
   activeMode = "FILES",
 }: MainContentTabsProps) {
   const router = useRouter();
-  const [tabsByMode, setTabsByMode] = useState<Record<"FILES" | "NOTES", ContentTab[]>>({
-    FILES: [],
+  const [tabsByMode, setTabsByMode] = useState<Record<"NOTES", ContentTab[]>>({
     NOTES: [],
   });
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
 
   useEffect(() => {
-    if (!activeTab || (activeMode !== "FILES" && activeMode !== "NOTES")) {
+    if (!activeTab || activeMode !== "NOTES") {
       return;
     }
 
     setTabsByMode((prev) => {
-      const currentTabs = prev[activeMode];
+      const currentTabs = prev.NOTES;
       const existingIndex = currentTabs.findIndex((tab) => {
-        if (activeTab.type === "media") {
-          return tab.type === "media";
-        }
         return tab.id === activeTab.id && tab.type === activeTab.type;
       });
 
       if (existingIndex === -1) {
         return {
           ...prev,
-          [activeMode]: [...currentTabs, activeTab],
+          NOTES: [...currentTabs, activeTab],
         };
       }
 
       return {
         ...prev,
-        [activeMode]: currentTabs.map((tab, index) => index === existingIndex ? activeTab : tab),
+        NOTES: currentTabs.map((tab, index) => index === existingIndex ? activeTab : tab),
       };
     });
   }, [activeTab, activeMode]);
@@ -68,18 +64,17 @@ export function MainContentTabs({
   useEffect(() => {
     if (existingIds) {
       setTabsByMode((prev) => ({
-        FILES: prev.FILES.filter((tab) => existingIds.includes(tab.id)),
         NOTES: prev.NOTES.filter((tab) => existingIds.includes(tab.id)),
       }));
     }
   }, [existingIds]);
 
   function closeTab(tabToClose: ContentTab) {
-    if (activeMode !== "FILES" && activeMode !== "NOTES") return;
+    if (activeMode !== "NOTES") return;
 
     setTabsByMode((prev) => ({
       ...prev,
-      [activeMode]: prev[activeMode].filter((tab) => tab.id !== tabToClose.id || tab.type !== tabToClose.type),
+      NOTES: prev.NOTES.filter((tab) => tab.id !== tabToClose.id || tab.type !== tabToClose.type),
     }));
 
     if (activeTab?.id === tabToClose.id && activeTab.type === tabToClose.type) {
@@ -87,7 +82,7 @@ export function MainContentTabs({
     }
   }
 
-  const currentTabs = activeMode === "FILES" || activeMode === "NOTES" ? tabsByMode[activeMode] : [];
+  const currentTabs = activeMode === "NOTES" ? tabsByMode.NOTES : [];
 
   return (
     <div className="flex h-full min-h-0 flex-col">
