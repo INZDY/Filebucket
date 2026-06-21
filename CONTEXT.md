@@ -85,7 +85,7 @@ _Avoid_: Fullscreen window, browser mode
 
 
 **Main Content Pane**:
-The primary work area where opened notes are edited as Markdown or opened media assets are previewed in lightweight tabs on a single scrollable tab row. Selecting a note opens a tab or focuses its existing tab, while selecting any media asset opens or focuses a single reusable media tab that replaces the previously previewed media asset; folder selection does not replace already opened content or create a tab. The active opened content should be restorable, while the wider open tab set may stay temporary for MVP. Note tabs protect unsaved editor state on close, while media tabs can close immediately. Before any note or media is opened, the main content pane may stay a quiet blank work surface. A broader keyboard shortcut system is a later interaction layer, not required to define MVP tab behavior. The main content pane is UI language, not a separate domain entity.
+The primary work area where opened notes are edited as Markdown in tabs on a single scrollable tab row. In Files Mode, opened media assets are previewed directly in the main content pane without tabs, and selecting a media asset replaces the active preview; folder selection does not replace already opened content or create a tab. The active opened content should be restorable, while the wider open tab set may stay temporary for MVP. Note tabs protect unsaved editor state on close. Before any note or media is opened, the main content pane may stay a quiet blank work surface. The main content pane is UI language, not a separate domain entity.
 _Avoid_: Middle panel, item list, viewer
 
 **Note Outline**:

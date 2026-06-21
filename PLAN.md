@@ -115,3 +115,31 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   **Keep & Chat Silos:** Block all boundary moves on Keep notes and Chat Channels/attachments to lock them within their respective root directories.
 *   **Verification**: Attempt drag-and-drop actions that violate these boundaries (e.g., dropping a folder from Files into Notes or vice versa) and verify they are rejected. Attempt moving a note out of Notes and verify it is blocked. Verify moving media assets still works.
 
+### Milestone 26: Workspace Tabbing & Vault Tree Polish
+*   **Status**: Proposed.
+*   **Goal**: Remove tabs from Files Mode and fix visual indentation and item counts within the Vault Browser tree.
+*   **Tasks**:
+    *   **Files Mode Tabbing**: Completely hide/remove the tab bar inside Files Mode. Preview opened media assets directly in the workspace, with selecting a media file replacing the active preview layout.
+    *   **Vault Tree Indentation**: Shift the base padding of `NoteRow` and `MediaRow` elements in `BrowserTree` from `12px` to `28px` (yielding `28px + depth * 16px` padding) so their file icons align perfectly under sibling and parent folder icons.
+    *   **Remove Folder Children Count**: Remove children count indicator elements (`folder.count`) entirely from all folder rows (including user folders, reserved system folders, and the root `Vault` row) to achieve a clean, clutter-free sidebar.
+*   **Verification**: Verify Files Mode has no tab bar and displays files directly. Verify visual icon alignment in the sidebar browser. Verify no children count is displayed on any folder rows.
+
+### Milestone 27: Responsive Mobile Manga Reader & Sidebar Drawer Triggers
+*   **Status**: Proposed.
+*   **Goal**: Fix mobile Manga Reader controls, eliminate redundant drawer toggles, and optimize navigation bar padding.
+*   **Tasks**:
+    *   **Manga Reader Mobile Polish**: On mobile viewports (< 640px), make the Layout Mode toggles icon-only (hiding text labels) and swap the generic book icon for directional arrows: `ArrowRight` (LTR), `ArrowLeft` (RTL), and `ArrowUpDown` (Webtoon). Replace the aspect-ratio `<select>` dropdown with a single compact toggler button to switch between "Fit Width" and "Fit Height". Add max-width constraint to titles to guarantee truncation.
+    *   **Sidebar Toggle Restructuring**: Remove the floating workspace drawer toggle (`PanelLeft` button) completely. Show the header hamburger toggle button on all tablet and mobile screen sizes under 1024px (`lg:hidden` instead of `md:hidden`) to serve as the unified drawer trigger.
+    *   **Trash & Activity Bar Spacing**: Add a flex spacer (`hidden md:block md:flex-1`) in the Activity Bar on desktop to push the Trash icon cleanly to the bottom. Group and evenly distribute layout weights (`flex-1` for all 5 buttons) in the mobile Bottom Navigation Bar for perfect spacing.
+*   **Verification**: Verify header controls do not overflow in mobile Manga Reader. Verify the floating left button is gone and the header hamburger menu toggles the sidebar on both mobile and tablet. Verify even button spacing in bottom nav.
+
+### Milestone 28: Keep Cards Markdown Rendering & Chat Multiline Input
+*   **Status**: Proposed.
+*   **Goal**: Render markdown inside Keep grid cards, increase font sizes, expand editor vertical space, and support multiline chat input.
+*   **Tasks**:
+    *   **Keep Note Font Size**: Increase card and modal text body font sizes from `text-xs` (12px) to `text-sm` (14px) for better readability.
+    *   **Markdown Keep Cards**: Parse and render standard Markdown in Keep note card grids (using a clean markdown preview renderer). Clamp notes in grid to a maximum height of `max-h-72` (280px) and apply a bottom fade-out gradient.
+    *   **Responsive Columns**: Set columns dynamically: 1 column on mobile (< 640px), 2 columns on tablet (640px - 1023px), 3 columns on small desktop (1024px - 1440px), and 4 columns on wide screens (> 1440px).
+    *   **Modal Height**: Increase the desktop editor modal maximum height to `95vh` to give maximum editing canvas space.
+    *   **Chat Multiline Input (Shift + Enter)**: Swap the single-line `<Input>` in `ChatWorkspace` with an auto-expanding `<textarea>` (default height `h-10`, auto-growing up to `max-h-36`). Configure key events so that hitting `Enter` sends the message, and `Shift + Enter` inputs a newline (mobile keyboard default remains newline insertion).
+*   **Verification**: Verify card text size and markdown support. Verify chat input handles Shift+Enter newlines, and submits on Enter.
