@@ -145,7 +145,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Verify card text size and markdown support. Verify chat input handles Shift+Enter newlines, and submits on Enter.
 
 ### Milestone 29: Sidebar Resizability & Persistence
-*   **Status**: Planned.
+*   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Persist the width of the resizable Vault Browser panel and support fallback minimum size.
 *   **Tasks**:
     *   **Width Persistence**: In `ResizableVault`, store the resized browser panel percentage or pixel width in `localStorage` (using key `filebucket_sidebar_width`).
@@ -154,7 +154,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Resize the sidebar, reload the page, and verify the width is preserved. Clear `localStorage` and verify the sidebar defaults to its minimum width.
 
 ### Milestone 30: Files Mode Folder-Only Tree & Special Folders Visibility Toggle
-*   **Status**: Planned.
+*   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Show folders only in Files Mode tree and implement a toggle to hide or show special reserved folders.
 *   **Tasks**:
     *   **Folder-Only Filtering**: In Files Mode, update `BrowserTree` to filter out notes and media assets so that only the folder tree structure is shown.
@@ -164,7 +164,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Enter Files Mode and verify no note or media rows are displayed in the tree. Verify that the `Notes/`, `Quick Notes/`, and `Chat Channels/` directories are hidden by default. Click the toggle to show them and verify they appear, then refresh the page and verify the state is preserved.
 
 ### Milestone 31: Main Content Pane Folder Contents View (Files Mode)
-*   **Status**: Planned.
+*   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Render all contents of the selected folder in the main content panel in Files Mode.
 *   **Tasks**:
     *   **Folder Contents Display**: When in Files Mode and a folder (or root) is active with no media preview open, render a `FolderContentsView` grid/list in the Main Content Pane.
