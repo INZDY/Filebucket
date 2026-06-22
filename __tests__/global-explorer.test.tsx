@@ -37,10 +37,12 @@ describe("SidebarBrowser Global Explorer & Action Toolbar", () => {
 
   const notes = [
     { id: "note-1", title: "Project Plan", folderId: "notes-sub" },
+    { id: "root-note", title: "Root Note Title", folderId: null },
   ];
 
   const mediaAssets = [
     { id: "media-1", filename: "logo.png", folderId: "custom-folder" },
+    { id: "root-media", filename: "root-file.png", folderId: null },
   ];
 
   const defaultProps = {
@@ -72,7 +74,7 @@ describe("SidebarBrowser Global Explorer & Action Toolbar", () => {
     returnTo: "/",
   };
 
-  it("should show all reserved folders in the Files Mode tree", async () => {
+  it("should hide reserved/special folders in the Files Mode tree by default, and show them when toggled", async () => {
     const container = document.createElement("div");
     document.body.appendChild(container);
     const root = createRoot(container);
@@ -86,11 +88,54 @@ describe("SidebarBrowser Global Explorer & Action Toolbar", () => {
       );
     });
 
-    // Check that reserved folders are rendered as rows in Files Mode tree
-    const textContent = container.textContent || "";
+    // Hidden by default
+    let textContent = container.textContent || "";
+    expect(textContent).not.toContain("Notes");
+    expect(textContent).not.toContain("Quick Notes");
+    expect(textContent).not.toContain("Chat Channels");
+
+    // Check for the toggle button in the toolbar
+    const toggleBtn = Array.from(container.querySelectorAll("button")).find(
+      (btn) => btn.getAttribute("title")?.toLowerCase().includes("special")
+    );
+    expect(toggleBtn).not.toBeUndefined();
+
+    // Click the toggle button to show special folders
+    await act(async () => {
+      toggleBtn?.click();
+    });
+
+    // Now they should be shown
+    textContent = container.textContent || "";
     expect(textContent).toContain("Notes");
     expect(textContent).toContain("Quick Notes");
     expect(textContent).toContain("Chat Channels");
+
+    // Clean up
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
+
+  it("should render only folders in the Files Mode tree, filtering out notes and media assets", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <SidebarBrowser
+          {...defaultProps}
+          activeMode="FILES"
+        />
+      );
+    });
+
+    // Notes and Media assets should be hidden from the tree view in Files Mode
+    const textContent = container.textContent || "";
+    expect(textContent).not.toContain("Root Note Title");
+    expect(textContent).not.toContain("root-file.png");
 
     // Clean up
     await act(async () => {

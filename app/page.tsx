@@ -728,6 +728,8 @@ export default async function Home({ searchParams }: HomeProps) {
                       hasVaultContent={hasVaultContent}
                       browserTitle={browserTitle}
                       allMediaAssets={mediaAssets}
+                      allFolders={folders}
+                      allNotes={notes}
                     />
                   )}
                 </MainContentTabs>

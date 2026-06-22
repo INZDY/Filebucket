@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Download, FolderPlus, Plus, X } from "lucide-react";
+import { Check, Download, FolderPlus, Plus, X, Eye, EyeOff } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { createFolderAction } from "@/app/folders/actions";
@@ -13,9 +13,17 @@ type BrowserToolbarProps = {
   folderId: string | null;
   disabled?: boolean;
   activeMode?: "FILES" | "NOTES" | "KEEP" | "CHAT";
+  showSpecialFolders?: boolean;
+  onToggleSpecialFolders?: () => void;
 };
 
-export function BrowserToolbar({ folderId, disabled = false, activeMode }: BrowserToolbarProps) {
+export function BrowserToolbar({
+  folderId,
+  disabled = false,
+  activeMode,
+  showSpecialFolders,
+  onToggleSpecialFolders,
+}: BrowserToolbarProps) {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const importFormRef = useRef<HTMLFormElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -23,6 +31,22 @@ export function BrowserToolbar({ folderId, disabled = false, activeMode }: Brows
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-1.5">
+        {/* Toggle Special Folders Action */}
+        {activeMode === "FILES" && onToggleSpecialFolders && (
+          <Button
+            aria-label="Toggle special folders"
+            className="h-9 w-9 border-slate-700 bg-[#1f242c] text-slate-300 hover:bg-slate-800 hover:text-slate-50"
+            disabled={disabled}
+            onClick={onToggleSpecialFolders}
+            size="icon"
+            type="button"
+            variant="outline"
+            title="Toggle special folders"
+          >
+            {showSpecialFolders ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+          </Button>
+        )}
+
         {/* New Note Action */}
         {activeMode === "NOTES" && (
           <form action={createNoteAction}>

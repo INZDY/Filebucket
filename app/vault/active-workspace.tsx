@@ -13,12 +13,13 @@ import {
   ChevronRight,
   BookOpen,
   Loader2,
+  Folder,
 } from "lucide-react";
 import { NoteActionsMenu } from "@/app/notes/note-actions-menu";
 import { NoteEditor } from "@/app/notes/note-editor";
 import { MediaActionsMenu } from "@/app/media/media-actions-menu";
 import { compareAlphanumeric } from "@/lib/sorting";
-import { getMediaAssetUrl } from "@/lib/utils";
+import { getMediaAssetUrl, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { MangaReader, type ReaderPage } from "@/components/manga-reader";
 
@@ -83,6 +84,8 @@ interface ActiveWorkspaceProps {
     r2Key: string;
     folderId: string | null;
   }[];
+  allFolders?: FolderEntry[];
+  allNotes?: NoteEntry[];
 }
 
 function getMediaPreviewKind(contentType: string, filename = "") {
@@ -111,9 +114,9 @@ export function ActiveWorkspace({
   imageMediaAssets,
   tags,
   textPreviewContent,
-  hasVaultContent,
-  browserTitle,
   allMediaAssets,
+  allFolders = [],
+  allNotes = [],
 }: ActiveWorkspaceProps) {
   const router = useRouter();
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -495,15 +498,170 @@ export function ActiveWorkspace({
     );
   }
 
+  const showSpecialFoldersSetting = (() => {
+    try {
+      if (typeof window !== "undefined") {
+        return localStorage.getItem("filebucket_show_special_folders") === "true";
+      }
+    } catch {
+      // ignore
+    }
+    return false;
+  })();
+
+  const childFolders = allFolders.filter((f) => {
+    if (f.parentId !== (selectedFolder?.id ?? null)) return false;
+    if (!showSpecialFoldersSetting && f.parentId === null) {
+      const isReservedRoot = f.type === "NOTES_ROOT" || f.type === "KEEP_ROOT" || f.type === "CHAT_ROOT";
+      if (isReservedRoot) return false;
+    }
+    return true;
+  }).sort((a, b) => compareAlphanumeric(a.name, b.name));
+
+  const childNotes = allNotes.filter(
+    (n) => n.folderId === (selectedFolder?.id ?? null)
+  ).sort((a, b) => compareAlphanumeric(a.title, b.title));
+
+  const childMedia = allMediaAssets.filter(
+    (m) => m.folderId === (selectedFolder?.id ?? null)
+  ).sort((a, b) => compareAlphanumeric(a.filename, b.filename));
+
   return (
-    <div className="flex min-h-full items-center justify-center px-6 py-10">
-      <div className="max-w-md text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-[#191c22] text-slate-300 shadow-sm">
-          <FileText className="h-5 w-5" />
+    <div className="flex h-full min-h-0 flex-col">
+      {/* Folder Contents Header Breadcrumbs */}
+      <div className="border-b border-slate-800 bg-[#191c22] px-5 py-2.5 shrink-0 flex items-center justify-between">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
+          <Link className="hover:text-slate-100 transition-colors" href="/">
+            Vault
+          </Link>
+          {folderTrail.map((folder) => (
+            <span key={folder.id} className="flex items-center gap-2">
+              <span className="text-slate-600">/</span>
+              <Link className="hover:text-slate-100 transition-colors font-medium text-slate-300" href={`/?folder=${folder.id}`}>
+                {folder.name}
+              </Link>
+            </span>
+          ))}
         </div>
-        <h2 className="mt-4 text-base font-semibold tracking-normal">
-          {!selectedFolder && !hasVaultContent ? "Your vault is empty" : browserTitle}
-        </h2>
+      </div>
+
+      {/* Grid of Folder Contents */}
+      <div className="flex-1 overflow-y-auto bg-[#101217] px-6 py-6">
+        {childFolders.length > 0 || childNotes.length > 0 || childMedia.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {/* Subfolders */}
+            {childFolders.map((folder) => (
+              <Link
+                key={folder.id}
+                href={`/?folder=${folder.id}`}
+                className="group flex flex-col justify-between p-4 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-amber-500/40 hover:shadow-[0_0_15px_rgba(245,158,11,0.05)] transition-all active:scale-95 duration-200"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 group-hover:bg-amber-500/20 transition-all duration-200">
+                    <Folder className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-200 group-hover:text-slate-100 transition-colors">
+                      {folder.name}
+                    </p>
+                    <p className="text-xs text-slate-500">Folder</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+
+            {/* Notes */}
+            {childNotes.map((note) => (
+              <Link
+                key={note.id}
+                href={note.folderId ? `/?folder=${note.folderId}&note=${note.id}` : `/?note=${note.id}`}
+                className="group flex flex-col justify-between p-4 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-purple-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.05)] transition-all active:scale-95 duration-200"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 group-hover:bg-purple-500/20 transition-all duration-200">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-200 group-hover:text-slate-100 transition-colors">
+                      {note.title}
+                    </p>
+                    <p className="text-xs text-slate-500">Note</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+
+            {/* Media Files */}
+            {childMedia.map((media) => {
+              const previewKind = getMediaPreviewKind(media.contentType, media.filename);
+              const isImg = previewKind === "image";
+              const isAudio = previewKind === "audio";
+              const isVideo = previewKind === "video";
+              const isPdf = previewKind === "pdf";
+
+              const Icon = isImg
+                ? ImagePlus
+                : isAudio
+                ? Music
+                : isVideo
+                ? Video
+                : isPdf
+                ? FileText
+                : FileQuestion;
+
+              const colorClass = isImg
+                ? "bg-blue-500/10 text-blue-400 border-blue-500/20 group-hover:bg-blue-500/20"
+                : isAudio
+                ? "bg-green-500/10 text-green-400 border-green-500/20 group-hover:bg-green-500/20"
+                : isVideo
+                ? "bg-orange-500/10 text-orange-400 border-orange-500/20 group-hover:bg-orange-500/20"
+                : isPdf
+                ? "bg-red-500/10 text-red-400 border-red-500/20 group-hover:bg-red-500/20"
+                : "bg-slate-500/10 text-slate-400 border-slate-500/20 group-hover:bg-slate-500/20";
+
+              const borderHoverClass = isImg
+                ? "hover:border-blue-500/40 hover:shadow-[0_0_15px_rgba(59,130,246,0.05)]"
+                : isAudio
+                ? "hover:border-green-500/40 hover:shadow-[0_0_15px_rgba(34,197,94,0.05)]"
+                : isVideo
+                ? "hover:border-orange-500/40 hover:shadow-[0_0_15px_rgba(249,115,22,0.05)]"
+                : isPdf
+                ? "hover:border-red-500/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.05)]"
+                : "hover:border-slate-500/40";
+
+              return (
+                <Link
+                  key={media.id}
+                  href={media.folderId ? `/?folder=${media.folderId}&media=${media.id}` : `/?media=${media.id}`}
+                  className={cn(
+                    "group flex flex-col justify-between p-4 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 transition-all active:scale-95 duration-200",
+                    borderHoverClass
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-all duration-200", colorClass)}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-200 group-hover:text-slate-100 transition-colors">
+                        {media.filename}
+                      </p>
+                      <p className="text-xs text-slate-500">File</p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#14161d] border border-slate-800 text-slate-500 mb-4 shadow-inner">
+              <Folder className="h-6 w-6" />
+            </div>
+            <h3 className="text-sm font-semibold text-slate-300">This folder is empty</h3>
+            <p className="text-xs text-slate-500 mt-1">Upload files or create subfolders to get started.</p>
+          </div>
+        )}
       </div>
     </div>
   );

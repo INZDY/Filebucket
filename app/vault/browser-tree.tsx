@@ -293,48 +293,52 @@ export function BrowserTree({
           ...(isExpanded ? renderVaultTree(folder.id, depth + 1) : []),
         ];
       }),
-      ...sortedNotes.map((note) => {
-        const isActive = selectedNoteId === note.id;
-        const href = note.folderId
-          ? `/?folder=${note.folderId}&note=${note.id}`
-          : `/?note=${note.id}`;
+      ...(mode !== "FILES"
+        ? sortedNotes.map((note) => {
+            const isActive = selectedNoteId === note.id;
+            const href = note.folderId
+              ? `/?folder=${note.folderId}&note=${note.id}`
+              : `/?note=${note.id}`;
 
-        return (
-          <NoteRow
-            key={`note:${note.id}`}
-            depth={depth}
-            destinations={folderDestinations}
-            href={href}
-            isActive={isActive}
-            note={{
-              id: note.id,
-              title: note.title,
-              folderId: note.folderId,
-            }}
-          />
-        );
-      }),
-      ...sortedMedia.map((media) => {
-        const isActive = selectedMediaId === media.id;
-        const href = media.folderId
-          ? `/?folder=${media.folderId}&media=${media.id}`
-          : `/?media=${media.id}`;
+            return (
+              <NoteRow
+                key={`note:${note.id}`}
+                depth={depth}
+                destinations={folderDestinations}
+                href={href}
+                isActive={isActive}
+                note={{
+                  id: note.id,
+                  title: note.title,
+                  folderId: note.folderId,
+                }}
+              />
+            );
+          })
+        : []),
+      ...(mode !== "FILES"
+        ? sortedMedia.map((media) => {
+            const isActive = selectedMediaId === media.id;
+            const href = media.folderId
+              ? `/?folder=${media.folderId}&media=${media.id}`
+              : `/?media=${media.id}`;
 
-        return (
-          <MediaRow
-            key={`media:${media.id}`}
-            depth={depth}
-            destinations={folderDestinations}
-            href={href}
-            isActive={isActive}
-            mediaAsset={{
-              id: media.id,
-              filename: media.filename,
-              folderId: media.folderId,
-            }}
-          />
-        );
-      }),
+            return (
+              <MediaRow
+                key={`media:${media.id}`}
+                depth={depth}
+                destinations={folderDestinations}
+                href={href}
+                isActive={isActive}
+                mediaAsset={{
+                  id: media.id,
+                  filename: media.filename,
+                  folderId: media.folderId,
+                }}
+              />
+            );
+          })
+        : []),
     ];
   }
 

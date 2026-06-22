@@ -17,9 +17,12 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
   const [isNarrow, setIsNarrow] = useState(false);
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
   const [isOutlineOpen, setIsOutlineOpen] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
   const hasOutline = Boolean(outline);
 
   useEffect(() => {
+    setIsMounted(true);
+
     const media = window.matchMedia("(max-width: 1023px)");
     const update = () => {
       const matches = media.matches;
@@ -46,6 +49,56 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
     window.addEventListener("open-sidebar", handleOpen);
     return () => window.removeEventListener("open-sidebar", handleOpen);
   }, []);
+
+  const getInitialLayout = () => {
+    let savedWidth: number | null = null;
+    try {
+      const stored = localStorage.getItem("filebucket_sidebar_width");
+      if (stored) {
+        const val = parseFloat(stored);
+        if (!isNaN(val)) savedWidth = val;
+      }
+    } catch {
+      // ignore
+    }
+
+    const browserSize = savedWidth !== null ? savedWidth : 20;
+
+    if (hasOutline) {
+      const outlineSize = 20;
+      const contentSize = 100 - browserSize - outlineSize;
+      return {
+        browser: browserSize,
+        content: contentSize > 0 ? contentSize : 55,
+        outline: outlineSize,
+      };
+    } else {
+      return {
+        browser: browserSize,
+        content: 100 - browserSize,
+      };
+    }
+  };
+
+  const initialLayout = getInitialLayout();
+
+  if (!isMounted) {
+    return (
+      <div className="flex flex-1 min-h-0 bg-[#111318] relative">
+        <div style={{ width: "280px" }} className="min-h-0 min-w-0 shrink-0 border-r border-slate-800">
+          {browser}
+        </div>
+        <div className="flex-1 min-h-0 min-w-0">
+          {content}
+        </div>
+        {hasOutline && outline && (
+          <div style={{ width: "220px" }} className="min-h-0 min-w-0 shrink-0 border-l border-slate-800">
+            {outline}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (isNarrow) {
     return (
@@ -135,16 +188,16 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
 
   return (
     <Group
-      defaultLayout={hasOutline
-        ? {
-            browser: isNarrow ? 32 : 25,
-            content: isNarrow ? 44 : 55,
-            outline: isNarrow ? 24 : 20,
+      defaultLayout={initialLayout}
+      onLayoutChanged={(newLayout) => {
+        if (newLayout.browser !== undefined) {
+          try {
+            localStorage.setItem("filebucket_sidebar_width", String(newLayout.browser));
+          } catch {
+            // ignore
           }
-        : {
-            browser: isNarrow ? 38 : 28,
-            content: isNarrow ? 62 : 72,
-          }}
+        }
+      }}
       id="filebucket-vault-panes"
       orientation="horizontal"
       className="relative min-h-0 flex-1 bg-[#111318]"
@@ -152,7 +205,7 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
       <Panel
         key="browser-panel"
         className="min-h-0 min-w-0"
-        defaultSize={hasOutline ? "25%" : "28%"}
+        defaultSize={initialLayout.browser}
         id="browser"
         minSize="280px"
         maxSize="420px"
@@ -163,7 +216,7 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
       <Panel
         key="content-panel"
         className="min-h-0 min-w-0"
-        defaultSize={hasOutline ? "55%" : "72%"}
+        defaultSize={initialLayout.content}
         id="content"
         minSize="420px"
       >
@@ -188,7 +241,7 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
           <Panel
             key="outline-panel"
             className="relative min-h-0 min-w-0"
-            defaultSize="20%"
+            defaultSize={initialLayout.outline}
             id="outline"
             minSize="220px"
             maxSize="340px"

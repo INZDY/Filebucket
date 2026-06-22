@@ -143,10 +143,32 @@ export function SidebarBrowser({
 }: SidebarBrowserProps) {
   
   const [searchFilter, setSearchFilter] = useState<"ALL" | "FILES" | "NOTES" | "CHATS">("ALL");
+  const [showSpecialFolders, setShowSpecialFolders] = useState(false);
 
   useEffect(() => {
     setSearchFilter("ALL");
   }, [query]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("filebucket_show_special_folders");
+      if (stored) {
+        setShowSpecialFolders(stored === "true");
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const toggleSpecialFolders = () => {
+    const nextVal = !showSpecialFolders;
+    setShowSpecialFolders(nextVal);
+    try {
+      localStorage.setItem("filebucket_show_special_folders", String(nextVal));
+    } catch {
+      // ignore
+    }
+  };
 
   const folderMap = new Map(folders.map((f) => [f.id, f]));
   function getItemMode(folderId: string | null): "FILES" | "NOTES" | "KEEP" | "CHAT" {
@@ -162,7 +184,13 @@ export function SidebarBrowser({
   }
 
   // 1. Files mode data
-  const filesFolders = folders;
+  const filesFolders = folders.filter((f) => {
+    if (!showSpecialFolders) {
+      const isReservedRoot = f.parentId === null && (f.type === "NOTES_ROOT" || f.type === "KEEP_ROOT" || f.type === "CHAT_ROOT");
+      if (isReservedRoot) return false;
+    }
+    return true;
+  });
   const filesNotes = notes;
   const filesMedia = mediaAssets;
 
@@ -267,6 +295,8 @@ export function SidebarBrowser({
             folderId={activeMode === "CHAT" ? chatRootId : (selectedFolder?.id ?? null)}
             disabled={isTrashView}
             activeMode={activeMode}
+            showSpecialFolders={showSpecialFolders}
+            onToggleSpecialFolders={toggleSpecialFolders}
           />
         )}
 
