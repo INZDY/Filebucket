@@ -116,7 +116,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Attempt drag-and-drop actions that violate these boundaries (e.g., dropping a folder from Files into Notes or vice versa) and verify they are rejected. Attempt moving a note out of Notes and verify it is blocked. Verify moving media assets still works.
 
 ### Milestone 26: Workspace Tabbing & Vault Tree Polish
-*   **Status**: Completed.
+*   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Remove tabs from Files Mode and fix visual indentation and item counts within the Vault Browser tree.
 *   **Tasks**:
     *   **Files Mode Tabbing**: Completely hide/remove the tab bar inside Files Mode. Preview opened media assets directly in the workspace, with selecting a media file replacing the active preview layout.
@@ -125,7 +125,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Verify Files Mode has no tab bar and displays files directly. Verify visual icon alignment in the sidebar browser. Verify no children count is displayed on any folder rows.
 
 ### Milestone 27: Responsive Mobile Manga Reader & Sidebar Drawer Triggers
-*   **Status**: Completed.
+*   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Fix mobile Manga Reader controls, eliminate redundant drawer toggles, and optimize navigation bar padding.
 *   **Tasks**:
     *   **Manga Reader Mobile Polish**: On mobile viewports (< 640px), make the Layout Mode toggles icon-only (hiding text labels) and swap the generic book icon for directional arrows: `ArrowRight` (LTR), `ArrowLeft` (RTL), and `ArrowUpDown` (Webtoon). Replace the aspect-ratio `<select>` dropdown with a single compact toggler button to switch between "Fit Width" and "Fit Height". Add max-width constraint to titles to guarantee truncation.
@@ -134,7 +134,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Verify header controls do not overflow in mobile Manga Reader. Verify the floating left button is gone and the header hamburger menu toggles the sidebar on both mobile and tablet. Verify even button spacing in bottom nav.
 
 ### Milestone 28: Keep Cards Markdown Rendering & Chat Multiline Input
-*   **Status**: Completed.
+*   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Render markdown inside Keep grid cards, increase font sizes, expand editor vertical space, and support multiline chat input.
 *   **Tasks**:
     *   **Keep Note Font Size**: Increase card and modal text body font sizes from `text-xs` (12px) to `text-sm` (14px) for better readability.
