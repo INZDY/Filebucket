@@ -143,3 +143,44 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   **Modal Height**: Increase the desktop editor modal maximum height to `95vh` to give maximum editing canvas space.
     *   **Chat Multiline Input (Shift + Enter)**: Swap the single-line `<Input>` in `ChatWorkspace` with an auto-expanding `<textarea>` (default height `h-10`, auto-growing up to `max-h-36`). Configure key events so that hitting `Enter` sends the message, and `Shift + Enter` inputs a newline (mobile keyboard default remains newline insertion).
 *   **Verification**: Verify card text size and markdown support. Verify chat input handles Shift+Enter newlines, and submits on Enter.
+
+### Milestone 29: Sidebar Resizability & Persistence
+*   **Status**: Planned.
+*   **Goal**: Persist the width of the resizable Vault Browser panel and support fallback minimum size.
+*   **Tasks**:
+    *   **Width Persistence**: In `ResizableVault`, store the resized browser panel percentage or pixel width in `localStorage` (using key `filebucket_sidebar_width`).
+    *   **Hydration-Safe Restore**: Read the stored width in a `useEffect` after mounting to prevent SSR hydration mismatches, then apply the size dynamically to the `<Panel>` component.
+    *   **Minimum Default Size**: If no width has been saved in `localStorage`, default the sidebar size to its minimum possible width (e.g., `280px` or minimum percentage size).
+*   **Verification**: Resize the sidebar, reload the page, and verify the width is preserved. Clear `localStorage` and verify the sidebar defaults to its minimum width.
+
+### Milestone 30: Files Mode Folder-Only Tree & Special Folders Visibility Toggle
+*   **Status**: Planned.
+*   **Goal**: Show folders only in Files Mode tree and implement a toggle to hide or show special reserved folders.
+*   **Tasks**:
+    *   **Folder-Only Filtering**: In Files Mode, update `BrowserTree` to filter out notes and media assets so that only the folder tree structure is shown.
+    *   **Special Folders Toggle**: Add a "Show/Hide Special Folders" button or icon to the vault browser toolbar when in Files Mode.
+    *   **Default Behavior**: Default the toggle to **hide** special folders (`Notes/`, `Quick Notes/`, `Chat Channels/`) at the root level.
+    *   **State Persistence**: Store the toggle state in `localStorage` so it persists across page reloads.
+*   **Verification**: Enter Files Mode and verify no note or media rows are displayed in the tree. Verify that the `Notes/`, `Quick Notes/`, and `Chat Channels/` directories are hidden by default. Click the toggle to show them and verify they appear, then refresh the page and verify the state is preserved.
+
+### Milestone 31: Main Content Pane Folder Contents View (Files Mode)
+*   **Status**: Planned.
+*   **Goal**: Render all contents of the selected folder in the main content panel in Files Mode.
+*   **Tasks**:
+    *   **Folder Contents Display**: When in Files Mode and a folder (or root) is active with no media preview open, render a `FolderContentsView` grid/list in the Main Content Pane.
+    *   **Mixed Child Listing**: Retrieve and render all direct children of the selected folder: subfolders (with custom icons), notes, and media assets.
+    *   **Navigation & Actions**:
+        *   Clicking a folder navigates the Vault Browser into that folder.
+        *   Clicking a media asset opens its preview in the Main Content Pane.
+        *   Clicking a note switches the mode to Obsidian Notes and opens the note.
+    *   **Empty State**: Handle empty folder states cleanly with helpful design.
+*   **Verification**: Click a folder in Files Mode tree. Verify the main content pane displays the items inside it. Click a subfolder in the grid to navigate deeper. Click a file to preview it. Click a note to switch to notes mode and edit it.
+
+### Milestone 32: Tree Views Topmost Root Hiding
+*   **Status**: Planned.
+*   **Goal**: Hide the topmost root header in the tree browser for a cleaner presentation.
+*   **Tasks**:
+    *   **Topmost Row Removal**: Update `BrowserTree` to omit rendering the topmost folder row (which shows "Vault", "Notes", or "Chat Channels" as the root node).
+    *   **Direct Child Rendering**: Render the first-level children of the root folder directly at the top level of the tree (with appropriate indentation).
+    *   **Root Drag & Drop Support**: Ensure the vault root drop zone remains operational so items can still be dragged and dropped into the root.
+*   **Verification**: Verify the "Vault", "Notes", or "Chat Channels" topmost rows are hidden and their child items are rendered at the root level of the sidebar tree. Verify drag-and-drop to root still works.

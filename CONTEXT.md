@@ -85,7 +85,7 @@ _Avoid_: Fullscreen window, browser mode
 
 
 **Main Content Pane**:
-The primary work area where opened notes are edited as Markdown in tabs on a single scrollable tab row. In Files Mode, opened media assets are previewed directly in the main content pane without tabs, and selecting a media asset replaces the active preview; folder selection does not replace already opened content or create a tab. The active opened content should be restorable, while the wider open tab set may stay temporary for MVP. Note tabs protect unsaved editor state on close. Before any note or media is opened, the main content pane may stay a quiet blank work surface. The main content pane is UI language, not a separate domain entity.
+The primary work area where opened notes are edited as Markdown in tabs on a single scrollable tab row (Obsidian Mode). In Files Mode, selecting a folder displays the **Folder Contents View** in the pane, while selecting a media asset replaces the active preview directly without tabs. Note tabs protect unsaved editor state on close. Before any note or media is opened in Obsidian Mode, the main content pane may stay a quiet blank work surface. The main content pane is UI language, not a separate domain entity.
 _Avoid_: Middle panel, item list, viewer
 
 **Note Outline**:
@@ -144,6 +144,19 @@ _Avoid_: Export, download, sync
 Editing behavior where note title, body, or card changes are saved automatically without requiring a manual save command. Autosave saves after the user pauses typing for 1500-2000ms. If a user switches workspace modes or closes an active content tab/modal, the app instantly flushes and saves any pending edits. Autosave is not a domain entity.
 _Avoid_: Manual save, draft mode
 
+**Folder Contents View**:
+A workspace layout in the Main Content Pane, active in Files Mode when a folder (or the vault root) is selected without an active media asset preview. It displays all direct children (subfolders, media assets, and notes) of the selected folder as a grid or list. Selecting a child folder navigates into it, selecting a media asset opens its preview, and selecting a note switches the mode to Obsidian Notes and opens the note.
+_Avoid_: Folder grid, directory explorer, vault listing
+
+**Special Folders Toggle**:
+A toggle UI control in Files Mode that filters whether the reserved system folders (`Notes/`, `Quick Notes/`, and `Chat Channels/`) are visible at the root level of the folder tree and folder contents view. It defaults to hidden.
+_Avoid_: Reserved folders switch, mode toggler, folders filter
+
+**Topmost Folder**:
+The root container element of the folder tree in the Vault Browser (rendered as "Vault" in Files Mode, "Notes" in Obsidian Mode, and "Chat Channels" in Chat Mode). Hiding the topmost folder exposes the first-level children directly at the top of the tree.
+_Avoid_: Root folder, vault row, header folder
+
+
 ## Example Dialogue
 
 Dev: When this user signs in, which vault do they see?
@@ -165,10 +178,10 @@ Dev: Where does new content go after the user selects a folder?
 Domain expert: Into that active folder. If no folder is active: files are created in the vault root, Obsidian notes are created in the root of `Notes/`, Keep notes are created in `Quick Notes/`, and Chat Channels are created under `Chat Channels/`.
 
 Dev: What if the user selects a folder before opening any note or media?
-Domain expert: The main content pane may stay empty because folders are browsing locations, not opened content.
+Domain expert: In Files Mode, selecting a folder opens the Folder Contents View in the main content pane. In Obsidian Mode, the main content pane stays empty until a note is opened.
 
 Dev: Does selecting a folder open a main content tab?
-Domain expert: No. Main content tabs are for opened notes and media assets.
+Domain expert: No. In Obsidian Mode, tabs are for opened notes. In Files Mode, there are no tabs; selecting folders and files changes the main workspace panel directly.
 
 Dev: What happens when the user selects a note that is already open?
 Domain expert: Focus its existing main content tab instead of opening a duplicate tab.
