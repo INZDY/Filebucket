@@ -106,4 +106,44 @@ describe("KeepWorkspace UI Component", () => {
     });
     document.body.removeChild(container);
   });
+
+  it("should render KeepEditModal inside a portal on document.body, not within the workspace container", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <KeepWorkspace
+          notes={mockNotes}
+          keepRootId="keep-root-123"
+          allTags={[]}
+        />
+      );
+    });
+
+    const card = Array.from(container.querySelectorAll("h3")).find(
+      (el) => el.textContent === "Note 1"
+    )?.closest(".cursor-pointer") as HTMLDivElement;
+    
+    expect(card).not.toBeNull();
+
+    await act(async () => {
+      card.click();
+    });
+
+    const modalTitleInput = document.body.querySelector("input[value='Note 1']");
+    expect(modalTitleInput).not.toBeNull();
+
+    const modalContainer = modalTitleInput?.closest(".fixed");
+    expect(modalContainer).not.toBeNull();
+    expect(container.contains(modalContainer!)).toBe(false);
+    expect(document.body.contains(modalContainer!)).toBe(true);
+
+    // Clean up
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
 });

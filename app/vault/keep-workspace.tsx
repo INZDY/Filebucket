@@ -23,6 +23,7 @@ import {
 } from "@/app/notes/actions";
 import { toggleNoteTagAction, createTagAction } from "@/app/tags/actions";
 import { parseMarkdownChecklist, serializeMarkdownChecklist, type ChecklistItem } from "@/lib/keep";
+import { createPortal } from "react-dom";
 
 interface NoteTagAssociation {
   tag: {
@@ -736,12 +737,14 @@ function KeepEditModal({
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
+return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   });
 
-  return (
+  if (typeof window === "undefined") return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4">
       <div 
         ref={modalRef}
@@ -859,6 +862,7 @@ function KeepEditModal({
                   setShowColorPicker(!showColorPicker);
                   setShowTagMenu(false);
                 }}
+                title="Change color"
               >
                 <Palette className="h-4.5 w-4.5" />
               </Button>
@@ -873,6 +877,7 @@ function KeepEditModal({
                         option.bgClass,
                         note.color === option.hex && "ring-1 ring-purple-500"
                       )}
+                      title={option.label}
                       onClick={() => {
                         onColorChange(note.id, option.hex);
                         setShowColorPicker(false);
@@ -972,6 +977,7 @@ function KeepEditModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
