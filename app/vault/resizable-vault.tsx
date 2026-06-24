@@ -80,7 +80,7 @@ export function ResizableVault({ browser, content, outline }: ResizableVaultProp
     }
   };
 
-  const initialLayout = getInitialLayout();
+  const initialLayout = getInitialLayout() as Record<string, number>;
 
   if (!isMounted) {
     return (
