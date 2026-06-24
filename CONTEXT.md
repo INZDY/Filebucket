@@ -36,7 +36,7 @@ The navigation surface for browsing folders, nested folders, notes, and media as
 _Avoid_: File tree, folder sidebar, explorer
 
 **Mobile Navigation**:
-The adapted layout configuration for mobile and narrow viewports. The desktop leftmost Activity Bar moves to a thumb-accessible Bottom Navigation Bar. The dynamic Sidebar Browser is hidden by default and acts as a sliding left Drawer overlay triggered by a top-header icon or edge-swiping, keeping the active editor, card grid, or chat channel stream fullscreen. Note outlines, card editing, and tab switchers expand to slide-up or slide-in fullscreen sheets to maximize typing space.
+The adapted layout configuration for mobile and narrow viewports. The desktop leftmost Activity Bar moves to a thumb-accessible Bottom Navigation Bar. The dynamic Sidebar Browser is hidden by default and acts as a sliding left Drawer overlay triggered by a top-header icon or edge-swiping, keeping the active editor, card grid, or chat channel stream fullscreen. Note outlines, card editing, and tab switchers expand to slide-up or slide-in sheets to maximize typing space. It enforces screen viewport locking using dynamic viewport height (`100dvh`) and locks the body scroll boundary (`overscroll-behavior: none`) to prevent the header, drawer overlays, and footer navigation bars from being scrolled or bounced out of the visible screen.
 _Avoid_: Side navigation, static sidebar, desktop layout
 
 **User**:
@@ -145,7 +145,7 @@ Editing behavior where note title, body, or card changes are saved automatically
 _Avoid_: Manual save, draft mode
 
 **Folder Contents View**:
-A workspace layout in the Main Content Pane, active in Files Mode when a folder (or the vault root) is selected without an active media asset preview. It displays all direct children (subfolders, media assets, and notes) of the selected folder as a grid or list. Selecting a child folder navigates into it, selecting a media asset opens its preview, and selecting a note switches the mode to Obsidian Notes and opens the note.
+A workspace layout in the Main Content Pane, active in Files Mode when a folder (or the vault root) is selected without an active media asset preview. It displays all direct children (subfolders, media assets, and notes) of the selected folder as a grid or list. Selecting a child folder navigates into it, selecting a media asset opens its preview, and selecting a note switches the mode to Obsidian Notes and opens the note. It supports dragging folders, notes, and media asset cards, and dropping items onto subfolder cards, the top location breadcrumbs, or the main pane background to trigger move actions under mode boundary validation rules.
 _Avoid_: Folder grid, directory explorer, vault listing
 
 **Special Folders Toggle**:

@@ -184,3 +184,40 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   **Direct Child Rendering**: Render the first-level children of the root folder directly at the top level of the tree (with appropriate indentation).
     *   **Root Drag & Drop Support**: Ensure the vault root drop zone remains operational so items can still be dragged and dropped into the root.
 *   **Verification**: Verify the "Vault", "Notes", or "Chat Channels" topmost rows are hidden and their child items are rendered at the root level of the sidebar tree. Verify drag-and-drop to root still works.
+
+### Milestone 33: Keep Note Edit Modal React Portal Integration
+*   **Status**: Planned.
+*   **Goal**: Mount the Keep edit modal directly to `document.body` using React Portal so it overlays the entire viewport (including the app header/footer) and applies background blur globally.
+*   **Tasks**:
+    *   Import `createPortal` in `app/vault/keep-workspace.tsx`.
+    *   Wrap `KeepEditModal`'s outer overlay layout container JSX in `createPortal(..., document.body)`.
+    *   Implement an SSR-safe check to prevent pre-render execution during Node.js compilation.
+*   **Verification**: Open a Keep card on desktop and verify the blurred backdrop covers the top app header. Open a Keep card on mobile and verify it overlays the header and bottom nav bar completely.
+
+### Milestone 34: Mobile Viewport Scrolling & Bouncing Lock-down
+*   **Status**: Planned.
+*   **Goal**: Lock down browser viewport height and body scroll boundaries to keep the app header and footer navigation bar fixed in view on mobile devices.
+*   **Tasks**:
+    *   Add `html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }` to `app/globals.css` to disable body drag bounce and address bar dynamic layout shifts.
+    *   Change standard `h-screen` viewport containers to `h-[100dvh]` on layout wrappers in `app/page.tsx` for precise viewport height matching.
+*   **Verification**: Simulate dynamic scrolling or swiping near top/bottom boundaries on mobile viewports; verify only internal elements scroll and that the app header and bottom nav bar stay persistently locked in-frame.
+
+### Milestone 35: Files Mode Folder Contents View Drag & Drop Interactivity
+*   **Status**: Planned.
+*   **Goal**: Enable complete drag-and-drop move operations within the Folder Contents View grid container.
+*   **Tasks**:
+    *   Add `draggable={true}` to folder, note, and media asset cards inside `FolderContentsView` (`active-workspace.tsx`) and populate `application/filebucket` dataTransfer with their ID and type on drag start.
+    *   Implement drop event handlers to move items when:
+        *   Dropped onto a subfolder card in the grid (moves item into that subfolder).
+        *   Dropped onto parent folder links or "Vault" root in the header breadcrumbs (moves item to target location).
+        *   Dropped onto the empty grid background pane (moves external tree rows into the currently open folder).
+    *   Enforce mode-specific move boundaries and handle name collision alerts.
+*   **Verification**: Verify dragging cards in the content grid and dropping them onto other folder cards or breadcrumbs triggers correct server action moves. Drag a row from the sidebar explorer tree and drop it onto the content pane background; verify it moves to the open folder.
+
+### Milestone 36: Sidebar Browser Header Clean-up
+*   **Status**: Planned.
+*   **Goal**: Prune the static `"Vault Browser"` label from the sidebar panel header to reduce visual noise.
+*   **Tasks**:
+    *   Remove the static `<p>` header tag displaying `"Vault Browser"` from `sidebar-browser.tsx`.
+    *   Adjust top spacing/margins of the location breadcrumbs trail to align cleanly inside the sidebar container.
+*   **Verification**: Open the app and verify the `"Vault Browser"` text header is removed from the sidebar browser top section, leaving only the location breadcrumbs visible.
