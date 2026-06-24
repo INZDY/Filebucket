@@ -273,8 +273,7 @@ export function SidebarBrowser({
     >
       <div className="space-y-3 border-b border-slate-800 px-4 py-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-slate-100">Vault Browser</p>
-          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1 text-xs text-slate-400">
+          <div className="flex min-w-0 flex-wrap items-center gap-1 text-xs text-slate-400">
             <Link className="hover:text-slate-100" href="/">
               Vault
             </Link>

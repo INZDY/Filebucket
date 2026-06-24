@@ -232,4 +232,28 @@ describe("SidebarBrowser Global Explorer & Action Toolbar", () => {
     });
     document.body.removeChild(container);
   });
+
+  it("should not render the static 'Vault Browser' header text", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <SidebarBrowser
+          {...defaultProps}
+          activeMode="FILES"
+        />
+      );
+    });
+
+    const textContent = container.textContent || "";
+    expect(textContent).not.toContain("Vault Browser");
+
+    // Clean up
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
 });
