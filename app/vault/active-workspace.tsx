@@ -27,6 +27,7 @@ type FolderEntry = {
   id: string;
   name: string;
   parentId: string | null;
+  type?: string;
 };
 
 type NoteEntry = {
