@@ -36,7 +36,7 @@ The navigation surface for browsing folders, nested folders, notes, and media as
 _Avoid_: File tree, folder sidebar, explorer
 
 **Mobile Navigation**:
-The adapted layout configuration for mobile and narrow viewports. The desktop leftmost Activity Bar moves to a thumb-accessible Bottom Navigation Bar. The dynamic Sidebar Browser is hidden by default and acts as a sliding left Drawer overlay triggered by a top-header icon or edge-swiping, keeping the active editor, card grid, or chat channel stream fullscreen. Note outlines, card editing, and tab switchers expand to slide-up or slide-in sheets to maximize typing space. It enforces screen viewport locking using dynamic viewport height (`100dvh`) and locks the body scroll boundary (`overscroll-behavior: none`) to prevent the header, drawer overlays, and footer navigation bars from being scrolled or bounced out of the visible screen.
+The adapted layout configuration for mobile and narrow viewports. The desktop leftmost Activity Bar moves to a thumb-accessible Bottom Navigation Bar. The dynamic Sidebar Browser is hidden by default and acts as a sliding left Drawer overlay triggered by a top-header icon or edge-swiping, keeping the active editor, card grid, or chat channel stream fullscreen. Note outlines, card editing, and tab switchers expand to slide-up or slide-in sheets to maximize typing space. It enforces screen viewport locking using visible layout limits and locks the body scroll boundary (`overscroll-behavior: none`) to prevent the header, drawer overlays, and footer navigation bars from being scrolled or bounced out of the visible screen.
 _Avoid_: Side navigation, static sidebar, desktop layout
 
 **User**:

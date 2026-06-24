@@ -607,9 +607,9 @@ export default async function Home({ searchParams }: HomeProps) {
   }));
 
   return (
-    <main className="h-[100dvh] overflow-hidden bg-[#0d0d11] text-slate-100">
+    <main className="h-full overflow-hidden bg-[#0d0d11] text-slate-100">
       <GlobalLoader renderKey={renderKey} />
-      <div className="flex h-[100dvh] flex-col overflow-hidden">
+      <div className="flex h-full flex-col overflow-hidden">
         <header className="flex min-h-14 flex-col gap-3 border-b border-slate-800/40 bg-[#101015]/60 backdrop-blur-md px-4 py-2.5 md:flex-row md:items-center md:px-5">
           <div className="flex min-w-0 items-center gap-3">
             <HeaderHamburger />
