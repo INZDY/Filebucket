@@ -16,6 +16,9 @@ import {
   Folder,
 } from "lucide-react";
 import { NoteActionsMenu } from "@/app/notes/note-actions-menu";
+import { moveFolderAction } from "@/app/folders/actions";
+import { moveNoteAction } from "@/app/notes/actions";
+import { moveMediaAssetAction } from "@/app/media/actions";
 import { NoteEditor } from "@/app/notes/note-editor";
 import { MediaActionsMenu } from "@/app/media/media-actions-menu";
 import { compareAlphanumeric } from "@/lib/sorting";
@@ -128,6 +131,151 @@ export function ActiveWorkspace({
   const [archivePages, setArchivePages] = useState<ReaderPage[]>([]);
   const [isArchiveLoading, setIsArchiveLoading] = useState(false);
   const [archiveError, setArchiveError] = useState("");
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
+
+  const folderMap = new Map(allFolders.map((f) => [f.id, f]));
+  function getItemMode(folderId: string | null): "FILES" | "NOTES" | "KEEP" | "CHAT" {
+    if (!folderId) return "FILES";
+    let current = folderMap.get(folderId);
+    while (current) {
+      if (current.type === "NOTES_ROOT") return "NOTES";
+      if (current.type === "KEEP_ROOT") return "KEEP";
+      if (current.type === "CHAT_ROOT") return "CHAT";
+      current = current.parentId ? folderMap.get(current.parentId) : undefined;
+    }
+    return "FILES";
+  }
+
+  function isDescendant(draggedId: string, targetId: string | null): boolean {
+    if (!targetId) return false;
+    if (draggedId === targetId) return true;
+    const targetFolder = allFolders.find((f) => f.id === targetId);
+    return targetFolder ? isDescendant(draggedId, targetFolder.parentId) : false;
+  }
+
+  function getNoteFilename(title: string): string {
+    const trimmedTitle = title.trim() || "Untitled note";
+    return trimmedTitle.toLowerCase().endsWith(".md") ? trimmedTitle : `${trimmedTitle}.md`;
+  }
+
+  async function handleDrop(targetFolderId: string | null, event: React.DragEvent) {
+    event.preventDefault();
+    setDragOverFolderId(null);
+
+    try {
+      const rawData = event.dataTransfer.getData("application/filebucket");
+      if (!rawData) return;
+      const data = JSON.parse(rawData);
+
+      // Validation
+      if (data.id === targetFolderId) return;
+      if (data.type === "folder" && isDescendant(data.id, targetFolderId)) {
+        alert("Cannot move a folder inside itself or its sub-folders.");
+        return;
+      }
+
+      // Boundary Validation
+      const targetMode = getItemMode(targetFolderId);
+
+      // Get item name and current mode
+      let name = "";
+      let currentMode: "FILES" | "NOTES" | "KEEP" | "CHAT" = "FILES";
+
+      if (data.type === "folder") {
+        const draggedFolder = allFolders.find((f) => f.id === data.id);
+        if (draggedFolder) {
+          if (draggedFolder.type && draggedFolder.type !== "GENERAL") {
+            alert("Reserved system folders cannot be moved.");
+            return;
+          }
+          name = draggedFolder.name;
+          currentMode = getItemMode(draggedFolder.parentId);
+          if (currentMode !== targetMode) {
+            alert("Folders cannot be moved across mode boundaries.");
+            return;
+          }
+        }
+      } else if (data.type === "note") {
+        const draggedNote = allNotes.find((n) => n.id === data.id);
+        if (draggedNote) {
+          name = draggedNote.title;
+          currentMode = getItemMode(draggedNote.folderId);
+          if (targetMode !== "NOTES" && targetMode !== "KEEP") {
+            alert("Notes must reside within the Notes or Quick Notes directories.");
+            return;
+          }
+          if (currentMode !== "FILES" && currentMode !== targetMode) {
+            alert("Notes cannot be moved across Obsidian and Keep mode boundaries.");
+            return;
+          }
+        }
+      } else if (data.type === "media") {
+        const draggedMedia = allMediaAssets.find((m) => m.id === data.id);
+        if (draggedMedia) {
+          name = draggedMedia.filename;
+          currentMode = getItemMode(draggedMedia.folderId);
+          if (
+            currentMode === "KEEP" ||
+            currentMode === "CHAT" ||
+            targetMode === "KEEP" ||
+            targetMode === "CHAT"
+          ) {
+            alert("Chat attachments and Keep media files are locked within their respective roots.");
+            return;
+          }
+        }
+      }
+
+      // Collision Check
+      if (name) {
+        let isCollision = false;
+        if (data.type === "folder") {
+          isCollision = allFolders.some(
+            (f) => f.parentId === targetFolderId && f.id !== data.id && f.name.toLowerCase() === name.toLowerCase()
+          );
+        } else {
+          const targetFilename = data.type === "note" ? getNoteFilename(name) : name;
+          
+          const collidesWithNote = allNotes.some((n) => {
+            if (data.type === "note" && n.id === data.id) return false;
+            return n.folderId === targetFolderId && getNoteFilename(n.title).toLowerCase() === targetFilename.toLowerCase();
+          });
+          
+          const collidesWithMedia = allMediaAssets.some((m) => {
+            if (data.type === "media" && m.id === data.id) return false;
+            return m.folderId === targetFolderId && m.filename.toLowerCase() === targetFilename.toLowerCase();
+          });
+
+          isCollision = collidesWithNote || collidesWithMedia;
+        }
+
+        if (isCollision) {
+          alert("An item with the same name already exists in the target folder.");
+          return;
+        }
+      }
+
+      // Call actions
+      const formData = new FormData();
+      if (data.type === "folder") {
+        formData.append("folderId", data.id);
+        formData.append("parentId", targetFolderId ?? "");
+        await moveFolderAction(formData);
+      } else if (data.type === "note") {
+        formData.append("noteId", data.id);
+        formData.append("folderId", targetFolderId ?? "");
+        await moveNoteAction(formData);
+      } else if (data.type === "media") {
+        formData.append("mediaAssetId", data.id);
+        formData.append("folderId", targetFolderId ?? "");
+        await moveMediaAssetAction(formData);
+      }
+
+      router.refresh();
+    } catch (err) {
+      console.error("Drop operation failed", err);
+    }
+  }
 
   // 1. Identify the preview kind of the active media asset
   const activeMediaKind = selectedMedia ? getMediaPreviewKind(selectedMedia.contentType, selectedMedia.filename) : null;
@@ -532,13 +680,47 @@ export function ActiveWorkspace({
       {/* Folder Contents Header Breadcrumbs */}
       <div className="border-b border-slate-800 bg-[#191c22] px-5 py-2.5 shrink-0 flex items-center justify-between">
         <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
-          <Link className="hover:text-slate-100 transition-colors" href="/">
+          <Link
+            className={cn(
+              "hover:text-slate-100 transition-colors",
+              dragOverFolderId === "vault-root" && "text-amber-500 font-semibold"
+            )}
+            href="/"
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOverFolderId("vault-root");
+            }}
+            onDragLeave={() => {
+              setDragOverFolderId(null);
+            }}
+            onDrop={(e) => {
+              e.stopPropagation();
+              handleDrop(null, e);
+            }}
+          >
             Vault
           </Link>
           {folderTrail.map((folder) => (
             <span key={folder.id} className="flex items-center gap-2">
               <span className="text-slate-600">/</span>
-              <Link className="hover:text-slate-100 transition-colors font-medium text-slate-300" href={`/?folder=${folder.id}`}>
+              <Link
+                className={cn(
+                  "hover:text-slate-100 transition-colors font-medium",
+                  dragOverFolderId === folder.id ? "text-amber-500 font-semibold" : "text-slate-300"
+                )}
+                href={`/?folder=${folder.id}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOverFolderId(folder.id);
+                }}
+                onDragLeave={() => {
+                  setDragOverFolderId(null);
+                }}
+                onDrop={(e) => {
+                  e.stopPropagation();
+                  handleDrop(folder.id, e);
+                }}
+              >
                 {folder.name}
               </Link>
             </span>
@@ -547,7 +729,29 @@ export function ActiveWorkspace({
       </div>
 
       {/* Grid of Folder Contents */}
-      <div className="flex-1 overflow-y-auto bg-[#101217] px-6 py-6">
+      <div
+        className={cn(
+          "flex-1 overflow-y-auto bg-[#101217] px-6 py-6 transition-colors duration-200",
+          dragOverFolderId === "workspace-bg" && "bg-slate-900/60"
+        )}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (
+            dragOverFolderId !== "workspace-bg" &&
+            !childFolders.some((f) => f.id === dragOverFolderId) &&
+            !folderTrail.some((f) => f.id === dragOverFolderId) &&
+            dragOverFolderId !== "vault-root"
+          ) {
+            setDragOverFolderId("workspace-bg");
+          }
+        }}
+        onDragLeave={() => {
+          setDragOverFolderId((prev) => (prev === "workspace-bg" ? null : prev));
+        }}
+        onDrop={(e) => {
+          handleDrop(selectedFolder?.id ?? null, e);
+        }}
+      >
         {childFolders.length > 0 || childNotes.length > 0 || childMedia.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {/* Subfolders */}
@@ -555,7 +759,27 @@ export function ActiveWorkspace({
               <Link
                 key={folder.id}
                 href={`/?folder=${folder.id}`}
-                className="group flex flex-col justify-between p-4 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-amber-500/40 hover:shadow-[0_0_15px_rgba(245,158,11,0.05)] transition-all active:scale-95 duration-200"
+                draggable={true}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "folder", id: folder.id }));
+                  e.dataTransfer.effectAllowed = "move";
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragOverFolderId(folder.id);
+                }}
+                onDragLeave={() => {
+                  setDragOverFolderId(null);
+                }}
+                onDrop={(e) => {
+                  e.stopPropagation();
+                  handleDrop(folder.id, e);
+                }}
+                className={cn(
+                  "group flex flex-col justify-between p-4 rounded-xl border bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-amber-500/40 hover:shadow-[0_0_15px_rgba(245,158,11,0.05)] transition-all active:scale-95 duration-200",
+                  dragOverFolderId === folder.id ? "border-amber-500 scale-95" : "border-slate-800"
+                )}
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 group-hover:bg-amber-500/20 transition-all duration-200">
@@ -576,6 +800,11 @@ export function ActiveWorkspace({
               <Link
                 key={note.id}
                 href={note.folderId ? `/?folder=${note.folderId}&note=${note.id}` : `/?note=${note.id}`}
+                draggable={true}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "note", id: note.id }));
+                  e.dataTransfer.effectAllowed = "move";
+                }}
                 className="group flex flex-col justify-between p-4 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-purple-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.05)] transition-all active:scale-95 duration-200"
               >
                 <div className="flex items-center gap-3">
@@ -634,6 +863,11 @@ export function ActiveWorkspace({
                 <Link
                   key={media.id}
                   href={media.folderId ? `/?folder=${media.folderId}&media=${media.id}` : `/?media=${media.id}`}
+                  draggable={true}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "media", id: media.id }));
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
                   className={cn(
                     "group flex flex-col justify-between p-4 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 transition-all active:scale-95 duration-200",
                     borderHoverClass
