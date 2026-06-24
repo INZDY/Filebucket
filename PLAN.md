@@ -177,7 +177,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Click a folder in Files Mode tree. Verify the main content pane displays the items inside it. Click a subfolder in the grid to navigate deeper. Click a file to preview it. Click a note to switch to notes mode and edit it.
 
 ### Milestone 32: Tree Views Topmost Root Hiding
-*   **Status**: Planned.
+*   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Hide the topmost root header in the tree browser for a cleaner presentation.
 *   **Tasks**:
     *   **Topmost Row Removal**: Update `BrowserTree` to omit rendering the topmost folder row (which shows "Vault", "Notes", or "Chat Channels" as the root node).
