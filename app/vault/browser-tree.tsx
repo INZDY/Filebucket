@@ -343,56 +343,32 @@ export function BrowserTree({
   }
 
   // Prevent flash or hydration error with localStorage expanded state
-  const treeNodes = isMounted ? renderVaultTree(rootFolderId, 1) : [];
-  const rootFolderName = rootFolderId
-    ? (folders.find((f) => f.id === rootFolderId)?.name ?? "Folder")
-    : "Vault";
-  const isRootActive = rootFolderId
-    ? selectedFolderId === rootFolderId
-    : isVaultRootActive;
+  const treeNodes = isMounted ? renderVaultTree(rootFolderId, 0) : [];
+  const isDragOverRoot = dragOverFolderId === "root" || (rootFolderId !== null && dragOverFolderId === rootFolderId);
 
   return (
-    <div className="flex flex-col gap-1">
-      {/* Vault Root drop target */}
-      <div
-        className={cn(
-          "rounded-md transition-all",
-          dragOverFolderId === "root" && "bg-purple-950/20 border border-dashed border-purple-500",
-        )}
-        onDragLeave={handleDragLeave}
-        onDragOver={(e) => handleDragOver(rootFolderId, e)}
-        onDrop={(e) => handleDrop(rootFolderId, e)}
-      >
-        <Button
-          asChild
-          variant="ghost"
-          className={cn(
-            "h-10 w-full justify-start px-3 text-slate-200 hover:bg-slate-800 hover:text-slate-50",
-            isRootActive && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
-          )}
-        >
-          <Link href={rootFolderId ? `/?folder=${rootFolderId}` : "/"}>
-            <Folder className="h-4 w-4 text-slate-400" />
-            <span className="min-w-0 flex-1 truncate text-left font-medium">{rootFolderName}</span>
-          </Link>
-        </Button>
-      </div>
-
-      <div className="flex flex-col gap-0.5 mt-1">
-        {isMounted ? (
-          treeNodes.length > 0 ? (
-            treeNodes
-          ) : (
-            <div className="px-3 py-5 text-sm text-slate-500 text-center">
-              Your vault is empty
-            </div>
-          )
+    <div
+      className={cn(
+        "flex flex-col gap-0.5 mt-1 min-h-[150px] rounded-md transition-all",
+        isDragOverRoot && "bg-purple-950/20 border border-dashed border-purple-500",
+      )}
+      onDragLeave={handleDragLeave}
+      onDragOver={(e) => handleDragOver(rootFolderId, e)}
+      onDrop={(e) => handleDrop(rootFolderId, e)}
+    >
+      {isMounted ? (
+        treeNodes.length > 0 ? (
+          treeNodes
         ) : (
-          <div className="px-3 py-5 text-sm text-slate-500 text-center animate-pulse">
-            Loading tree...
+          <div className="px-3 py-5 text-sm text-slate-500 text-center">
+            Your vault is empty
           </div>
-        )}
-      </div>
+        )
+      ) : (
+        <div className="px-3 py-5 text-sm text-slate-500 text-center animate-pulse">
+          Loading tree...
+        </div>
+      )}
     </div>
   );
 }
