@@ -13,7 +13,6 @@ import {
   MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { getPresignedUploadUrlAction } from "@/app/media/actions";
 import { createChatAttachmentAction } from "@/app/media/actions";
 import { MangaReader, type ReaderPage } from "@/components/manga-reader";

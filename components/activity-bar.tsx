@@ -70,28 +70,6 @@ export function ActivityBar({
     icon: Trash2,
     href: "/?view=trash",
   };
-
-  const renderItemButton = (item: typeof mainItems[number] | typeof trashItem) => {
-    const IconComponent = item.icon;
-    const isActive = activeMode === item.mode;
-    const styles = modeStyles[item.mode];
-
-    return (
-      <a
-        key={item.mode}
-        href={item.href}
-        title={item.label}
-        className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 border ${
-          isActive
-            ? `${styles.active}`
-            : `text-slate-400 border-transparent ${styles.hover} hover:bg-slate-800/30`
-        }`}
-      >
-        <IconComponent className="h-5 w-5 transition-transform duration-200 group-hover:scale-105" />
-      </a>
-    );
-  };
-
   const items = [...mainItems, trashItem];
 
   return (

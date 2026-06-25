@@ -9,7 +9,6 @@ import {
   ZoomOut,
   Maximize2,
   Minimize2,
-  BookOpen,
   ArrowUpDown,
   Loader2,
   ArrowRight,

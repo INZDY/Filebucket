@@ -1,10 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import { ReactNode, useEffect, useState } from "react";
-import { Folder } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
 
 import { FolderRow } from "@/app/folders/folder-row";
 import { moveFolderAction } from "@/app/folders/actions";
@@ -47,7 +43,6 @@ type BrowserTreeProps = {
 export function BrowserTree({
   folderDestinations,
   folders,
-  isVaultRootActive,
   mediaAssets,
   notes,
   selectedFolderId,
