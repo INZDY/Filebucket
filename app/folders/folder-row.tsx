@@ -118,7 +118,16 @@ export function FolderRow({
     >
       {menu?.mode === "rename" ? (
         <form
-          action={renameFolderAction}
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
+            const newName = formData.get("name") as string;
+            window.dispatchEvent(new CustomEvent("vault-mutate", {
+              detail: { type: "rename-folder", folderId: folder.id, name: newName }
+            }));
+            setMenu(null);
+            await renameFolderAction(formData);
+          }}
           className="flex flex-1 items-center gap-2 px-2"
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
@@ -202,7 +211,19 @@ export function FolderRow({
           style={{ left: menu.x, top: menu.y }}
         >
           {menu.mode === "move" ? (
-            <form action={moveFolderAction} className="space-y-2 p-2">
+            <form
+              onSubmit={async (event) => {
+                event.preventDefault();
+                const formData = new FormData(event.currentTarget);
+                const parentId = formData.get("parentId") as string;
+                window.dispatchEvent(new CustomEvent("vault-mutate", {
+                  detail: { type: "move-folder", folderId: folder.id, parentId: parentId || null }
+                }));
+                setMenu(null);
+                await moveFolderAction(formData);
+              }}
+              className="space-y-2 p-2"
+            >
               <input type="hidden" name="folderId" value={folder.id} />
               <label className="block space-y-1 text-xs font-medium text-muted-foreground">
                 Move to
@@ -218,8 +239,8 @@ export function FolderRow({
                     .map((destination) => (
                       <option key={destination.id} value={destination.id}>
                         {destination.name}
-                    </option>
-                  ))}
+                      </option>
+                    ))}
                 </select>
               </label>
               <div className="flex justify-end gap-2">
@@ -274,7 +295,17 @@ export function FolderRow({
                   </a>
                 </Button>
               )}
-              <form action={trashFolderAction}>
+              <form
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  const formData = new FormData(event.currentTarget);
+                  window.dispatchEvent(new CustomEvent("vault-mutate", {
+                    detail: { type: "trash-folder", folderId: folder.id }
+                  }));
+                  setMenu(null);
+                  await trashFolderAction(formData);
+                }}
+              >
                 <input type="hidden" name="folderId" value={folder.id} />
                 <Button className="h-9 w-full justify-start px-2" type="submit" variant="ghost">
                   <Trash2 className="h-4 w-4" />

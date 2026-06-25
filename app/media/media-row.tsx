@@ -82,7 +82,16 @@ export function MediaRow({
     >
       {menu?.mode === "rename" ? (
         <form
-          action={renameMediaAssetAction}
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
+            const newName = formData.get("name") as string;
+            window.dispatchEvent(new CustomEvent("vault-mutate", {
+              detail: { type: "rename-media", mediaAssetId: mediaAsset.id, name: newName }
+            }));
+            setMenu(null);
+            await renameMediaAssetAction(formData);
+          }}
           className="flex flex-1 items-center gap-2 px-2"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
@@ -140,7 +149,19 @@ export function MediaRow({
           style={{ left: menu.x, top: menu.y }}
         >
           {menu.mode === "move" ? (
-            <form action={moveMediaAssetAction} className="space-y-2 p-2">
+            <form
+              onSubmit={async (event) => {
+                event.preventDefault();
+                const formData = new FormData(event.currentTarget);
+                const folderId = formData.get("folderId") as string;
+                window.dispatchEvent(new CustomEvent("vault-mutate", {
+                  detail: { type: "move-media", mediaAssetId: mediaAsset.id, parentId: folderId || null }
+                }));
+                setMenu(null);
+                await moveMediaAssetAction(formData);
+              }}
+              className="space-y-2 p-2"
+            >
               <input type="hidden" name="mediaAssetId" value={mediaAsset.id} />
               <label className="block space-y-1 text-xs font-medium text-muted-foreground">
                 Move to
@@ -187,7 +208,17 @@ export function MediaRow({
                 <Move className="h-4 w-4" />
                 Move
               </Button>
-              <form action={trashMediaAssetAction}>
+              <form
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  const formData = new FormData(event.currentTarget);
+                  window.dispatchEvent(new CustomEvent("vault-mutate", {
+                    detail: { type: "trash-media", mediaAssetId: mediaAsset.id }
+                  }));
+                  setMenu(null);
+                  await trashMediaAssetAction(formData);
+                }}
+              >
                 <input type="hidden" name="mediaAssetId" value={mediaAsset.id} />
                 <input type="hidden" name="folderId" value={mediaAsset.folderId ?? ""} />
                 <Button className="h-9 w-full justify-start px-2" type="submit" variant="ghost">

@@ -154,12 +154,17 @@ export function KeepWorkspace({ notes, keepRootId, allTags }: KeepWorkspaceProps
   // Toggle Pinned status instantly
   async function togglePin(note: KeepNote) {
     const updatedStatus = !note.isPinned;
-    // Update optimistically if needed, or trigger save
+    window.dispatchEvent(new CustomEvent("vault-mutate", {
+      detail: { type: "update-keep-note", noteId: note.id, isPinned: updatedStatus }
+    }));
     await updateKeepNoteAction(note.id, { isPinned: updatedStatus });
   }
 
   // Update Color instantly
   async function updateColor(noteId: string, color: string | null) {
+    window.dispatchEvent(new CustomEvent("vault-mutate", {
+      detail: { type: "update-keep-note", noteId, color }
+    }));
     await updateKeepNoteAction(noteId, { color });
   }
 
@@ -168,6 +173,9 @@ export function KeepWorkspace({ notes, keepRootId, allTags }: KeepWorkspaceProps
     if (editingNote?.id === noteId) {
       setEditingNote(null);
     }
+    window.dispatchEvent(new CustomEvent("vault-mutate", {
+      detail: { type: "trash-note", noteId }
+    }));
     await trashKeepNoteAction(noteId);
   }
 
@@ -389,6 +397,9 @@ function KeepCard({
     const idx = checkboxes.indexOf(checkbox);
     if (idx !== -1) {
       const isChecked = checkbox.checked;
+      window.dispatchEvent(new CustomEvent("vault-mutate", {
+        detail: { type: "toggle-keep-checklist", noteId: note.id, checkboxIndex: idx, checked: isChecked }
+      }));
       const updatedBody = toggleMarkdownCheckbox(note.body, idx, isChecked);
       await updateKeepNoteAction(note.id, { body: updatedBody });
     }
@@ -622,13 +633,14 @@ function KeepEditModal({
 
   // Tags toggle (instant save)
   async function toggleTag(tagId: string) {
-    startTransition(async () => {
-      const formData = new FormData();
-      formData.append("noteId", note.id);
-      formData.append("tagId", tagId);
-      formData.append("returnTo", "/");
-      await toggleNoteTagAction(formData);
-    });
+    window.dispatchEvent(new CustomEvent("vault-mutate", {
+      detail: { type: "toggle-note-tag", noteId: note.id, tagId }
+    }));
+    const formData = new FormData();
+    formData.append("noteId", note.id);
+    formData.append("tagId", tagId);
+    formData.append("returnTo", "/");
+    await toggleNoteTagAction(formData);
   }
 
   async function createNewTag() {

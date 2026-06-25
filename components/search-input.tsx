@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -12,10 +11,7 @@ export function SearchInput({
   defaultValue: string;
   disabled?: boolean;
 }) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const [query, setQuery] = useState(defaultValue);
-  const [, startTransition] = useTransition();
 
   useEffect(() => {
     setQuery(defaultValue);
@@ -23,16 +19,15 @@ export function SearchInput({
 
   function handleSearch(val: string) {
     setQuery(val);
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (val) {
-        params.set("q", val);
-      } else {
-        params.delete("q");
-      }
-      // Preserve other params but update query
-      router.push(`/?${params.toString()}`);
-    });
+    const params = new URLSearchParams(window.location.search);
+    if (val) {
+      params.set("q", val);
+    } else {
+      params.delete("q");
+    }
+    const newUrl = `/?${params.toString()}`;
+    window.history.pushState(null, "", newUrl);
+    window.dispatchEvent(new CustomEvent("vault-navigate", { detail: { url: newUrl } }));
   }
 
   return (

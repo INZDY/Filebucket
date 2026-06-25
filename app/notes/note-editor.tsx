@@ -2,7 +2,7 @@
 
 import { ImagePlus, Save, Plus, Tag } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+
 import dynamic from "next/dynamic";
 import type { Editor } from "@tiptap/react";
 
@@ -67,8 +67,6 @@ export function NoteEditor({ imageMediaAssets, note, updatedAt, allTags, assigne
 }
 
 function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assignedTags }: NoteEditorProps) {
-  const router = useRouter();
-
   const handleLinkClick = useCallback((href: string, event: React.MouseEvent) => {
     const matchingAsset = imageMediaAssets.find(
       (asset) => asset.url === href || href.includes(asset.id)
@@ -81,9 +79,10 @@ function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assign
       const targetHref = matchingAsset.folderId
         ? `/?folder=${matchingAsset.folderId}&media=${matchingAsset.id}`
         : `/?media=${matchingAsset.id}`;
-      router.push(targetHref);
+      window.history.pushState(null, "", targetHref);
+      window.dispatchEvent(new CustomEvent("vault-navigate", { detail: { url: targetHref } }));
     }
-  }, [imageMediaAssets, router]);
+  }, [imageMediaAssets]);
   const [mediaAssets, setMediaAssets] = useState(imageMediaAssets);
   const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [tagQuery, setTagQuery] = useState("");

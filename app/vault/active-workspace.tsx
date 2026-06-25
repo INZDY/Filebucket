@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+
 import {
   FileQuestion,
   FileText,
@@ -122,7 +122,7 @@ export function ActiveWorkspace({
   allFolders = [],
   allNotes = [],
 }: ActiveWorkspaceProps) {
-  const router = useRouter();
+
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
@@ -260,18 +260,25 @@ export function ActiveWorkspace({
       if (data.type === "folder") {
         formData.append("folderId", data.id);
         formData.append("parentId", targetFolderId ?? "");
+        window.dispatchEvent(new CustomEvent("vault-mutate", {
+          detail: { type: "move-folder", folderId: data.id, parentId: targetFolderId }
+        }));
         await moveFolderAction(formData);
       } else if (data.type === "note") {
         formData.append("noteId", data.id);
         formData.append("folderId", targetFolderId ?? "");
+        window.dispatchEvent(new CustomEvent("vault-mutate", {
+          detail: { type: "move-note", noteId: data.id, parentId: targetFolderId }
+        }));
         await moveNoteAction(formData);
       } else if (data.type === "media") {
         formData.append("mediaAssetId", data.id);
         formData.append("folderId", targetFolderId ?? "");
+        window.dispatchEvent(new CustomEvent("vault-mutate", {
+          detail: { type: "move-media", mediaAssetId: data.id, parentId: targetFolderId }
+        }));
         await moveMediaAssetAction(formData);
       }
-
-      router.refresh();
     } catch (err) {
       console.error("Drop operation failed", err);
     }
@@ -352,15 +359,17 @@ export function ActiveWorkspace({
       }
 
       if (e.key === "ArrowLeft" && prevHref) {
-        router.push(prevHref);
+        window.history.pushState(null, "", prevHref);
+        window.dispatchEvent(new CustomEvent("vault-navigate", { detail: { url: prevHref } }));
       } else if (e.key === "ArrowRight" && nextHref) {
-        router.push(nextHref);
+        window.history.pushState(null, "", nextHref);
+        window.dispatchEvent(new CustomEvent("vault-navigate", { detail: { url: nextHref } }));
       }
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedMedia, prevHref, nextHref, router, isReaderOpen]);
+  }, [selectedMedia, prevHref, nextHref, isReaderOpen]);
 
   // Touch navigation handlers
   const minSwipeDistance = 50;
@@ -381,9 +390,11 @@ export function ActiveWorkspace({
     const isRightSwipe = distance < -minSwipeDistance;
 
     if (isLeftSwipe && nextHref) {
-      router.push(nextHref);
+      window.history.pushState(null, "", nextHref);
+      window.dispatchEvent(new CustomEvent("vault-navigate", { detail: { url: nextHref } }));
     } else if (isRightSwipe && prevHref) {
-      router.push(prevHref);
+      window.history.pushState(null, "", prevHref);
+      window.dispatchEvent(new CustomEvent("vault-navigate", { detail: { url: prevHref } }));
     }
   }
   

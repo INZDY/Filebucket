@@ -77,7 +77,19 @@ export function NoteActionsMenu({ destinations, note }: NoteActionsMenuProps) {
           style={{ left: menu.x, top: menu.y }}
         >
           {menu.mode === "move" ? (
-            <form action={moveNoteAction} className="space-y-2 p-2">
+            <form
+              onSubmit={async (event) => {
+                event.preventDefault();
+                const formData = new FormData(event.currentTarget);
+                const folderId = formData.get("folderId") as string;
+                window.dispatchEvent(new CustomEvent("vault-mutate", {
+                  detail: { type: "move-note", noteId: note.id, parentId: folderId || null }
+                }));
+                setMenu(null);
+                await moveNoteAction(formData);
+              }}
+              className="space-y-2 p-2"
+            >
               <input type="hidden" name="noteId" value={note.id} />
               <label className="block space-y-1 text-xs font-medium text-muted-foreground">
                 Move to
@@ -125,7 +137,17 @@ export function NoteActionsMenu({ destinations, note }: NoteActionsMenuProps) {
                   Export as Markdown
                 </a>
               </Button>
-              <form action={trashNoteAction}>
+              <form
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  const formData = new FormData(event.currentTarget);
+                  window.dispatchEvent(new CustomEvent("vault-mutate", {
+                    detail: { type: "trash-note", noteId: note.id }
+                  }));
+                  setMenu(null);
+                  await trashNoteAction(formData);
+                }}
+              >
                 <input type="hidden" name="noteId" value={note.id} />
                 <input type="hidden" name="folderId" value={note.folderId ?? ""} />
                 <Button className="h-9 w-full justify-start px-2" type="submit" variant="ghost">

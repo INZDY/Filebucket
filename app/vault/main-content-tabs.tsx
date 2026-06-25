@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
 import { type ReactNode, useEffect, useState } from "react";
 import { FileText, Folder, ImagePlus, X } from "lucide-react";
 
@@ -30,7 +30,7 @@ export function MainContentTabs({
   children,
   activeMode = "FILES",
 }: MainContentTabsProps) {
-  const router = useRouter();
+
   const [tabsByMode, setTabsByMode] = useState<Record<"NOTES", ContentTab[]>>({
     NOTES: [],
   });
@@ -78,7 +78,8 @@ export function MainContentTabs({
     }));
 
     if (activeTab?.id === tabToClose.id && activeTab.type === tabToClose.type) {
-      router.push(fallbackHref);
+      window.history.pushState(null, "", fallbackHref);
+      window.dispatchEvent(new CustomEvent("vault-navigate", { detail: { url: fallbackHref } }));
     }
   }
 
