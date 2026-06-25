@@ -44,12 +44,15 @@ type NoteEditorProps = {
   }[];
 };
 
-function formatDate(value: Date) {
+function formatDate(value: Date | string | number | undefined | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat("en", {
     month: "short",
     day: "numeric",
     year: "numeric",
-  }).format(value);
+  }).format(date);
 }
 
 const AUTOSAVE_DELAY_MS = 20_000;
