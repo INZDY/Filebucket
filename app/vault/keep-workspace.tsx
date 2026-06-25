@@ -4,15 +4,14 @@ import React, { useState, useEffect, useRef, useTransition, useCallback } from "
 import { 
   Pin, 
   CheckSquare, 
-  Type, 
   Palette, 
   Tag, 
   Trash2, 
-  X, 
   Plus, 
   Check
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -22,8 +21,32 @@ import {
   trashKeepNoteAction 
 } from "@/app/notes/actions";
 import { toggleNoteTagAction, createTagAction } from "@/app/tags/actions";
-import { parseMarkdownChecklist, serializeMarkdownChecklist, type ChecklistItem } from "@/lib/keep";
 import { createPortal } from "react-dom";
+import dynamic from "next/dynamic";
+import type { Editor } from "@tiptap/react";
+
+const FilebucketEditor = dynamic(
+  () => import("@/components/filebucket-editor").then((mod) => mod.FilebucketEditor),
+  { ssr: false }
+);
+
+function toggleMarkdownCheckbox(body: string, checkboxIndex: number, checked: boolean): string {
+  let count = 0;
+  const lines = body.split("\n");
+  const updatedLines = lines.map((line) => {
+    const match = /^(\s*-\s*\[)( |x|X)(\]\s*.*)$/.exec(line);
+    if (match) {
+      if (count === checkboxIndex) {
+        const replacement = checked ? "x" : " ";
+        count++;
+        return `${match[1]}${replacement}${match[3]}`;
+      }
+      count++;
+    }
+    return line;
+  });
+  return updatedLines.join("\n");
+}
 
 interface NoteTagAssociation {
   tag: {
@@ -79,44 +102,36 @@ export function KeepWorkspace({ notes, keepRootId, allTags }: KeepWorkspaceProps
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newBody, setNewBody] = useState("");
-  const [isChecklistCreation, setIsChecklistCreation] = useState(false);
-  const [newChecklistItems, setNewChecklistItems] = useState<ChecklistItem[]>([]);
   const [newNoteColor, setNewNoteColor] = useState<string | null>(null);
   const [newNotePinned, setNewNotePinned] = useState(false);
   const [showColorPickerForCreation, setShowColorPickerForCreation] = useState(false);
+  const creationEditorRef = useRef<Editor | null>(null);
 
   const creationContainerRef = useRef<HTMLDivElement>(null);
 
   // Close creation bar and save
   const closeAndSaveCreation = useCallback(async () => {
-    if (!newTitle.trim() && !newBody.trim() && newChecklistItems.length === 0) {
+    if (!newTitle.trim() && !newBody.trim()) {
       setIsCreating(false);
-      setIsChecklistCreation(false);
       return;
     }
-
-    const finalBody = isChecklistCreation 
-      ? serializeMarkdownChecklist(newChecklistItems) 
-      : newBody;
 
     const data = {
       folderId: keepRootId,
       title: newTitle.trim() || "Untitled note",
-      body: finalBody,
+      body: newBody,
       color: newNoteColor,
       isPinned: newNotePinned
     };
 
     setIsCreating(false);
-    setIsChecklistCreation(false);
     setNewTitle("");
     setNewBody("");
-    setNewChecklistItems([]);
     setNewNoteColor(null);
     setNewNotePinned(false);
 
     await createKeepNoteAction(data);
-  }, [newTitle, newBody, isChecklistCreation, newChecklistItems, newNoteColor, newNotePinned, keepRootId]);
+  }, [newTitle, newBody, newNoteColor, newNotePinned, keepRootId]);
 
   // Click outside creation bar listener
   useEffect(() => {
@@ -174,8 +189,7 @@ export function KeepWorkspace({ notes, keepRootId, allTags }: KeepWorkspaceProps
                 size="icon" 
                 className="h-8 w-8 text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"
                 onClick={() => {
-                  setIsChecklistCreation(true);
-                  setNewChecklistItems([{ id: "init-1", text: "", checked: false }]);
+                  setNewBody("- [ ] ");
                   setIsCreating(true);
                 }}
                 title="New list"
@@ -202,7 +216,7 @@ export function KeepWorkspace({ notes, keepRootId, allTags }: KeepWorkspaceProps
                 size="icon" 
                 className={cn(
                   "h-8 w-8 shrink-0 hover:bg-slate-800/50 transition-colors", 
-                  newNotePinned ? "text-purple-400" : "text-slate-400 hover:text-slate-200"
+                  newNotePinned ? "text-amber-500" : "text-slate-400 hover:text-slate-200"
                 )}
                 onClick={() => setNewNotePinned(!newNotePinned)}
               >
@@ -211,76 +225,16 @@ export function KeepWorkspace({ notes, keepRootId, allTags }: KeepWorkspaceProps
             </div>
 
             {/* Note Content Input */}
-            {!isChecklistCreation ? (
-              <textarea
-                placeholder="Take a note..."
-                value={newBody}
-                onChange={(e) => setNewBody(e.target.value)}
-                rows={3}
-                className="w-full bg-transparent border-0 outline-none text-sm placeholder:text-slate-500 resize-none leading-relaxed focus:ring-0 focus:outline-none"
-              />
-            ) : (
-              // Checklist Creation Inputs
-              <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
-                {newChecklistItems.map((item, idx) => (
-                  <div key={item.id} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={item.checked}
-                      onChange={(e) => {
-                        const nextItems = [...newChecklistItems];
-                        nextItems[idx].checked = e.target.checked;
-                        setNewChecklistItems(nextItems);
-                      }}
-                      className="rounded border-slate-700 bg-transparent text-purple-600 focus:ring-purple-600/35 h-3.5 w-3.5"
-                    />
-                    <input
-                      type="text"
-                      placeholder="List item"
-                      value={item.text}
-                      onChange={(e) => {
-                        const nextItems = [...newChecklistItems];
-                        nextItems[idx].text = e.target.value;
-                        setNewChecklistItems(nextItems);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          const nextItems = [...newChecklistItems];
-                          nextItems.splice(idx + 1, 0, { id: Math.random().toString(36).substring(2, 9), text: "", checked: false });
-                          setNewChecklistItems(nextItems);
-                          // Delay focusing the next sibling input
-                          setTimeout(() => {
-                            const inputs = creationContainerRef.current?.querySelectorAll("input[type='text']");
-                            (inputs?.[idx + 2] as HTMLInputElement)?.focus();
-                          }, 10);
-                        }
-                      }}
-                      className="flex-1 bg-transparent border-0 outline-none text-sm focus:ring-0 focus:outline-none placeholder:text-slate-600"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-slate-500 hover:text-slate-200 hover:bg-slate-800"
-                      onClick={() => {
-                        setNewChecklistItems(newChecklistItems.filter((_, i) => i !== idx));
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs text-slate-400 hover:text-slate-200 h-7 px-2 font-medium"
-                  onClick={() => setNewChecklistItems([...newChecklistItems, { id: Math.random().toString(36).substring(2, 9), text: "", checked: false }])}
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Add item
-                </Button>
-              </div>
-            )}
+            <FilebucketEditor
+              markdown={newBody}
+              onChange={setNewBody}
+              mode="keep"
+              className="w-full text-sm leading-relaxed"
+              onEditorReady={(editor) => {
+                creationEditorRef.current = editor;
+              }}
+              autoFocus
+            />
 
             {/* Creation Footer */}
             <div className="flex items-center justify-between border-t border-slate-800/40 pt-3 relative">
@@ -305,7 +259,7 @@ export function KeepWorkspace({ notes, keepRootId, allTags }: KeepWorkspaceProps
                           className={cn(
                             "h-5 w-5 rounded-full border border-slate-700/60",
                             option.bgClass,
-                            newNoteColor === option.hex && "ring-1 ring-purple-500"
+                            newNoteColor === option.hex && "ring-1 ring-amber-500"
                           )}
                           title={option.label}
                           onClick={() => {
@@ -322,10 +276,14 @@ export function KeepWorkspace({ notes, keepRootId, allTags }: KeepWorkspaceProps
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"
-                  onClick={() => setIsChecklistCreation(!isChecklistCreation)}
-                  title={isChecklistCreation ? "Convert to text note" : "Convert to checklist"}
+                  onClick={() => {
+                    if (creationEditorRef.current) {
+                      creationEditorRef.current.commands.toggleTaskList();
+                    }
+                  }}
+                  title="Toggle checklist"
                 >
-                  {isChecklistCreation ? <Type className="h-4.5 w-4.5" /> : <CheckSquare className="h-4.5 w-4.5" />}
+                  <CheckSquare className="h-4.5 w-4.5" />
                 </Button>
               </div>
 
@@ -422,14 +380,18 @@ function KeepCard({
   const [showColors, setShowColors] = useState(false);
   const colorOpt = COLOR_OPTIONS.find((o) => o.hex === note.color) || COLOR_OPTIONS[0];
 
-  const { items, isChecklist } = parseMarkdownChecklist(note.body);
-
-  async function handleCheckboxToggle(idx: number, checked: boolean, e: React.MouseEvent) {
+  async function handleCheckboxClick(e: React.MouseEvent<HTMLInputElement>) {
     e.stopPropagation(); // Avoid opening edit modal
-    const nextItems = [...items];
-    nextItems[idx].checked = checked;
-    const finalBody = serializeMarkdownChecklist(nextItems);
-    await updateKeepNoteAction(note.id, { body: finalBody });
+    const checkbox = e.currentTarget;
+    const card = checkbox.closest(".keep-card-container");
+    if (!card) return;
+    const checkboxes = Array.from(card.querySelectorAll("input[type='checkbox']"));
+    const idx = checkboxes.indexOf(checkbox);
+    if (idx !== -1) {
+      const isChecked = checkbox.checked;
+      const updatedBody = toggleMarkdownCheckbox(note.body, idx, isChecked);
+      await updateKeepNoteAction(note.id, { body: updatedBody });
+    }
   }
 
   const colorFades: Record<string, string> = {
@@ -450,7 +412,7 @@ function KeepCard({
     <div 
       onClick={() => onEdit(note)}
       className={cn(
-        "break-inside-avoid w-full border rounded-xl p-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-lg relative group/card flex flex-col justify-between min-h-24 max-h-72 overflow-hidden",
+        "keep-card-container break-inside-avoid w-full border rounded-xl p-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-lg relative group/card flex flex-col justify-between min-h-24 max-h-72 overflow-hidden",
         colorOpt.bgClass,
         colorOpt.borderClass
       )}
@@ -467,7 +429,7 @@ function KeepCard({
             }}
             className={cn(
               "h-7 w-7 opacity-100 lg:opacity-0 group-hover/card:opacity-100 transition-opacity",
-              note.isPinned ? "text-purple-400" : "text-slate-400 hover:text-slate-200"
+              note.isPinned ? "text-amber-500" : "text-slate-400 hover:text-slate-200"
             )}
           >
             <Pin className="h-3.5 w-3.5" />
@@ -475,41 +437,47 @@ function KeepCard({
         </div>
 
         {/* Note Body content */}
-        {!isChecklist ? (
-          <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
-            <ReactMarkdown
-              components={{
-                p: ({ children }) => <p className="mb-1.5 last:mb-0 text-sm leading-relaxed">{children}</p>,
-                ul: ({ children }) => <ul className="list-disc list-inside ml-2 mb-2 text-sm">{children}</ul>,
-                ol: ({ children }) => <ol className="list-decimal list-inside ml-2 mb-2 text-sm">{children}</ol>,
-                li: ({ children }) => <li className="mb-0.5">{children}</li>,
-                h1: ({ children }) => <h1 className="text-base font-bold mb-1 mt-2">{children}</h1>,
-                h2: ({ children }) => <h2 className="text-sm font-bold mb-1 mt-1.5">{children}</h2>,
-                h3: ({ children }) => <h3 className="text-xs font-bold mb-0.5 mt-1">{children}</h3>,
-              }}
-            >
-              {note.body}
-            </ReactMarkdown>
-          </div>
-        ) : (
-          // Checklist view on card
-          <div className="space-y-1 max-h-52 overflow-hidden pr-0.5">
-            {items.map((item, idx) => (
-              <div key={item.id} className="flex items-center gap-1.5 text-sm text-slate-300">
-                <input
-                  type="checkbox"
-                  checked={item.checked}
-                  onClick={(e) => handleCheckboxToggle(idx, !item.checked, e)}
-                  onChange={() => {}} // Controlled by onClick
-                  className="rounded border-slate-700 bg-transparent text-purple-600 focus:ring-purple-600/35 h-3.5 w-3.5"
-                />
-                <span className={cn("truncate flex-1", item.checked && "line-through text-slate-500")}>
-                  {item.text}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              p: ({ children }) => <p className="mb-1.5 last:mb-0 text-sm leading-relaxed">{children}</p>,
+              ul: ({ children }) => <ul className="list-disc list-inside ml-2 mb-2 text-sm">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal list-inside ml-2 mb-2 text-sm">{children}</ol>,
+              li: ({ children }) => {
+                const hasCheckbox = React.Children.toArray(children).some(
+                  (child) => React.isValidElement(child) && (child.props as { type?: unknown }).type === "checkbox"
+                );
+                return (
+                  <li className={cn("mb-0.5", hasCheckbox && "list-none ml-0")}>
+                    {children}
+                  </li>
+                );
+              },
+              input: (props) => {
+                if (props.type === "checkbox") {
+                  return (
+                    <input
+                      type="checkbox"
+                      checked={props.checked}
+                      onClick={handleCheckboxClick}
+                      onChange={() => {}}
+                      className="rounded border-slate-700 bg-transparent text-amber-500 focus:ring-amber-500/35 h-3.5 w-3.5 mr-1.5 cursor-pointer accent-amber-500 align-middle"
+                    />
+                  );
+                }
+                const rest = { ...props };
+                delete (rest as { node?: unknown }).node;
+                return <input {...rest} />;
+              },
+              h1: ({ children }) => <h1 className="text-base font-bold mb-1 mt-2">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-sm font-bold mb-1 mt-1.5">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-xs font-bold mb-0.5 mt-1">{children}</h3>,
+            }}
+          >
+            {note.body}
+          </ReactMarkdown>
+        </div>
 
         {/* Assigned tags list on Card */}
         {note.tags.length > 0 && (
@@ -600,21 +568,17 @@ function KeepEditModal({
 
   const [title, setTitle] = useState(note.title);
   const [body, setBody] = useState(note.body);
-  const { items: initItems, isChecklist: initIsChecklist } = parseMarkdownChecklist(note.body);
-  const [isChecklist, setIsChecklist] = useState(initIsChecklist);
-  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>(initItems);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showTagMenu, setShowTagMenu] = useState(false);
   const [newTagName, setNewTagName] = useState("");
 
   const modalRef = useRef<HTMLDivElement>(null);
+  const modalEditorRef = useRef<Editor | null>(null);
   const colorOpt = COLOR_OPTIONS.find((o) => o.hex === note.color) || COLOR_OPTIONS[0];
 
   // Debounced autosave ref states
   const titleRef = useRef(title);
   const bodyRef = useRef(body);
-  const checklistItemsRef = useRef(checklistItems);
-  const isChecklistRef = useRef(isChecklist);
   const lastSavedTitle = useRef(note.title);
   const lastSavedBody = useRef(note.body);
 
@@ -626,20 +590,9 @@ function KeepEditModal({
     bodyRef.current = body;
   }, [body]);
 
-  useEffect(() => {
-    checklistItemsRef.current = checklistItems;
-  }, [checklistItems]);
-
-  useEffect(() => {
-    isChecklistRef.current = isChecklist;
-  }, [isChecklist]);
-
   // Save changes callback
   const save = useCallback(async () => {
-    const finalBody = isChecklistRef.current 
-      ? serializeMarkdownChecklist(checklistItemsRef.current) 
-      : bodyRef.current;
-
+    const finalBody = bodyRef.current;
     const t = titleRef.current.trim() || "Untitled note";
 
     if (t === lastSavedTitle.current && finalBody === lastSavedBody.current) {
@@ -659,49 +612,13 @@ function KeepEditModal({
   useEffect(() => {
     const timer = setTimeout(save, 1500);
     return () => clearTimeout(timer);
-  }, [title, body, checklistItems, save]);
+  }, [title, body, save]);
 
   // Force save on modal close (instant flush)
   const handleClose = async () => {
     await save();
     onClose();
   };
-
-  // Checklist updates (instant saves)
-  async function handleCheckboxChange(idx: number, checked: boolean) {
-    const next = [...checklistItems];
-    next[idx].checked = checked;
-    setChecklistItems(next);
-    checklistItemsRef.current = next;
-    
-    // Save checklist checkboxes immediately
-    const finalBody = serializeMarkdownChecklist(next);
-    lastSavedBody.current = finalBody;
-    await updateKeepNoteAction(note.id, { body: finalBody });
-  }
-
-  async function handleItemTextChange(idx: number, text: string) {
-    const next = [...checklistItems];
-    next[idx].text = text;
-    setChecklistItems(next);
-    checklistItemsRef.current = next;
-  }
-
-  async function handleAddChecklistItem() {
-    const next = [...checklistItems, { id: Math.random().toString(36).substring(2, 9), text: "", checked: false }];
-    setChecklistItems(next);
-    checklistItemsRef.current = next;
-  }
-
-  async function handleRemoveChecklistItem(idx: number) {
-    const next = checklistItems.filter((_, i) => i !== idx);
-    setChecklistItems(next);
-    checklistItemsRef.current = next;
-    
-    const finalBody = serializeMarkdownChecklist(next);
-    lastSavedBody.current = finalBody;
-    await updateKeepNoteAction(note.id, { body: finalBody });
-  }
 
   // Tags toggle (instant save)
   async function toggleTag(tagId: string) {
@@ -770,7 +687,7 @@ return () => {
               onClick={() => onPin(note)}
               className={cn(
                 "h-8 w-8 shrink-0 hover:bg-slate-800/50",
-                note.isPinned ? "text-purple-400" : "text-slate-400 hover:text-slate-200"
+                note.isPinned ? "text-amber-500" : "text-slate-400 hover:text-slate-200"
               )}
             >
               <Pin className="h-4.5 w-4.5" />
@@ -778,55 +695,15 @@ return () => {
           </div>
 
           {/* Note content */}
-          {!isChecklist ? (
-            <textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder="Note"
-              rows={12}
-              className="w-full bg-transparent border-0 outline-none text-sm placeholder:text-slate-500 resize-none leading-relaxed focus:ring-0 focus:outline-none"
-            />
-          ) : (
-            // Checklist editor
-            <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1">
-              {checklistItems.map((item, idx) => (
-                <div key={item.id} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={item.checked}
-                    onChange={(e) => handleCheckboxChange(idx, e.target.checked)}
-                    className="rounded border-slate-700 bg-transparent text-purple-600 focus:ring-purple-600/35 h-3.5 w-3.5"
-                  />
-                  <input
-                    type="text"
-                    value={item.text}
-                    onChange={(e) => handleItemTextChange(idx, e.target.value)}
-                    className={cn(
-                      "flex-1 bg-transparent border-0 outline-none text-sm focus:ring-0 focus:outline-none placeholder:text-slate-600",
-                      item.checked && "line-through text-slate-500"
-                    )}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-slate-500 hover:text-slate-200 hover:bg-slate-800"
-                    onClick={() => handleRemoveChecklistItem(idx)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-slate-400 hover:text-slate-200 h-7 px-2 font-medium"
-                onClick={handleAddChecklistItem}
-              >
-                <Plus className="h-3 w-3 mr-1" />
-                Add item
-              </Button>
-            </div>
-          )}
+          <FilebucketEditor
+            markdown={body}
+            onChange={setBody}
+            mode="keep"
+            className="w-full text-sm leading-relaxed"
+            onEditorReady={(editor) => {
+              modalEditorRef.current = editor;
+            }}
+          />
 
           {/* Assigned tags list in Modal */}
           {note.tags.length > 0 && (
@@ -875,7 +752,7 @@ return () => {
                       className={cn(
                         "h-5 w-5 rounded-full border border-slate-700/60",
                         option.bgClass,
-                        note.color === option.hex && "ring-1 ring-purple-500"
+                        note.color === option.hex && "ring-1 ring-amber-500"
                       )}
                       title={option.label}
                       onClick={() => {
@@ -913,7 +790,7 @@ return () => {
                     />
                     <Button 
                       size="icon" 
-                      className="h-7 w-7 bg-purple-600 hover:bg-purple-500 shrink-0"
+                      className="h-7 w-7 bg-amber-600 hover:bg-amber-500 shrink-0"
                       onClick={createNewTag}
                     >
                       <Plus className="h-3.5 w-3.5" />
@@ -930,7 +807,7 @@ return () => {
                           onClick={() => toggleTag(tag.id)}
                         >
                           <span>#{tag.name}</span>
-                          {isAssigned && <Check className="h-3 w-3 text-purple-400" />}
+                          {isAssigned && <Check className="h-3 w-3 text-amber-500" />}
                         </button>
                       );
                     })}
@@ -945,17 +822,13 @@ return () => {
               size="icon"
               className="h-8 w-8 text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"
               onClick={() => {
-                const nextChecklistMode = !isChecklist;
-                setIsChecklist(nextChecklistMode);
-                isChecklistRef.current = nextChecklistMode;
-                if (nextChecklistMode && checklistItems.length === 0) {
-                  setChecklistItems([{ id: "init-1", text: body, checked: false }]);
-                } else if (!nextChecklistMode) {
-                  setBody(checklistItems.map((c) => c.text).join("\n"));
+                if (modalEditorRef.current) {
+                  modalEditorRef.current.commands.toggleTaskList();
                 }
               }}
+              title="Toggle checklist"
             >
-              {isChecklist ? <Type className="h-4.5 w-4.5" /> : <CheckSquare className="h-4.5 w-4.5" />}
+              <CheckSquare className="h-4.5 w-4.5" />
             </Button>
 
             <Button

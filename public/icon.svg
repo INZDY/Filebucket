@@ -1,25 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Premium dark gradient squircle background -->
+    <linearGradient id="squircleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14151b" />
+      <stop offset="100%" stop-color="#0a0a0d" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Squircle Plate -->
+  <rect width="512" height="512" rx="128" ry="128" fill="url(#squircleGrad)" />
+
   <!-- Bucket Handle (behind bucket) -->
-  <path d="M 130 220 C 130 380, 382 380, 382 220" stroke="#a855f7" stroke-width="24" stroke-linecap="round" />
+  <path d="M 130 220 C 130 380, 382 380, 382 220" stroke="#3b82f6" stroke-width="24" stroke-linecap="round" />
   
-  <!-- Folder (inside bucket) -->
-  <!-- Back of folder -->
-  <path d="M 160 170 L 160 120 C 160 105, 175 95, 190 95 L 240 95 C 250 95, 255 100, 260 105 L 275 120 C 280 125, 285 125, 290 125 L 340 125 C 355 125, 360 135, 360 150 L 360 200" stroke="#a855f7" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
-  <!-- Document peaking out -->
-  <path d="M 190 95 L 190 65 C 190 55, 200 45, 215 45 L 295 45 L 320 70 L 320 95" stroke="#c084fc" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
-  <line x1="215" y1="65" x2="270" y2="65" stroke="#c084fc" stroke-width="8" stroke-linecap="round" />
+  <!-- Folder (inside bucket, document removed) -->
+  <path d="M 160 170 L 160 120 C 160 105, 175 95, 190 95 L 240 95 C 250 95, 255 100, 260 105 L 275 120 C 280 125, 285 125, 290 125 L 340 125 C 355 125, 360 135, 360 150 L 360 200" stroke="#3b82f6" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
   
   <!-- Bucket Body -->
   <!-- Rim -->
-  <rect x="130" y="200" width="252" height="28" rx="14" fill="#111318" stroke="#a855f7" stroke-width="24" stroke-linejoin="round" />
+  <rect x="130" y="200" width="252" height="28" rx="14" fill="#111318" stroke="#3b82f6" stroke-width="24" stroke-linejoin="round" />
   <!-- Body -->
-  <path d="M 160 228 L 185 380 C 188 400, 205 410, 225 410 L 287 410 C 307 410, 324 400, 327 380 L 352 228" fill="#111318" stroke="#a855f7" stroke-width="24" stroke-linejoin="round" stroke-linecap="round" />
+  <path d="M 160 228 L 185 380 C 188 400, 205 410, 225 410 L 287 410 C 307 410, 324 400, 327 380 L 352 228" fill="#111318" stroke="#3b82f6" stroke-width="24" stroke-linejoin="round" stroke-linecap="round" />
 
   <!-- Padlock on Bucket Front -->
   <!-- Shackle -->
-  <path d="M 232 320 V 292 C 232 278, 242 268, 256 268 C 270 268, 280 278, 280 292 V 320" stroke="#c084fc" stroke-width="16" stroke-linecap="round" />
+  <path d="M 232 320 V 292 C 232 278, 242 268, 256 268 C 270 268, 280 278, 280 292 V 320" stroke="#60a5fa" stroke-width="16" stroke-linecap="round" />
   <!-- Body -->
-  <rect x="216" y="320" width="80" height="60" rx="12" fill="#a855f7" stroke="#a855f7" stroke-width="8" />
+  <rect x="216" y="320" width="80" height="60" rx="12" fill="#3b82f6" stroke="#3b82f6" stroke-width="8" />
   <!-- Keyhole -->
   <circle cx="256" cy="345" r="6" fill="#111318" />
   <path d="M 256 351 L 256 364" stroke="#111318" stroke-width="6" stroke-linecap="round" />

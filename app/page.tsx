@@ -1,6 +1,3 @@
-import {
-  Cloud,
-} from "lucide-react";
 
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -613,8 +610,8 @@ export default async function Home({ searchParams }: HomeProps) {
         <header className="flex min-h-14 flex-col gap-3 border-b border-slate-800/40 bg-[#101015]/60 backdrop-blur-md px-4 py-2.5 md:flex-row md:items-center md:px-5">
           <div className="flex min-w-0 items-center gap-3">
             <HeaderHamburger />
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-purple-600/20 border border-purple-500/30 text-purple-400 shadow-[0_0_10px_rgba(139,92,246,0.15)]">
-              <Cloud className="h-5 w-5" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600/10 border border-blue-500/25 shadow-[0_0_10px_rgba(59,130,246,0.1)] overflow-hidden">
+              <img src="/icon.svg" alt="Filebucket" className="h-6.5 w-6.5" />
             </div>
             <div className="min-w-0">
               <h1 className="truncate text-base font-semibold tracking-normal text-slate-50">Filebucket</h1>

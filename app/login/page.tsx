@@ -1,4 +1,4 @@
-import { Cloud, LockKeyhole, BookOpenText, ImagePlus, Tags, Download } from "lucide-react";
+import { LockKeyhole, BookOpenText, ImagePlus, Tags, Download } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { loginAction, loginWithProviderAction } from "@/app/login/actions";
@@ -31,8 +31,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-400 shadow-[0_0_15px_rgba(147,51,234,0.15)]">
-            <Cloud className="h-5.5 w-5.5" />
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600/10 border border-blue-500/25 shadow-[0_0_15px_rgba(59,130,246,0.1)] overflow-hidden">
+            <img src="/icon.svg" alt="Filebucket" className="h-8 w-8" />
           </div>
           <div>
             <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-slate-50 to-slate-300 bg-clip-text text-transparent">
@@ -111,8 +111,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
         {/* Logo display on mobile */}
         <div className="lg:hidden mb-8 flex items-center justify-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-400">
-            <Cloud className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/10 border border-blue-500/25 overflow-hidden">
+            <img src="/icon.svg" alt="Filebucket" className="h-7 w-7" />
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-slate-50 to-slate-300 bg-clip-text text-transparent">

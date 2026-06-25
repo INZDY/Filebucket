@@ -12,19 +12,19 @@
     --card-foreground: 210 20% 94%;
     --popover: 240 10% 9%;
     --popover-foreground: 210 20% 94%;
-    --primary: 262 83% 58%;
+    --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 0 0% 100%;
     --secondary: 240 6% 12%;
     --secondary-foreground: 210 20% 94%;
     --muted: 240 6% 12%;
     --muted-foreground: 240 5% 64%;
-    --accent: 262 83% 20%;
-    --accent-foreground: 262 90% 88%;
+    --accent: 221.2 83.2% 20%;
+    --accent-foreground: 221.2 90% 88%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
     --border: 240 9% 13%;
     --input: 240 9% 13%;
-    --ring: 262 83% 58%;
+    --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
   }
 
@@ -85,8 +85,8 @@
   }
 
   .glass-input:focus {
-    border-color: rgba(124, 58, 237, 0.5) !important;
-    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15) !important;
+    border-color: rgba(37, 99, 235, 0.5) !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
   }
 
   /* Micro animations */
@@ -187,4 +187,184 @@
   .filebucket-crepe .ProseMirror hr {
     border-color: #1e293b;
   }
+
+  /* Tiptap / ProseMirror Editor General Styles */
+  .filebucket-editor-container {
+    min-height: 100%;
+    width: 100%;
+    color: #f1f5f9;
+  }
+
+  .filebucket-editor-container .ProseMirror {
+    min-height: 100%;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 20px;
+    outline: none;
+    line-height: 1.7;
+    font-size: 0.875rem;
+  }
+
+  .notes-editor.ProseMirror {
+    padding: 96px 20px 72px;
+    font-size: 0.95rem;
+  }
+
+  .keep-editor.ProseMirror {
+    padding: 8px 4px;
+    font-size: 0.875rem;
+  }
+
+  .filebucket-editor-container .ProseMirror > * + * {
+    margin-top: 0.85rem;
+  }
+
+  .filebucket-editor-container .ProseMirror h1 {
+    font-size: 1.875rem;
+    font-weight: 650;
+    line-height: 1.2;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .filebucket-editor-container .ProseMirror h2 {
+    font-size: 1.5rem;
+    font-weight: 650;
+    line-height: 1.25;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .filebucket-editor-container .ProseMirror h3 {
+    font-size: 1.25rem;
+    font-weight: 650;
+    line-height: 1.3;
+    margin-top: 1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .filebucket-editor-container .ProseMirror a {
+    color: hsl(var(--primary));
+    text-decoration: underline;
+  }
+
+  .filebucket-editor-container .ProseMirror blockquote {
+    border-left: 2px solid #475569;
+    color: #cbd5e1;
+    padding-left: 1rem;
+  }
+
+  .filebucket-editor-container .ProseMirror code {
+    border-radius: 0.25rem;
+    background: #0f172a;
+    padding: 0.1rem 0.3rem;
+  }
+
+  .filebucket-editor-container .ProseMirror pre {
+    overflow-x: auto;
+    border-radius: 0.375rem;
+    background: #020617;
+    padding: 1rem;
+    color: #f8fafc;
+  }
+
+  .filebucket-editor-container .ProseMirror pre code {
+    background: transparent;
+    padding: 0;
+  }
+
+  .filebucket-editor-container .ProseMirror ul,
+  .filebucket-editor-container .ProseMirror ol {
+    padding-left: 1.4rem;
+  }
+
+  .filebucket-editor-container .ProseMirror ul {
+    list-style: disc;
+  }
+
+  .filebucket-editor-container .ProseMirror ol {
+    list-style: decimal;
+  }
+
+  .filebucket-editor-container .ProseMirror table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .filebucket-editor-container .ProseMirror th,
+  .filebucket-editor-container .ProseMirror td {
+    border: 1px solid #475569;
+    padding: 0.35rem 0.5rem;
+  }
+
+  .filebucket-editor-container .ProseMirror hr {
+    border-color: #1e293b;
+  }
+
+  .filebucket-editor-container .ProseMirror img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.375rem;
+    margin: 1rem 0;
+  }
+
+  /* Tiptap Task List / Checklist Styles */
+  .ProseMirror ul[data-type="taskList"] {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .ProseMirror li[data-type="taskItem"] {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .ProseMirror li[data-type="taskItem"] > label {
+    user-select: none;
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    margin-top: 0.25rem;
+  }
+
+  .ProseMirror li[data-type="taskItem"] > label input[type="checkbox"] {
+    cursor: pointer;
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: 0.25rem;
+    border: 1px solid #475569;
+    background-color: transparent;
+    transition: all 0.2s ease;
+  }
+
+  /* Notes mode: Purple checkbox accent */
+  .notes-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"] {
+    accent-color: #9333ea;
+  }
+  .notes-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"]:checked {
+    background-color: #9333ea;
+    border-color: #a855f7;
+  }
+
+  /* Keep mode: Amber checkbox accent */
+  .keep-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"] {
+    accent-color: #f59e0b;
+  }
+  .keep-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"]:checked {
+    background-color: #f59e0b;
+    border-color: #fbbf24;
+  }
+
+  .ProseMirror li[data-type="taskItem"] > div {
+    flex: 1;
+  }
+
+  .ProseMirror li[data-type="taskItem"][data-checked="true"] > div {
+    text-decoration: line-through;
+    color: #64748b;
+  }
 }
+

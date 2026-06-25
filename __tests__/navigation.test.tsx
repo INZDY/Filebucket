@@ -25,16 +25,30 @@ vi.mock("@/app/tags/actions", () => ({
   createTagAction: vi.fn(),
 }));
 
-// Mock crepe and milkdown dependencies to avoid initializing the full editor DOM/wasm during unit tests
-vi.mock("@milkdown/react", () => ({
-  Milkdown: () => <div data-testid="milkdown">Milkdown Editor</div>,
-  MilkdownProvider: ({ children }: any) => <>{children}</>,
-  useEditor: () => {},
-}));
-
-vi.mock("@milkdown/crepe", () => ({
-  Crepe: class {},
-  CrepeFeature: {},
+// Mock next/dynamic to return a synchronous mock editor
+vi.mock("next/dynamic", () => ({
+  default: () => {
+    return function MockedFilebucketEditor(props: any) {
+      return (
+        <div 
+          className={props.className}
+          onClick={(e) => {
+            const anchor = (e.target as HTMLElement).closest("a");
+            if (anchor && props.onLinkClick) {
+              const href = anchor.getAttribute("href");
+              if (href) {
+                props.onLinkClick(href, e);
+              }
+            }
+          }}
+        >
+          <div className="ProseMirror">
+            Mocked Editor Content
+          </div>
+        </div>
+      );
+    };
+  }
 }));
 
 describe("NoteEditor Media Link Interception", () => {

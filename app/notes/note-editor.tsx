@@ -1,10 +1,15 @@
 "use client";
 
-import { Crepe, CrepeFeature } from "@milkdown/crepe";
-import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react";
 import { ImagePlus, Save, Plus, Tag } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import type { Editor } from "@tiptap/react";
+
+const FilebucketEditor = dynamic(
+  () => import("@/components/filebucket-editor").then((mod) => mod.FilebucketEditor),
+  { ssr: false }
+);
 
 import { updateNoteAction } from "@/app/notes/actions";
 import { getPresignedUploadUrlAction, createMediaAssetAction } from "@/app/media/actions";
@@ -51,15 +56,13 @@ const AUTOSAVE_DELAY_MS = 20_000;
 
 export function NoteEditor({ imageMediaAssets, note, updatedAt, allTags, assignedTags }: NoteEditorProps) {
   return (
-    <MilkdownProvider>
-      <MilkdownNoteEditor
-        imageMediaAssets={imageMediaAssets}
-        note={note}
-        updatedAt={updatedAt}
-        allTags={allTags}
-        assignedTags={assignedTags}
-      />
-    </MilkdownProvider>
+    <MilkdownNoteEditor
+      imageMediaAssets={imageMediaAssets}
+      note={note}
+      updatedAt={updatedAt}
+      allTags={allTags}
+      assignedTags={assignedTags}
+    />
   );
 }
 
@@ -124,8 +127,7 @@ function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assign
   const noteIdRef = useRef(note.id);
   const hasChanges = title !== lastSavedTitle || body !== lastSavedBody;
 
-  const [editorInitialMarkdown, setEditorInitialMarkdown] = useState(() => resolveMediaUrls(note.body));
-  const [editorRevision, setEditorRevision] = useState(0);
+  const editorRef = useRef<Editor | null>(null);
 
   const save = useCallback(() => {
     const noteIdSnapshot = noteIdRef.current;
@@ -165,7 +167,6 @@ function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assign
     setLastSavedBody(dbBody);
     setSaveError("");
     setShowImagePicker(false);
-    setEditorInitialMarkdown(resolveMediaUrls(note.body));
     titleRef.current = note.title;
     bodyRef.current = dbBody;
     savedTitleRef.current = note.title;
@@ -185,21 +186,15 @@ function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assign
   }, [restoreMediaUrls]);
 
   function insertImageReference(
-    mediaAsset: NoteEditorProps["imageMediaAssets"][number],
-    customAssets?: NoteEditorProps["imageMediaAssets"]
+    mediaAsset: NoteEditorProps["imageMediaAssets"][number]
   ) {
-    const assetsList = customAssets || mediaAssets;
-    const editorBody = resolveMediaUrls(bodyRef.current, assetsList);
-    const trimmedBody = editorBody.trimEnd();
-    const imageMarkdown = `![${mediaAsset.filename}](${mediaAsset.url})`;
-    const nextEditorBody = trimmedBody ? `${trimmedBody}\n\n${imageMarkdown}\n` : `${imageMarkdown}\n`;
-
-    const nextDbBody = restoreMediaUrls(nextEditorBody, assetsList);
-    bodyRef.current = nextDbBody;
-    setBody(nextDbBody);
-
-    setEditorInitialMarkdown(nextEditorBody);
-    setEditorRevision((currentRevision) => currentRevision + 1);
+    if (editorRef.current) {
+      editorRef.current.commands.focus();
+      editorRef.current.commands.setImage({
+        src: mediaAsset.url,
+        alt: mediaAsset.filename
+      });
+    }
     setShowImagePicker(false);
   }
 
@@ -258,7 +253,7 @@ function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assign
 
       const updatedAssets = [...mediaAssets, newAsset];
       setMediaAssets(updatedAssets);
-      insertImageReference(newAsset, updatedAssets);
+      insertImageReference(newAsset);
 
       setSaveError("");
     } catch (err: unknown) {
@@ -523,61 +518,16 @@ function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assign
         </div>
       </div>
 
-      <CrepeEditor
-        key={`${note.id}:${editorRevision}`}
-        markdown={editorInitialMarkdown}
-        onMarkdownChange={updateBody}
+      <FilebucketEditor
+        markdown={resolveMediaUrls(body)}
+        onChange={updateBody}
         onLinkClick={handleLinkClick}
+        mode="notes"
+        className="filebucket-crepe min-h-0 flex-1 overflow-y-auto bg-[#0d0d11]"
+        onEditorReady={(editor) => {
+          editorRef.current = editor;
+        }}
       />
-    </div>
-  );
-}
-
-function CrepeEditor({
-  markdown,
-  onMarkdownChange,
-  onLinkClick,
-}: {
-  markdown: string;
-  onMarkdownChange: (markdown: string) => void;
-  onLinkClick?: (href: string, event: React.MouseEvent) => void;
-}) {
-  useEditor(
-    (root) => {
-      const crepe = new Crepe({
-        root,
-        defaultValue: markdown,
-        features: {
-          [CrepeFeature.TopBar]: false,
-          [CrepeFeature.AI]: false,
-        },
-      });
-
-      crepe.on((listener) => {
-        listener.markdownUpdated((_, nextMarkdown) => {
-          onMarkdownChange(nextMarkdown);
-        });
-      });
-
-      return crepe;
-    },
-    [markdown, onMarkdownChange],
-  );
-
-  return (
-    <div 
-      className="filebucket-crepe min-h-0 flex-1 overflow-y-auto bg-[#0d0d11]"
-      onClick={(e) => {
-        const anchor = (e.target as HTMLElement).closest("a");
-        if (anchor && onLinkClick) {
-          const href = anchor.getAttribute("href");
-          if (href) {
-            onLinkClick(href, e);
-          }
-        }
-      }}
-    >
-      <Milkdown />
     </div>
   );
 }
