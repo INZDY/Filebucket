@@ -315,14 +315,29 @@
     margin: 0 !important;
   }
 
-  .ProseMirror li[data-type="taskItem"] {
-    display: flex;
+  /* Disable Tailwind prose bullet points and list item padding on task list items */
+  .prose ul[data-type="taskList"] > li::before,
+  .prose ul > li[data-checked]::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .ProseMirror li[data-type="taskItem"],
+  .ProseMirror li[data-checked] {
+    display: flex !important;
     align-items: flex-start;
     gap: 0.5rem;
     margin-bottom: 0.25rem;
+    padding-left: 0 !important; /* Override standard prose padding */
   }
 
-  .ProseMirror li[data-type="taskItem"] > label {
+  .ProseMirror li[data-type="taskItem"] p,
+  .ProseMirror li[data-checked] p {
+    margin: 0 !important;
+  }
+
+  .ProseMirror li[data-type="taskItem"] > label,
+  .ProseMirror li[data-checked] > label {
     user-select: none;
     pointer-events: auto;
     display: flex;
@@ -330,7 +345,8 @@
     margin-top: 0.25rem;
   }
 
-  .ProseMirror li[data-type="taskItem"] > label input[type="checkbox"] {
+  .ProseMirror li[data-type="taskItem"] > label input[type="checkbox"],
+  .ProseMirror li[data-checked] > label input[type="checkbox"] {
     cursor: pointer;
     width: 0.875rem;
     height: 0.875rem;
@@ -341,30 +357,57 @@
   }
 
   /* Notes mode: Purple checkbox accent */
-  .notes-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"] {
+  .notes-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"],
+  .notes-editor.ProseMirror li[data-checked] > label input[type="checkbox"] {
     accent-color: #9333ea;
   }
-  .notes-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"]:checked {
+  .notes-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"]:checked,
+  .notes-editor.ProseMirror li[data-checked] > label input[type="checkbox"]:checked {
     background-color: #9333ea;
     border-color: #a855f7;
   }
 
   /* Keep mode: Amber checkbox accent */
-  .keep-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"] {
+  .keep-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"],
+  .keep-editor.ProseMirror li[data-checked] > label input[type="checkbox"] {
     accent-color: #f59e0b;
   }
-  .keep-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"]:checked {
+  .keep-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"]:checked,
+  .keep-editor.ProseMirror li[data-checked] > label input[type="checkbox"]:checked {
     background-color: #f59e0b;
     border-color: #fbbf24;
   }
 
-  .ProseMirror li[data-type="taskItem"] > div {
+  .ProseMirror li[data-type="taskItem"] > div,
+  .ProseMirror li[data-checked] > div {
     flex: 1;
   }
 
-  .ProseMirror li[data-type="taskItem"][data-checked="true"] > div {
+  .ProseMirror li[data-type="taskItem"][data-checked="true"] > div,
+  .ProseMirror li[data-checked="true"] > div {
     text-decoration: line-through;
     color: #64748b;
+  }
+
+  /* Support standard remark-gfm checklist items in markdown previews */
+  .prose li.task-list-item {
+    display: flex !important;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding-left: 0 !important;
+  }
+  .prose li.task-list-item::before {
+    display: none !important;
+    content: none !important;
+  }
+  .prose li.task-list-item > input[type="checkbox"] {
+    margin-top: 0.25rem;
+    margin-right: 0.25rem;
+    flex-shrink: 0;
+  }
+  .prose li.task-list-item p {
+    margin: 0 !important;
+    display: inline !important;
   }
 }
 

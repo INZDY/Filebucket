@@ -449,7 +449,7 @@ function KeepCard({
                   (child) => React.isValidElement(child) && (child.props as { type?: unknown }).type === "checkbox"
                 );
                 return (
-                  <li className={cn("mb-0.5", hasCheckbox && "list-none ml-0")}>
+                  <li className={cn("mb-0.5", hasCheckbox && "list-none ml-0 flex items-start gap-1.5 [&_p]:m-0 [&_p]:inline")}>
                     {children}
                   </li>
                 );
