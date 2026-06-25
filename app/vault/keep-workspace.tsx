@@ -462,7 +462,7 @@ function KeepCard({
                       checked={props.checked}
                       onClick={handleCheckboxClick}
                       onChange={() => {}}
-                      className="rounded border-amber-500/30 hover:border-amber-500/60 bg-transparent text-amber-500 focus:ring-amber-500/35 h-3.5 w-3.5 mr-1.5 cursor-pointer accent-amber-500 align-middle transition-colors duration-200"
+                      className="keep-preview-checkbox mr-1.5 align-middle"
                     />
                   );
                 }

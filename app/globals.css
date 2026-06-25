@@ -345,21 +345,45 @@
     margin-top: 0.25rem;
   }
 
+  /* Checkbox base style */
   .ProseMirror li[data-type="taskItem"] > label input[type="checkbox"],
-  .ProseMirror li[data-checked] > label input[type="checkbox"] {
+  .ProseMirror li[data-checked] > label input[type="checkbox"],
+  .prose li.task-list-item > input[type="checkbox"],
+  input[type="checkbox"].keep-preview-checkbox {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
     cursor: pointer;
     width: 0.875rem;
     height: 0.875rem;
     border-radius: 0.25rem;
     border: 1px solid #475569;
     background-color: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
     transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  /* Vector checkmark for checked state */
+  .ProseMirror li[data-type="taskItem"] > label input[type="checkbox"]:checked::after,
+  .ProseMirror li[data-checked] > label input[type="checkbox"]:checked::after,
+  .prose li.task-list-item > input[type="checkbox"]:checked::after,
+  input[type="checkbox"].keep-preview-checkbox:checked::after {
+    content: "";
+    display: block;
+    width: 0.25rem;
+    height: 0.45rem;
+    border: solid white;
+    border-width: 0 1.5px 1.5px 0;
+    transform: rotate(45deg) translate(-0.5px, -1px);
   }
 
   /* Notes mode: Purple checkbox accent */
   .notes-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"],
   .notes-editor.ProseMirror li[data-checked] > label input[type="checkbox"] {
-    accent-color: #9333ea;
     border-color: rgba(147, 51, 234, 0.4);
   }
   .notes-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"]:hover,
@@ -375,7 +399,6 @@
   /* Keep mode: Amber checkbox accent */
   .keep-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"],
   .keep-editor.ProseMirror li[data-checked] > label input[type="checkbox"] {
-    accent-color: #f59e0b;
     border-color: rgba(245, 158, 11, 0.4);
   }
   .keep-editor.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"]:hover,
@@ -413,22 +436,30 @@
   .prose li.task-list-item > input[type="checkbox"] {
     margin-top: 0.25rem;
     margin-right: 0.25rem;
-    flex-shrink: 0;
-    cursor: pointer;
-    width: 0.875rem;
-    height: 0.875rem;
-    border-radius: 0.25rem;
-    border: 1px solid rgba(245, 158, 11, 0.4);
-    background-color: transparent;
-    accent-color: #f59e0b;
-    transition: all 0.2s ease;
+    border-color: rgba(245, 158, 11, 0.4);
   }
   .prose li.task-list-item > input[type="checkbox"]:hover {
     border-color: rgba(245, 158, 11, 0.7);
   }
+  .prose li.task-list-item > input[type="checkbox"]:checked {
+    background-color: #f59e0b;
+    border-color: #fbbf24;
+  }
   .prose li.task-list-item p {
     margin: 0 !important;
     display: inline !important;
+  }
+
+  /* Keep Workspace card preview checkboxes */
+  input[type="checkbox"].keep-preview-checkbox {
+    border-color: rgba(245, 158, 11, 0.4);
+  }
+  input[type="checkbox"].keep-preview-checkbox:hover {
+    border-color: rgba(245, 158, 11, 0.7);
+  }
+  input[type="checkbox"].keep-preview-checkbox:checked {
+    background-color: #f59e0b;
+    border-color: #fbbf24;
   }
 }
 
