@@ -221,3 +221,58 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Remove the static `<p>` header tag displaying `"Vault Browser"` from `sidebar-browser.tsx`.
     *   Adjust top spacing/margins of the location breadcrumbs trail to align cleanly inside the sidebar container.
 *   **Verification**: Open the app and verify the `"Vault Browser"` text header is removed from the sidebar browser top section, leaving only the location breadcrumbs visible.
+
+### Milestone 37: Brand Color & Global Styling Updates
+*   **Status**: Planned.
+*   **Goal**: Shift global brand styling to Blue, update the app-wide logo, and style the app icon background with a dark squircle gradient.
+*   **Tasks**:
+    *   Modify `app/globals.css` variable tokens to set brand Blue (`--primary: 221.2 83.2% 53.3%` or similar HSL blue) replacing the purple theme colors.
+    *   Update `public/icon.svg`:
+        *   Simplify the bucket outline path and lock front face details.
+        *   Keep the folder nested inside the bucket, but remove the document page path.
+        *   Paint the bucket artwork in a vibrant blue shade.
+        *   Overlay the logo onto a dark charcoal/deep slate gradient square with corner rounding (`rx="120"` / `ry="120"`) to create a squircle app icon. Do not use an outer border glow.
+    *   Replace the generic `Cloud` icons inside the app header (`app/page.tsx`) and the login page (`app/login/page.tsx`) with the actual `/icon.svg` brand logo centered inside a `rounded-xl` (squircle) background plate with a subtle drop shadow.
+    *   Keep Obsidian Notes mode and tag pills styled in Purple as secondary accents, but update Keep checkbox selection elements to use Keep's mode-specific Amber color.
+*   **Verification**: Check that brand accents are blue globally, verify PWA manifest icon `/icon.svg` renders as a squircle, and check that the login page and header render the Filebucket logo on a squircle background.
+
+### Milestone 38: Unified Tiptap Rich Text Editor Setup
+*   **Status**: Planned.
+*   **Goal**: Set up Tiptap editor engine supporting native markdown serialization, mixed lists/paragraphs, and checked items auto-sorting.
+*   **Tasks**:
+    *   Install Tiptap core dependencies (`@tiptap/react`, `@tiptap/core`, `@tiptap/starter-kit`, `@tiptap/extension-task-list`, `@tiptap/extension-task-item`) and `tiptap-markdown` for markdown conversions.
+    *   Create a modular `FilebucketEditor` component wrapping the Tiptap canvas.
+    *   Configure `FilebucketEditor` to parse markdown shortcuts dynamically (`# `, `* `, `1. `, `[ ] `).
+    *   Implement an event trigger or Tiptap extension to auto-sort checked checklist items to the bottom of their parent `taskList` block.
+    *   Set up visual rendering styles in `app/globals.css` matching the design system (headings, bold, lists).
+*   **Verification**: Run tests on the editor wrapper; verify typing shortcuts yields styled tags inline and that checking a task item moves it to the bottom of the list block.
+
+### Milestone 39: Replace Markdown Editors in Obsidian & Keep Workspaces
+*   **Status**: Planned.
+*   **Goal**: Integrate Tiptap editor into Notes Mode and Keep Mode modal/creation forms using Next.js dynamic imports.
+*   **Tasks**:
+    *   Replace Milkdown Crepe in `app/notes/note-editor.tsx` with the new `FilebucketEditor` component.
+    *   Connect inline image picker assets insertion so that images serialize as `![filename](filebucket-media:id)` inside Tiptap.
+    *   Replace the raw `<textarea>` and checklist inputs in `app/vault/keep-workspace.tsx` (edit modal and creation card) with the Tiptap editor.
+    *   Apply Amber styling variables to Tiptap checklist task elements in Keep Mode.
+    *   Wrap editor loads with `next/dynamic` (`ssr: false`) to optimize initial page loading.
+*   **Verification**: Open a markdown note in Obsidian mode and verify Tiptap renders and saves note edits. Open a Keep card and verify mixed checklist and paragraph editing works, checkbox toggles work, and files don't block initial SSR loading.
+
+### Milestone 40: Client-Side Selection State & Shallow Routing
+*   **Status**: Planned.
+*   **Goal**: Eliminate full server-side page fetches on item navigation by using client selection states and shallow routing.
+*   **Tasks**:
+    *   Refactor active selection parameter checks in `app/page.tsx` and workspaces.
+    *   Load the directory tree layout structure once on mount. On row clicks inside `SidebarBrowser`, update client-side selection state dynamically.
+    *   Use `window.history.pushState` or dynamic query string replacements to synchronize parameters (`?folder=...&note=...`) client-side without executing server-side route re-renders.
+    *   Expose clean API routes (`/api/notes/[id]` and `/api/folders/[id]`) to dynamically fetch note data and folder items details on client state changes.
+*   **Verification**: Click folders and notes in the sidebar tree. Verify navigation is instantaneous, URL parameters update in the address bar, and note details load dynamically without full-page server round-trips.
+
+### Milestone 41: Optimistic UI Updates & Transition Hardenings
+*   **Status**: Planned.
+*   **Goal**: Ensure action responses (renaming, trashing, checking, pinning) feel instantaneous to the user.
+*   **Tasks**:
+    *   Implement optimistic UI updates for Keep card updates (checkbox state toggles, pin states, card colors, tag associations).
+    *   Implement optimistic UI updates for folder explorer row operations (inline rename, trash, moves).
+    *   Add smooth fade/slide CSS transitions and content skeletons to the workspace pane to mask dynamic API data fetches.
+*   **Verification**: Perform folder renames, keep note pinning, and checklist checkmarks; verify UI updates instantly in the browser without waiting for server responses. Check that loading skeletons show gracefully during load times.

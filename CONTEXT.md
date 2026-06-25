@@ -20,7 +20,7 @@ The primary mode of the vault, active at the root level and inside any non-reser
 _Avoid_: File vault, root directory, public folder
 
 **Keep Note**:
-A specialized note that exists only as a direct child of the reserved `Quick Notes/` folder. It is rendered in a grid layout, supports background card colors, can be pinned/unpinned, and can be viewed/edited as a checklist (storing items as standard Markdown checkboxes `- [ ]` / `- [x]`) or a simple scratchpad.
+A specialized note that exists only as a direct child of the reserved `Quick Notes/` folder. It is rendered in a grid layout, supports background card colors, can be pinned/unpinned, and can be viewed/edited as a rich-text document supporting mixed text and checklist items. Checked checklist items are automatically grouped at the bottom of their checklist block.
 _Avoid_: Sticky note, keep card, board item
 
 **Chat Channel**:
