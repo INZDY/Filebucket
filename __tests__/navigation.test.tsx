@@ -4,14 +4,6 @@ import { createRoot } from "react-dom/client";
 import { act } from "react";
 import { NoteEditor } from "@/app/notes/note-editor";
 
-// Mock next/navigation
-const mockPush = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
-}));
-
 // Mock action modules to avoid server-side dependency issues
 vi.mock("@/app/notes/actions", () => ({
   updateNoteAction: vi.fn(),
@@ -56,7 +48,9 @@ describe("NoteEditor Media Link Interception", () => {
     vi.clearAllMocks();
   });
 
-  it("should intercept media asset link clicks and navigate to the file preview page", async () => {
+  it("should intercept media asset link clicks and navigate to the file preview page via pushState", async () => {
+    const pushStateSpy = vi.spyOn(window.history, "pushState").mockImplementation(() => {});
+    
     const container = document.createElement("div");
     document.body.appendChild(container);
     const root = createRoot(container);
@@ -88,28 +82,26 @@ describe("NoteEditor Media Link Interception", () => {
       );
     });
 
-    // We can simulate a click on an anchor tag in the filebucket-crepe container
     const editorContainer = container.querySelector(".filebucket-crepe");
     expect(editorContainer).not.toBeNull();
 
-    // Create a mock link inside editorContainer
     const linkEl = document.createElement("a");
     linkEl.setAttribute("href", "r2-diagram-url");
     linkEl.textContent = "diagram";
     editorContainer?.appendChild(linkEl);
 
-    // Click the link
     await act(async () => {
       linkEl.click();
     });
 
-    // Check that we intercepted the click and routed correctly
-    expect(mockPush).toHaveBeenCalledWith("/?folder=folder-789&media=media-456");
+    // Check that we intercepted the click and routed correctly via history.pushState
+    expect(pushStateSpy).toHaveBeenCalledWith(null, "", "/?folder=folder-789&media=media-456");
 
     // Clean up
     await act(async () => {
       root.unmount();
     });
     document.body.removeChild(container);
+    pushStateSpy.mockRestore();
   });
 });
