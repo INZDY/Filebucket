@@ -223,7 +223,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Open the app and verify the `"Vault Browser"` text header is removed from the sidebar browser top section, leaving only the location breadcrumbs visible.
 
 ### Milestone 37: Brand Color & Global Styling Updates
-*   **Status**: Planned.
+*   **Status**: Completed.
 *   **Goal**: Shift global brand styling to Blue, update the app-wide logo, and style the app icon background with a dark squircle gradient.
 *   **Tasks**:
     *   Modify `app/globals.css` variable tokens to set brand Blue (`--primary: 221.2 83.2% 53.3%` or similar HSL blue) replacing the purple theme colors.
@@ -237,7 +237,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Check that brand accents are blue globally, verify PWA manifest icon `/icon.svg` renders as a squircle, and check that the login page and header render the Filebucket logo on a squircle background.
 
 ### Milestone 38: Unified Tiptap Rich Text Editor Setup
-*   **Status**: Planned.
+*   **Status**: Completed.
 *   **Goal**: Set up Tiptap editor engine supporting native markdown serialization, mixed lists/paragraphs, and checked items auto-sorting.
 *   **Tasks**:
     *   Install Tiptap core dependencies (`@tiptap/react`, `@tiptap/core`, `@tiptap/starter-kit`, `@tiptap/extension-task-list`, `@tiptap/extension-task-item`) and `tiptap-markdown` for markdown conversions.
@@ -248,7 +248,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Run tests on the editor wrapper; verify typing shortcuts yields styled tags inline and that checking a task item moves it to the bottom of the list block.
 
 ### Milestone 39: Replace Markdown Editors in Obsidian & Keep Workspaces
-*   **Status**: Planned.
+*   **Status**: Completed.
 *   **Goal**: Integrate Tiptap editor into Notes Mode and Keep Mode modal/creation forms using Next.js dynamic imports.
 *   **Tasks**:
     *   Replace Milkdown Crepe in `app/notes/note-editor.tsx` with the new `FilebucketEditor` component.
