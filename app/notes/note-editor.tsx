@@ -24,7 +24,7 @@ type NoteEditorProps = {
     title: string;
     body: string;
   };
-  updatedAt?: Date;
+  updatedAt?: Date | string;
   imageMediaAssets: {
     id: string;
     filename: string;

@@ -95,9 +95,9 @@ interface SidebarBrowserProps {
   selectedDeletedMedia: MediaEntry | null;
   
   folders: FolderEntry[];
-  deletedFolders: (FolderEntry & { parent?: { deletedAt: Date | string | null } | null })[];
-  deletedNotes: (NoteEntry & { folder?: { name: string; deletedAt: Date | string | null } | null })[];
-  deletedMediaAssets: (MediaEntry & { contentType: string; sizeBytes: number; folder?: { name: string; deletedAt: Date | string | null } | null })[];
+  deletedFolders: (FolderEntry & { parent?: { deletedAt?: Date | string | null } | null })[];
+  deletedNotes: (NoteEntry & { folder?: { name: string; deletedAt?: Date | string | null } | null })[];
+  deletedMediaAssets: (MediaEntry & { contentType: string; sizeBytes: number; folder?: { name: string; deletedAt?: Date | string | null } | null })[];
   tags: TagEntry[];
   notes: NoteEntry[];
   mediaAssets: MediaEntry[];

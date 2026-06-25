@@ -3,7 +3,7 @@ export type ViewMode = "FILES" | "NOTES" | "KEEP" | "CHAT";
 interface Folder {
   id: string;
   parentId: string | null;
-  type: string;
+  type?: string;
 }
 
 interface Note {

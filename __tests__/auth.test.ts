@@ -18,20 +18,20 @@ describe("Authentication Helpers", () => {
 
   describe("getSession", () => {
     it("should return null if auth() returns no session", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      (vi.mocked(auth) as any).mockResolvedValue(null);
       const result = await getSession();
       expect(result).toBeNull();
     });
 
     it("should return null if auth() returns a session without user email", async () => {
-      vi.mocked(auth).mockResolvedValue({ user: {} });
+      (vi.mocked(auth) as any).mockResolvedValue({ user: {} });
       const result = await getSession();
       expect(result).toBeNull();
     });
 
     it("should return email and user if auth() succeeds", async () => {
       const mockUser = { name: "Admin", email: "admin@filebucket.local" };
-      vi.mocked(auth).mockResolvedValue({ user: mockUser });
+      (vi.mocked(auth) as any).mockResolvedValue({ user: mockUser });
 
       const result = await getSession();
       expect(result).toEqual({
@@ -44,7 +44,7 @@ describe("Authentication Helpers", () => {
   describe("requireSession", () => {
     it("should return session if user is logged in", async () => {
       const mockUser = { name: "Admin", email: "admin@filebucket.local" };
-      vi.mocked(auth).mockResolvedValue({ user: mockUser });
+      (vi.mocked(auth) as any).mockResolvedValue({ user: mockUser });
 
       const result = await requireSession();
       expect(result).toEqual({
@@ -55,7 +55,7 @@ describe("Authentication Helpers", () => {
     });
 
     it("should redirect to /login if user is not logged in", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      (vi.mocked(auth) as any).mockResolvedValue(null);
 
       await requireSession();
       expect(redirect).toHaveBeenCalledWith("/login");

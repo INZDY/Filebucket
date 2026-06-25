@@ -81,15 +81,48 @@ type TagEntry = {
   };
 };
 
+type DeletedFolderEntry = FolderListEntry & {
+  deletedAt: Date | string | null;
+  parent?: {
+    deletedAt?: Date | string | null;
+  } | null;
+};
+
+type DeletedNoteEntry = {
+  id: string;
+  title: string;
+  body: string;
+  userId: string;
+  folderId: string | null;
+  deletedAt: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  color: string | null;
+  isPinned: boolean;
+  folder?: {
+    id: string;
+    name: string;
+    deletedAt?: Date | string | null;
+  } | null;
+};
+
+type DeletedMediaEntry = MediaListEntry & {
+  folder?: {
+    id: string;
+    name: string;
+    deletedAt?: Date | string | null;
+  } | null;
+};
+
 type VaultDashboardProps = {
   userId: string;
   initialFolders: FolderListEntry[];
   initialNotes: NoteListEntry[];
   initialMediaAssets: MediaListEntry[];
   initialTags: TagEntry[];
-  initialDeletedFolders: any[];
-  initialDeletedNotes: any[];
-  initialDeletedMediaAssets: any[];
+  initialDeletedFolders: DeletedFolderEntry[];
+  initialDeletedNotes: DeletedNoteEntry[];
+  initialDeletedMediaAssets: DeletedMediaEntry[];
   initialSearchParams: {
     folder?: string;
     note?: string;
@@ -251,10 +284,10 @@ export function VaultDashboard({
   const [folders, setFolders] = useState<FolderListEntry[]>(initialFolders);
   const [notes, setNotes] = useState<NoteListEntry[]>(initialNotes);
   const [mediaAssets, setMediaAssets] = useState<MediaListEntry[]>(initialMediaAssets);
-  const [tags, setTags] = useState<TagEntry[]>(initialTags);
-  const [deletedFolders, setDeletedFolders] = useState<any[]>(initialDeletedFolders);
-  const [deletedNotes, setDeletedNotes] = useState<any[]>(initialDeletedNotes);
-  const [deletedMediaAssets, setDeletedMediaAssets] = useState<any[]>(initialDeletedMediaAssets);
+  const [tags] = useState<TagEntry[]>(initialTags);
+  const [deletedFolders, setDeletedFolders] = useState<DeletedFolderEntry[]>(initialDeletedFolders);
+  const [deletedNotes, setDeletedNotes] = useState<DeletedNoteEntry[]>(initialDeletedNotes);
+  const [deletedMediaAssets, setDeletedMediaAssets] = useState<DeletedMediaEntry[]>(initialDeletedMediaAssets);
 
   // Client Selection State
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(initialSearchParams?.folder ?? null);
@@ -264,7 +297,7 @@ export function VaultDashboard({
   const [searchQuery, setSearchQuery] = useState<string>(initialSearchParams?.q ?? "");
   const [activeTagSlug, setActiveTagSlug] = useState<string>(initialSearchParams?.tag ?? "");
 
-  const [selectedNoteDetails, setSelectedNoteDetails] = useState<any | null>(null);
+  const [selectedNoteDetails, setSelectedNoteDetails] = useState<NoteListEntry | null>(null);
   const [isNoteLoading, setIsNoteLoading] = useState(false);
   const [isFolderLoading, setIsFolderLoading] = useState(false);
 
@@ -376,7 +409,7 @@ export function VaultDashboard({
       else if (type === "rename-note" && noteId && name) {
         setNotes(prev => prev.map(n => n.id === noteId ? { ...n, title: name } : n));
         if (selectedNoteDetails?.id === noteId) {
-          setSelectedNoteDetails((prev: any) => prev ? { ...prev, title: name } : null);
+          setSelectedNoteDetails((prev) => prev ? { ...prev, title: name } : null);
         }
       }
       else if (type === "move-note" && noteId) {
@@ -417,10 +450,13 @@ export function VaultDashboard({
       else if (type === "update-keep-note" && noteId) {
         setNotes(prev => prev.map(n => {
           if (n.id !== noteId) return n;
-          const updated = { ...n, updatedAt: new Date() } as any;
-          if (color !== undefined) updated.color = color;
-          if (isPinned !== undefined) updated.isPinned = isPinned;
-          if (name !== undefined) updated.title = name;
+          const updated: NoteListEntry = {
+            ...n,
+            updatedAt: new Date(),
+            color: color !== undefined ? color : n.color,
+            isPinned: isPinned !== undefined ? isPinned : n.isPinned,
+            title: name !== undefined ? name : n.title,
+          };
           return updated;
         }));
       }
@@ -456,7 +492,7 @@ export function VaultDashboard({
         if (!res.ok) throw new Error("Failed to fetch note details");
         return res.json();
       })
-      .then((data) => {
+      .then((data: NoteListEntry) => {
         if (active) {
           setSelectedNoteDetails(data);
         }
@@ -469,7 +505,7 @@ export function VaultDashboard({
     return () => {
       active = false;
     };
-  }, [selectedNoteId]);
+  }, [selectedNoteId, selectedNoteDetails?.id]);
 
   // Fetch selected folder details dynamically
   useEffect(() => {
@@ -482,7 +518,7 @@ export function VaultDashboard({
         if (!res.ok) throw new Error("Failed to fetch folder details");
         return res.json();
       })
-      .then((data) => {
+      .then(() => {
         if (active) {
           // Merge dynamic data in client state if appropriate
         }
@@ -654,12 +690,16 @@ export function VaultDashboard({
         }))
     : [];
 
-  const deletedFolderContents = selectedDeletedFolder
-    ? {
-        folders: deletedFolders.filter((f) => f.parentId === selectedDeletedFolder.id),
-        notes: deletedNotes.filter((n) => n.folderId === selectedDeletedFolder.id),
-        mediaAssets: deletedMediaAssets.filter((m) => m.folderId === selectedDeletedFolder.id),
-      }
+  const deletedFolderContents: [
+    { id: string; name: string; deletedAt: Date | string | null }[],
+    { id: string; title: string; deletedAt: Date | string | null }[],
+    { id: string; filename: string; contentType: string; deletedAt: Date | string | null }[]
+  ] | null = selectedDeletedFolder
+    ? [
+        deletedFolders.filter((f) => f.parentId === selectedDeletedFolder.id).map(f => ({ id: f.id, name: f.name, deletedAt: f.deletedAt })),
+        deletedNotes.filter((n) => n.folderId === selectedDeletedFolder.id).map(n => ({ id: n.id, title: n.title, deletedAt: n.deletedAt })),
+        deletedMediaAssets.filter((m) => m.folderId === selectedDeletedFolder.id).map(m => ({ id: m.id, filename: m.filename, contentType: m.contentType, deletedAt: m.deletedAt })),
+      ]
     : null;
 
   const notesRoot = folders.find((f) => f.type === "NOTES_ROOT");
@@ -785,7 +825,7 @@ export function VaultDashboard({
                       selectedDeletedNote={selectedDeletedNote}
                       selectedDeletedMedia={selectedDeletedMedia}
                       selectedDeletedFolder={selectedDeletedFolder}
-                      deletedFolderContents={deletedFolderContents as any}
+                      deletedFolderContents={deletedFolderContents}
                       textPreviewContent={textPreviewContent}
                       resolveDisplayMarkdown={resolveDisplayMarkdown}
                     />

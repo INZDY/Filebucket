@@ -34,7 +34,7 @@ describe("Media API GET Route Handler", () => {
   });
 
   it("should return 401 Unauthorized if no active session", async () => {
-    vi.mocked(auth).mockResolvedValue(null);
+    (vi.mocked(auth) as any).mockResolvedValue(null);
     const req = new NextRequest("http://localhost/api/media?key=some-key");
 
     const res = await GET(req);
@@ -43,7 +43,7 @@ describe("Media API GET Route Handler", () => {
   });
 
   it("should return 400 if key parameter is missing", async () => {
-    vi.mocked(auth).mockResolvedValue({
+    (vi.mocked(auth) as any).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
     });
@@ -55,7 +55,7 @@ describe("Media API GET Route Handler", () => {
   });
 
   it("should return 404 if media asset is not found", async () => {
-    vi.mocked(auth).mockResolvedValue({
+    (vi.mocked(auth) as any).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
     });
@@ -68,7 +68,7 @@ describe("Media API GET Route Handler", () => {
   });
 
   it("should return 307 redirect to presigned download URL when authorized and media is found", async () => {
-    vi.mocked(auth).mockResolvedValue({
+    (vi.mocked(auth) as any).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
     });

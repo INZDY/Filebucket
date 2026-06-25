@@ -34,14 +34,14 @@ describe("Dynamic API Routes", () => {
 
   describe("GET /api/notes/[id]", () => {
     it("should return 401 Unauthorized if no active session", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      (vi.mocked(auth) as any).mockResolvedValue(null);
       const req = new NextRequest("http://localhost/api/notes/note-123");
       const res = await getNote(req, { params: Promise.resolve({ id: "note-123" }) });
       expect(res.status).toBe(401);
     });
 
     it("should return 404 if note not found", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      (vi.mocked(auth) as any).mockResolvedValue({
         user: { id: mockUserId },
         expires: "tomorrow",
       });
@@ -52,7 +52,7 @@ describe("Dynamic API Routes", () => {
     });
 
     it("should return note details if found", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      (vi.mocked(auth) as any).mockResolvedValue({
         user: { id: mockUserId },
         expires: "tomorrow",
       });
@@ -68,14 +68,14 @@ describe("Dynamic API Routes", () => {
 
   describe("GET /api/folders/[id]", () => {
     it("should return 401 Unauthorized if no active session", async () => {
-      vi.mocked(auth).mockResolvedValue(null);
+      (vi.mocked(auth) as any).mockResolvedValue(null);
       const req = new NextRequest("http://localhost/api/folders/folder-123");
       const res = await getFolder(req, { params: Promise.resolve({ id: "folder-123" }) });
       expect(res.status).toBe(401);
     });
 
     it("should return 404 if folder not found", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      (vi.mocked(auth) as any).mockResolvedValue({
         user: { id: mockUserId },
         expires: "tomorrow",
       });
@@ -86,7 +86,7 @@ describe("Dynamic API Routes", () => {
     });
 
     it("should return folder details and contents if found", async () => {
-      vi.mocked(auth).mockResolvedValue({
+      (vi.mocked(auth) as any).mockResolvedValue({
         user: { id: mockUserId },
         expires: "tomorrow",
       });

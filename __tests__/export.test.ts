@@ -83,7 +83,7 @@ describe("ZIP Export Route Handler", () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
-    });
+    } as any);
 
     // Mock folders: "Work" in root, "Work" nested in "Work" (no collision), and another sibling "Work" in root (collision)
     const mockFolders = [
@@ -223,7 +223,7 @@ describe("ZIP Export Route Handler", () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
-    });
+    } as any);
 
     vi.mocked(prisma.folder.findMany).mockResolvedValue([]);
     vi.mocked(prisma.note.findMany).mockResolvedValue([]);

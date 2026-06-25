@@ -71,7 +71,7 @@ describe("Contextual Export API GET Route Handler", () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
-    });
+    } as any);
   });
 
   describe("Note markdown export", () => {

@@ -83,7 +83,7 @@ describe("Media Server Actions", () => {
     it("should successfully create a media asset in the root when no folders are requested", async () => {
       vi.mocked(prisma.note.findMany).mockResolvedValue([]);
       vi.mocked(prisma.mediaAsset.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.mediaAsset.create).mockImplementation(async ({ data }: any) => ({
+      (prisma.mediaAsset.create as any).mockImplementation(async ({ data }: any) => ({
         id: "media-999",
         ...data,
       }));
@@ -117,7 +117,7 @@ describe("Media Server Actions", () => {
         .mockResolvedValueOnce({ id: "assets-folder-id" } as any); // for getActiveFolder check
       vi.mocked(prisma.note.findMany).mockResolvedValue([]);
       vi.mocked(prisma.mediaAsset.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.mediaAsset.create).mockImplementation(async ({ data }: any) => ({
+      (prisma.mediaAsset.create as any).mockImplementation(async ({ data }: any) => ({
         id: "media-999",
         ...data,
       }));
@@ -143,7 +143,7 @@ describe("Media Server Actions", () => {
       vi.mocked(prisma.folder.create).mockResolvedValue({ id: "new-assets-folder-id" } as any);
       vi.mocked(prisma.note.findMany).mockResolvedValue([]);
       vi.mocked(prisma.mediaAsset.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.mediaAsset.create).mockImplementation(async ({ data }: any) => ({
+      (prisma.mediaAsset.create as any).mockImplementation(async ({ data }: any) => ({
         id: "media-999",
         ...data,
       }));
@@ -176,7 +176,7 @@ describe("Media Server Actions", () => {
         { filename: "pic 2.jpg" },
       ] as any);
 
-      vi.mocked(prisma.mediaAsset.create).mockImplementation(async ({ data }: any) => ({
+      (prisma.mediaAsset.create as any).mockImplementation(async ({ data }: any) => ({
         id: "media-999",
         ...data,
       }));
@@ -354,7 +354,7 @@ describe("Media Server Actions", () => {
 
       vi.mocked(prisma.note.findMany).mockResolvedValue([]);
       vi.mocked(prisma.mediaAsset.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.mediaAsset.create).mockImplementation(async ({ data }: any) => ({
+      (prisma.mediaAsset.create as any).mockImplementation(async ({ data }: any) => ({
         id: "media-chat-1",
         ...data,
       }));

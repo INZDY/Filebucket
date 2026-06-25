@@ -23,7 +23,7 @@ type FolderEntry = {
   name: string;
   parentId: string | null;
   parent?: {
-    deletedAt: Date | string | null;
+    deletedAt?: Date | string | null;
   } | null;
 };
 
@@ -34,7 +34,7 @@ type NoteEntry = {
   folder?: {
     id: string;
     name: string;
-    deletedAt: Date | string | null;
+    deletedAt?: Date | string | null;
   } | null;
 };
 
@@ -47,7 +47,7 @@ type MediaEntry = {
   folder?: {
     id: string;
     name: string;
-    deletedAt: Date | string | null;
+    deletedAt?: Date | string | null;
   } | null;
 };
 

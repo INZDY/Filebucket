@@ -31,7 +31,7 @@ describe("Chat API GET Route Handler", () => {
   });
 
   it("should return 401 Unauthorized if no active session", async () => {
-    vi.mocked(auth).mockResolvedValue(null);
+    (vi.mocked(auth) as any).mockResolvedValue(null);
     const req = new NextRequest("http://localhost/api/chat?folderId=folder-123");
 
     const res = await GET(req);
@@ -40,7 +40,7 @@ describe("Chat API GET Route Handler", () => {
   });
 
   it("should return 400 if folderId is missing", async () => {
-    vi.mocked(auth).mockResolvedValue({
+    (vi.mocked(auth) as any).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
     });
@@ -52,7 +52,7 @@ describe("Chat API GET Route Handler", () => {
   });
 
   it("should return 403 Forbidden if folder is not owned by the session user", async () => {
-    vi.mocked(auth).mockResolvedValue({
+    (vi.mocked(auth) as any).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
     });
@@ -66,7 +66,7 @@ describe("Chat API GET Route Handler", () => {
   });
 
   it("should return 200 with chat messages when authorized and owns the folder", async () => {
-    vi.mocked(auth).mockResolvedValue({
+    (vi.mocked(auth) as any).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
     });
@@ -106,7 +106,7 @@ describe("Chat API POST Route Handler", () => {
   });
 
   it("should return 401 Unauthorized if no active session", async () => {
-    vi.mocked(auth).mockResolvedValue(null);
+    (vi.mocked(auth) as any).mockResolvedValue(null);
     const req = new NextRequest("http://localhost/api/chat", {
       method: "POST",
       body: JSON.stringify({ content: "test", folderId: mockFolderId }),
@@ -117,7 +117,7 @@ describe("Chat API POST Route Handler", () => {
   });
 
   it("should return 400 if folderId is missing", async () => {
-    vi.mocked(auth).mockResolvedValue({
+    (vi.mocked(auth) as any).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
     });
@@ -132,7 +132,7 @@ describe("Chat API POST Route Handler", () => {
   });
 
   it("should return 400 if both content and media assets are missing/empty", async () => {
-    vi.mocked(auth).mockResolvedValue({
+    (vi.mocked(auth) as any).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
     });
@@ -147,7 +147,7 @@ describe("Chat API POST Route Handler", () => {
   });
 
   it("should return 403 Forbidden if folder is not owned by user", async () => {
-    vi.mocked(auth).mockResolvedValue({
+    (vi.mocked(auth) as any).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
     });
@@ -164,7 +164,7 @@ describe("Chat API POST Route Handler", () => {
   });
 
   it("should return 201 with created message when successful", async () => {
-    vi.mocked(auth).mockResolvedValue({
+    (vi.mocked(auth) as any).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
     });
@@ -220,7 +220,7 @@ describe("Chat API DELETE Route Handler", () => {
   });
 
   it("should return 401 Unauthorized if no active session", async () => {
-    vi.mocked(auth).mockResolvedValue(null);
+    (vi.mocked(auth) as any).mockResolvedValue(null);
     const req = new NextRequest(`http://localhost/api/chat?messageId=${mockMessageId}`, {
       method: "DELETE",
     });
@@ -230,7 +230,7 @@ describe("Chat API DELETE Route Handler", () => {
   });
 
   it("should return 400 if messageId is missing", async () => {
-    vi.mocked(auth).mockResolvedValue({
+    (vi.mocked(auth) as any).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
     });
@@ -244,7 +244,7 @@ describe("Chat API DELETE Route Handler", () => {
   });
 
   it("should return 404 Not Found if message is not found or not owned by user", async () => {
-    vi.mocked(auth).mockResolvedValue({
+    (vi.mocked(auth) as any).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
     });
@@ -259,7 +259,7 @@ describe("Chat API DELETE Route Handler", () => {
   });
 
   it("should return 204 No Content on successful soft delete", async () => {
-    vi.mocked(auth).mockResolvedValue({
+    (vi.mocked(auth) as any).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
     });
