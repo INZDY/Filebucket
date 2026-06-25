@@ -259,7 +259,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Open a markdown note in Obsidian mode and verify Tiptap renders and saves note edits. Open a Keep card and verify mixed checklist and paragraph editing works, checkbox toggles work, and files don't block initial SSR loading.
 
 ### Milestone 40: Client-Side Selection State & Shallow Routing
-*   **Status**: Completed.
+*   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Eliminate full server-side page fetches on item navigation by using client selection states and shallow routing.
 *   **Tasks**:
     *   Refactor active selection parameter checks in `app/page.tsx` and workspaces.
@@ -269,7 +269,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Click folders and notes in the sidebar tree. Verify navigation is instantaneous, URL parameters update in the address bar, and note details load dynamically without full-page server round-trips.
 
 ### Milestone 41: Optimistic UI Updates & Transition Hardenings
-*   **Status**: Completed.
+*   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Ensure action responses (renaming, trashing, checking, pinning) feel instantaneous to the user.
 *   **Tasks**:
     *   Implement optimistic UI updates for Keep card updates (checkbox state toggles, pin states, card colors, tag associations).
