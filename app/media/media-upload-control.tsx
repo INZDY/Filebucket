@@ -95,13 +95,24 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
       });
 
       // 3. Create MediaAsset metadata in DB
-      await createMediaAssetAction({
+      const createdAsset = await createMediaAssetAction({
         filename: upload.name,
         contentType: upload.file.type,
         sizeBytes: upload.size,
         r2Key,
         folderId: folderId ?? null,
       });
+
+      if (createdAsset) {
+        window.dispatchEvent(
+          new CustomEvent("vault-mutate", {
+            detail: {
+              type: "create-media",
+              mediaAsset: createdAsset,
+            },
+          })
+        );
+      }
 
       updateUploadStatus(upload.id, { status: "success", progress: 100 });
     } catch (err: unknown) {

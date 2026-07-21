@@ -117,9 +117,22 @@ export function BrowserToolbar({
       {/* Inline Folder Creation Form */}
       {isCreatingFolder && !disabled ? (
         <form
-          action={createFolderAction}
+          action={async (formData) => {
+            setIsCreatingFolder(false);
+            const name = formData.get("name") as string;
+            const parentId = (formData.get("parentId") as string) || null;
+            const tempId = `temp_folder_${Date.now()}`;
+            window.dispatchEvent(
+              new CustomEvent("vault-mutate", {
+                detail: {
+                  type: "create-folder",
+                  folder: { id: tempId, name: name || "New folder", parentId }
+                }
+              })
+            );
+            await createFolderAction(formData);
+          }}
           className="flex items-center gap-1.5 rounded-md border border-slate-800 bg-[#111318] p-1.5"
-          onSubmit={() => setIsCreatingFolder(false)}
         >
           <input type="hidden" name="parentId" value={folderId ?? ""} />
           <Input
