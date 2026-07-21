@@ -199,6 +199,41 @@ describe("FolderContentsView in ActiveWorkspace", () => {
     root.unmount();
   });
 
+  it("should render distinct Folders and Files & Media sections with folder item counts", async () => {
+    const selectedFolder = allFolders.find(f => f.id === "user-folder-1") || null;
+
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <ActiveWorkspace
+          selectedNote={null}
+          selectedMedia={null}
+          selectedFolder={selectedFolder}
+          folderTrail={[selectedFolder!]}
+          folderDestinations={[]}
+          imageMediaAssets={[]}
+          tags={[]}
+          textPreviewContent=""
+          hasVaultContent={true}
+          browserTitle="Personal Work"
+          allMediaAssets={allMediaAssets}
+          allFolders={allFolders}
+          allNotes={allNotes as Parameters<typeof ActiveWorkspace>[0]["allNotes"]}
+        />
+      );
+    });
+
+    const textContent = container.textContent || "";
+    // Verify section headers
+    expect(textContent).toContain("Folders (1)");
+    expect(textContent).toContain("Files & Media (2)");
+
+    // Verify subfolder item count (Sub-project contains 0 items)
+    expect(textContent).toContain("(0)");
+
+    root.unmount();
+  });
+
   it("should support dragging cards and dropping them on subfolders, breadcrumbs, and empty grid background", async () => {
     const { moveNoteAction } = await import("@/app/notes/actions");
     const { moveMediaAssetAction } = await import("@/app/media/actions");

@@ -764,170 +764,200 @@ export function ActiveWorkspace({
         }}
       >
         {childFolders.length > 0 || childNotes.length > 0 || childMedia.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {/* Subfolders */}
-            {childFolders.map((folder) => (
-              <Link
-                key={folder.id}
-                href={`/?folder=${folder.id}`}
-                draggable={true}
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "folder", id: folder.id }));
-                  e.dataTransfer.effectAllowed = "move";
-                }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setDragOverFolderId(folder.id);
-                }}
-                onDragLeave={() => {
-                  setDragOverFolderId(null);
-                }}
-                onDrop={(e) => {
-                  e.stopPropagation();
-                  handleDrop(folder.id, e);
-                }}
-                className={cn(
-                  "group flex flex-col justify-between p-4 rounded-xl border bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-amber-500/40 hover:shadow-[0_0_15px_rgba(245,158,11,0.05)] transition-all active:scale-95 duration-200",
-                  dragOverFolderId === folder.id ? "border-amber-500 scale-95" : "border-slate-800"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 group-hover:bg-amber-500/20 transition-all duration-200">
-                    <Folder className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-200 group-hover:text-slate-100 transition-colors">
-                      {folder.name}
-                    </p>
-                    <p className="text-xs text-slate-500">Folder</p>
-                  </div>
-                </div>
-              </Link>
-            ))}
+          <div className="space-y-6">
+            {/* Top Section: Subfolders */}
+            {childFolders.length > 0 && (
+              <div>
+                <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-1">
+                  Folders ({childFolders.length})
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                  {childFolders.map((folder) => {
+                    const folderChildFolders = allFolders.filter((f) => f.parentId === folder.id).length;
+                    const folderChildNotes = allNotes.filter((n) => n.folderId === folder.id).length;
+                    const folderChildMedia = allMediaAssets.filter((m) => m.folderId === folder.id).length;
+                    const totalItems = folderChildFolders + folderChildNotes + folderChildMedia;
 
-            {/* Notes */}
-            {childNotes.map((note) => (
-              <Link
-                key={note.id}
-                href={note.folderId ? `/?folder=${note.folderId}&note=${note.id}` : `/?note=${note.id}`}
-                draggable={true}
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "note", id: note.id }));
-                  e.dataTransfer.effectAllowed = "move";
-                }}
-                className="group flex flex-col justify-between p-4 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-purple-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.05)] transition-all active:scale-95 duration-200"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 group-hover:bg-purple-500/20 transition-all duration-200">
-                    <FileText className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-200 group-hover:text-slate-100 transition-colors">
-                      {note.title}
-                    </p>
-                    <p className="text-xs text-slate-500">Note</p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-
-            {/* Media Files */}
-            {childMedia.map((media) => {
-              const previewKind = getMediaPreviewKind(media.contentType, media.filename);
-              const isImg = previewKind === "image";
-              const isAudio = previewKind === "audio";
-              const isVideo = previewKind === "video";
-              const isPdf = previewKind === "pdf";
-
-              const Icon = isImg
-                ? ImagePlus
-                : isAudio
-                ? Music
-                : isVideo
-                ? Video
-                : isPdf
-                ? FileText
-                : FileQuestion;
-
-              const colorClass = isImg
-                ? "bg-blue-500/10 text-blue-400 border-blue-500/20 group-hover:bg-blue-500/20"
-                : isAudio
-                ? "bg-green-500/10 text-green-400 border-green-500/20 group-hover:bg-green-500/20"
-                : isVideo
-                ? "bg-orange-500/10 text-orange-400 border-orange-500/20 group-hover:bg-orange-500/20"
-                : isPdf
-                ? "bg-red-500/10 text-red-400 border-red-500/20 group-hover:bg-red-500/20"
-                : "bg-slate-500/10 text-slate-400 border-slate-500/20 group-hover:bg-slate-500/20";
-
-              const borderHoverClass = isImg
-                ? "hover:border-blue-500/40 hover:shadow-[0_0_15px_rgba(59,130,246,0.05)]"
-                : isAudio
-                ? "hover:border-green-500/40 hover:shadow-[0_0_15px_rgba(34,197,94,0.05)]"
-                : isVideo
-                ? "hover:border-orange-500/40 hover:shadow-[0_0_15px_rgba(249,115,22,0.05)]"
-                : isPdf
-                ? "hover:border-red-500/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.05)]"
-                : "hover:border-slate-500/40";
-
-              const mediaUrl = getMediaAssetUrl(media.r2Key);
-
-              return (
-                <div
-                  key={media.id}
-                  className={cn(
-                    "group relative flex flex-col justify-between p-2 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 transition-all active:scale-95 duration-200",
-                    borderHoverClass
-                  )}
-                  draggable={true}
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "media", id: media.id }));
-                    e.dataTransfer.effectAllowed = "move";
-                  }}
-                >
-                  {/* Top-Right 3-dots actions menu for move/rename/delete without previewing */}
-                  <div className="absolute top-3 right-3 z-20 opacity-80 group-hover:opacity-100 transition-opacity">
-                    <MediaActionsMenu mediaAsset={media} destinations={folderDestinations} />
-                  </div>
-
-                  <Link
-                    href={media.folderId ? `/?folder=${media.folderId}&media=${media.id}` : `/?media=${media.id}`}
-                    draggable={true}
-                    className="block w-full"
-                  >
-                    {/* Thumbnail / Media Frame */}
-                    <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-[#0d0f14] border border-slate-800/60 mb-2 flex items-center justify-center">
-                      {isImg && mediaUrl ? (
-                        <img
-                          src={mediaUrl}
-                          alt={media.filename}
-                          className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105 duration-300"
-                        />
-                      ) : isVideo && mediaUrl ? (
-                        <video
-                          src={mediaUrl}
-                          preload="metadata"
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      ) : (
-                        <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-all duration-200", colorClass)}>
-                          <Icon className="h-5 w-5" />
+                    return (
+                      <Link
+                        key={folder.id}
+                        href={`/?folder=${folder.id}`}
+                        draggable={true}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "folder", id: folder.id }));
+                          e.dataTransfer.effectAllowed = "move";
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDragOverFolderId(folder.id);
+                        }}
+                        onDragLeave={() => {
+                          setDragOverFolderId(null);
+                        }}
+                        onDrop={(e) => {
+                          e.stopPropagation();
+                          handleDrop(folder.id, e);
+                        }}
+                        className={cn(
+                          "group flex items-center justify-between h-12 px-3 rounded-xl border bg-[#14161d]/60 hover:bg-[#1a1d26] hover:border-amber-500/40 hover:shadow-[0_0_15px_rgba(245,158,11,0.05)] transition-all active:scale-95 duration-200",
+                          dragOverFolderId === folder.id ? "border-amber-500 scale-95" : "border-slate-800/80"
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 group-hover:bg-amber-500/20 transition-all duration-200">
+                            <Folder className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-slate-100 transition-colors">
+                              {folder.name}
+                            </p>
+                            <p className="text-[10px] text-slate-500 font-medium">({totalItems})</p>
+                          </div>
                         </div>
-                      )}
-                    </div>
-
-                    <div className="min-w-0 px-1 pb-1">
-                      <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-slate-100 transition-colors" title={media.filename}>
-                        {media.filename}
-                      </p>
-                      <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider font-medium">
-                        {isImg ? "Image" : isVideo ? "Video" : isAudio ? "Audio" : isPdf ? "PDF" : "File"}
-                      </p>
-                    </div>
-                  </Link>
+                      </Link>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </div>
+            )}
+
+            {/* Bottom Section: Files & Media */}
+            {(childNotes.length > 0 || childMedia.length > 0) && (
+              <div>
+                {childFolders.length > 0 && (
+                  <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-1">
+                    Files & Media ({childNotes.length + childMedia.length})
+                  </h3>
+                )}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  {/* Notes */}
+                  {childNotes.map((note) => (
+                    <Link
+                      key={note.id}
+                      href={note.folderId ? `/?folder=${note.folderId}&note=${note.id}` : `/?note=${note.id}`}
+                      draggable={true}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "note", id: note.id }));
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
+                      className="group flex flex-col justify-between p-3 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-purple-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.05)] transition-all active:scale-95 duration-200"
+                    >
+                      <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-[#0d0f14] border border-purple-500/10 mb-2 flex items-center justify-center">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 group-hover:bg-purple-500/20 transition-all duration-200">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                      </div>
+                      <div className="min-w-0 px-1 pb-1">
+                        <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-slate-100 transition-colors" title={note.title}>
+                          {note.title}
+                        </p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider font-medium">
+                          Note
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+
+                  {/* Media Files */}
+                  {childMedia.map((media) => {
+                    const previewKind = getMediaPreviewKind(media.contentType, media.filename);
+                    const isImg = previewKind === "image";
+                    const isAudio = previewKind === "audio";
+                    const isVideo = previewKind === "video";
+                    const isPdf = previewKind === "pdf";
+
+                    const Icon = isImg
+                      ? ImagePlus
+                      : isAudio
+                      ? Music
+                      : isVideo
+                      ? Video
+                      : isPdf
+                      ? FileText
+                      : FileQuestion;
+
+                    const colorClass = isImg
+                      ? "bg-blue-500/10 text-blue-400 border-blue-500/20 group-hover:bg-blue-500/20"
+                      : isAudio
+                      ? "bg-green-500/10 text-green-400 border-green-500/20 group-hover:bg-green-500/20"
+                      : isVideo
+                      ? "bg-orange-500/10 text-orange-400 border-orange-500/20 group-hover:bg-orange-500/20"
+                      : isPdf
+                      ? "bg-red-500/10 text-red-400 border-red-500/20 group-hover:bg-red-500/20"
+                      : "bg-slate-500/10 text-slate-400 border-slate-500/20 group-hover:bg-slate-500/20";
+
+                    const borderHoverClass = isImg
+                      ? "hover:border-blue-500/40 hover:shadow-[0_0_15px_rgba(59,130,246,0.05)]"
+                      : isAudio
+                      ? "hover:border-green-500/40 hover:shadow-[0_0_15px_rgba(34,197,94,0.05)]"
+                      : isVideo
+                      ? "hover:border-orange-500/40 hover:shadow-[0_0_15px_rgba(249,115,22,0.05)]"
+                      : isPdf
+                      ? "hover:border-red-500/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.05)]"
+                      : "hover:border-slate-500/40";
+
+                    const mediaUrl = getMediaAssetUrl(media.r2Key);
+
+                    return (
+                      <div
+                        key={media.id}
+                        className={cn(
+                          "group relative flex flex-col justify-between p-2 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 transition-all active:scale-95 duration-200",
+                          borderHoverClass
+                        )}
+                        draggable={true}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "media", id: media.id }));
+                          e.dataTransfer.effectAllowed = "move";
+                        }}
+                      >
+                        {/* Top-Right 3-dots actions menu for move/rename/delete without previewing */}
+                        <div className="absolute top-3 right-3 z-20 opacity-80 group-hover:opacity-100 transition-opacity">
+                          <MediaActionsMenu mediaAsset={media} destinations={folderDestinations} />
+                        </div>
+
+                        <Link
+                          href={media.folderId ? `/?folder=${media.folderId}&media=${media.id}` : `/?media=${media.id}`}
+                          draggable={true}
+                          className="block w-full"
+                        >
+                          {/* Thumbnail / Media Frame */}
+                          <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-[#0d0f14] border border-slate-800/60 mb-2 flex items-center justify-center">
+                            {isImg && mediaUrl ? (
+                              <img
+                                src={mediaUrl}
+                                alt={media.filename}
+                                className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105 duration-300"
+                              />
+                            ) : isVideo && mediaUrl ? (
+                              <video
+                                src={mediaUrl}
+                                preload="metadata"
+                                className="w-full h-full object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-all duration-200", colorClass)}>
+                                <Icon className="h-5 w-5" />
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="min-w-0 px-1 pb-1">
+                            <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-slate-100 transition-colors" title={media.filename}>
+                              {media.filename}
+                            </p>
+                            <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider font-medium">
+                              {isImg ? "Image" : isVideo ? "Video" : isAudio ? "Audio" : isPdf ? "PDF" : "File"}
+                            </p>
+                          </div>
+                        </Link>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
