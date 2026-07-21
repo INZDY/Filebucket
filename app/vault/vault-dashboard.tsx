@@ -390,9 +390,12 @@ export function VaultDashboard({
         isPinned?: boolean;
         checkboxIndex?: number;
         checked?: boolean;
+        folder?: FolderListEntry;
+        mediaAsset?: MediaListEntry;
+        note?: NoteListEntry;
       }>;
       
-      const { type, folderId, noteId, mediaAssetId, name, parentId, color, isPinned, checkboxIndex, checked } = customEvent.detail;
+      const { type, folderId, noteId, mediaAssetId, name, parentId, color, isPinned, checkboxIndex, checked, folder, mediaAsset, note } = customEvent.detail;
 
       if (type === "rename-folder" && folderId && name) {
         setFolders(prev => prev.map(f => f.id === folderId ? { ...f, name } : f));
@@ -473,17 +476,15 @@ export function VaultDashboard({
             updatedAt: new Date(),
           };
         }));
-      else if (type === "create-folder" && (customEvent.detail as any).folder) {
-        const newFolder = (customEvent.detail as any).folder;
-        setFolders(prev => prev.some(f => f.id === newFolder.id) ? prev : [...prev, newFolder]);
       }
-      else if (type === "create-media" && (customEvent.detail as any).mediaAsset) {
-        const newMedia = (customEvent.detail as any).mediaAsset;
-        setMediaAssets(prev => prev.some(m => m.id === newMedia.id) ? prev : [...prev, newMedia]);
+      else if (type === "create-folder" && folder) {
+        setFolders(prev => prev.some(f => f.id === folder.id) ? prev : [...prev, folder]);
       }
-      else if (type === "create-note" && (customEvent.detail as any).note) {
-        const newNote = (customEvent.detail as any).note;
-        setNotes(prev => prev.some(n => n.id === newNote.id) ? prev : [...prev, newNote]);
+      else if (type === "create-media" && mediaAsset) {
+        setMediaAssets(prev => prev.some(m => m.id === mediaAsset.id) ? prev : [...prev, mediaAsset]);
+      }
+      else if (type === "create-note" && note) {
+        setNotes(prev => prev.some(n => n.id === note.id) ? prev : [...prev, note]);
       }
     };
 

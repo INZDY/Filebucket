@@ -7,9 +7,6 @@ import { Markdown } from "@tiptap/markdown";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import Image from "@tiptap/extension-image";
-import { Extension } from "@tiptap/core";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { cn } from "@/lib/utils";
 
 type FilebucketEditorProps = {
