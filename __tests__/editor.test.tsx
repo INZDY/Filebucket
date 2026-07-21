@@ -34,7 +34,7 @@ describe("FilebucketEditor Component (TDD)", () => {
     document.body.removeChild(container);
   });
 
-  it("should auto-sort checked checklist items to the bottom of the list block", async () => {
+  it("should preserve original item order when checklist items are checked (no auto-sorting)", async () => {
     const container = document.createElement("div");
     document.body.appendChild(container);
     const root = createRoot(container);
@@ -73,24 +73,21 @@ describe("FilebucketEditor Component (TDD)", () => {
       });
     });
 
-    // Verify that the markdown output moved Task 1 to the bottom and checked it
+    // Verify that Task 1 stays at the top (checked) and does not jump to the bottom
     const output = editorInstance.getMarkdown();
-    
-    // Clean up spacing and normalise formatting characters
     const normalised = output.replace(/\r/g, "").trim();
     
-    // Expect Task 2 and Task 3 to remain unchecked at the top, and Task 1 checked at the bottom
+    expect(normalised).toContain("- [x] Task 1");
     expect(normalised).toContain("- [ ] Task 2");
     expect(normalised).toContain("- [ ] Task 3");
-    expect(normalised).toContain("- [x] Task 1");
 
-    // The sequential order should be: Task 2 -> Task 3 -> Task 1 (checked)
+    // The sequential order should remain: Task 1 (checked) -> Task 2 -> Task 3
+    const idx1 = normalised.indexOf("Task 1");
     const idx2 = normalised.indexOf("Task 2");
     const idx3 = normalised.indexOf("Task 3");
-    const idx1 = normalised.indexOf("Task 1");
 
+    expect(idx1).toBeLessThan(idx2);
     expect(idx2).toBeLessThan(idx3);
-    expect(idx3).toBeLessThan(idx1);
 
     // Clean up
     await act(async () => {

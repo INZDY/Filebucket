@@ -12,66 +12,6 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { cn } from "@/lib/utils";
 
-// Custom ProseMirror plugin to sort checked checklist items to the bottom of their parent list
-const AutoSortChecklist = Extension.create({
-  name: "autoSortChecklist",
-
-  addProseMirrorPlugins() {
-    return [
-      new Plugin({
-        key: new PluginKey("autoSortChecklist"),
-        appendTransaction(transactions, oldState, newState) {
-          // Only trigger if document has changed
-          if (transactions.length === 0 || !transactions.some(tr => tr.docChanged)) {
-            return null;
-          }
-
-          const tr = newState.tr;
-          let modified = false;
-
-          tr.doc.descendants((node, pos) => {
-            if (node.type.name === "taskList") {
-              const children: ProseMirrorNode[] = [];
-              let checkedCount = 0;
-              let outOfOrder = false;
-
-              node.forEach((child) => {
-                const isChecked = !!child.attrs.checked;
-                children.push(child);
-                if (isChecked) {
-                  checkedCount++;
-                } else {
-                  if (checkedCount > 0) {
-                    outOfOrder = true;
-                  }
-                }
-              });
-
-              if (outOfOrder) {
-                // Sort children: unchecked items first, checked items last
-                const sortedChildren = children.slice().sort((a, b) => {
-                  const aChecked = !!a.attrs.checked;
-                  const bChecked = !!b.attrs.checked;
-                  if (aChecked === bChecked) return 0;
-                  return aChecked ? 1 : -1;
-                });
-
-                const listStart = pos + 1;
-                const listEnd = pos + node.nodeSize - 1;
-                tr.replaceWith(listStart, listEnd, sortedChildren);
-                modified = true;
-                return false; // Skip descendants as we modified this node
-              }
-            }
-          });
-
-          return modified ? tr : null;
-        }
-      })
-    ];
-  }
-});
-
 type FilebucketEditorProps = {
   markdown: string;
   onChange: (markdown: string) => void;
@@ -106,8 +46,7 @@ export function FilebucketEditor({
       }),
       Image.configure({
         allowBase64: true
-      }),
-      AutoSortChecklist
+      })
     ],
     content: markdown,
     // Notify Tiptap that content is Markdown, not HTML
