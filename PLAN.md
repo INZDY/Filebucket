@@ -311,3 +311,33 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
         *   Reduce card outer padding from `p-4` to `p-2` with compact truncated filename footers for maximum visual area and higher density.
         *   Add a top-right 3-dots overflow menu button to every file card, right-click context menu listener, and mobile long-press / touch sheet support to trigger Move, Rename, and Move to Trash operations directly on cards without loading file previews first.
 *   **Verification**: View a folder containing images/videos in Files Mode; verify live image/video thumbnails render inside compact `p-2` aspect-video cards. Click the 3-dots menu on a card without previewing; verify Move, Rename, and Delete work directly from the grid view and update client state instantly on mobile and desktop.
+
+### Milestone 46: Checkbox Line Alignment & Layout Fixes
+*   **Status**: Completed & Verified (July 2026).
+*   **Goal**: Ensure task list / checklist text is perfectly aligned on the same line as checkboxes across Obsidian Notes and Keep Notes without breaking into new lines.
+*   **Tasks**:
+    *   Enforce inline flex layout contract in `app/globals.css` for `.ProseMirror li[data-type="taskItem"]`, `.prose li.task-list-item`, and `keep-workspace.tsx` ReactMarkdown `li` items: `display: flex; align-items: flex-start; gap: 0.5rem;`.
+    *   Force descendant `<p>` and `<div>` tags inside task item `<li>` elements to `display: inline; margin: 0;` to prevent block line breaks beneath the checkbox input.
+    *   Offset checkbox vertical position (`margin-top: 0.2rem` / `translate-y-[2px]`) to align with the first line's font cap-height.
+*   **Verification**: Create multi-line and single-line task list items in both Obsidian Note Editor and Keep Note cards; verify text remains on the same top line next to the checkbox across viewports and line wraps cleanly under text rather than under the checkbox icon.
+
+### Milestone 47: Mode-Aware Checkbox Theme Colors (Purple & Amber/Yellow)
+*   **Status**: Completed & Verified (July 2026).
+*   **Goal**: Theme checkboxes dynamically based on active application mode (Purple for Obsidian Notes, Amber/Yellow for Keep Notes).
+*   **Tasks**:
+    *   In `app/globals.css`, scope checkbox rules by editor/workspace mode wrapper classes (`.notes-editor` / Obsidian Notes Mode vs `.keep-editor` / `.keep-card-container` / Keep Mode).
+    *   Set checked state background (`#8b5cf6` / `bg-purple-600`), borders (`#a855f7`), and focus rings to Purple under Obsidian Notes Mode.
+    *   Set checked state background (`#f59e0b` / `bg-amber-500`), borders (`#fbbf24`), and focus rings to Amber/Yellow under Keep Notes Mode.
+    *   Maintain subtle slate (`#64748b` / slate-500) borders in unchecked state with mode-specific hover glow tints.
+*   **Verification**: Check task items in Obsidian Notes Mode; verify checked boxes fill in Purple. Check task items in Keep Notes Mode (workspace cards and modal editor); verify checked boxes fill in Amber/Yellow.
+
+### Milestone 48: Files Mode Folder Contents View Section Split & Card Refinement
+*   **Status**: Completed & Verified (July 2026).
+*   **Goal**: Restructure Folder Contents View into distinct Folders and Files/Notes sections to eliminate empty card space and polish card layouts.
+*   **Tasks**:
+    *   Refactor `FolderContentsView` in `app/vault/active-workspace.tsx` to separate content into two sections:
+        *   **Folders Section (Top)**: Compact, fixed-height subfolder pills (`h-14` / compact flex cards) with Folder icon, folder name, item count badge (e.g. `"X items"`), and top-right 3-dots overflow menu (`FolderActionsMenu`).
+        *   **Files & Media Section (Bottom)**: 16:9 aspect-video thumbnail cards grid for media assets and notes with metadata footers and 3-dots overflow menus.
+    *   Eliminate empty space under folder cards by giving folders a dedicated compact layout separate from tall file thumbnail heights.
+    *   Ensure drag-and-drop support continues working seamlessly for both subfolder pills and file thumbnail cards.
+*   **Verification**: Open Files Mode in a folder containing both subfolders and media files; verify subfolders display in a clean compact top section with item counts and no empty vertical space, while media assets display in a responsive 16:9 thumbnail grid below. Verify drag-and-drop and context menus function properly in both sections.
