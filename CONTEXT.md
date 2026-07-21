@@ -20,7 +20,7 @@ The primary mode of the vault, active at the root level and inside any non-reser
 _Avoid_: File vault, root directory, public folder
 
 **Keep Note**:
-A specialized note that exists only as a direct child of the reserved `Quick Notes/` folder. It is rendered in a grid layout, supports background card colors, can be pinned/unpinned, and can be viewed/edited as a rich-text document supporting mixed text and checklist items. Checked checklist items are automatically grouped at the bottom of their checklist block.
+A specialized note that exists only as a direct child of the reserved `Quick Notes/` folder. It is rendered in a grid layout, supports background card colors, can be pinned/unpinned, and can be viewed/edited as a rich-text document supporting mixed text and checklist items. Checklist items preserve their original order when checked.
 _Avoid_: Sticky note, keep card, board item
 
 **Chat Channel**:
@@ -145,7 +145,7 @@ Editing behavior where note title, body, or card changes are saved automatically
 _Avoid_: Manual save, draft mode
 
 **Folder Contents View**:
-A workspace layout in the Main Content Pane, active in Files Mode when a folder (or the vault root) is selected without an active media asset preview. It displays all direct children (subfolders, media assets, and notes) of the selected folder as a grid or list. Selecting a child folder navigates into it, selecting a media asset opens its preview, and selecting a note switches the mode to Obsidian Notes and opens the note. It supports dragging folders, notes, and media asset cards, and dropping items onto subfolder cards, the top location breadcrumbs, or the main pane background to trigger move actions under mode boundary validation rules.
+A workspace layout in the Main Content Pane, active in Files Mode when a folder (or the vault root) is selected without an active media asset preview. It displays all direct children (subfolders, media assets, and notes) of the selected folder in a compact grid layout featuring live image and video thumbnail previews with compact padding. Selecting a child folder navigates into it, selecting a media asset opens its preview, and selecting a note switches the mode to Obsidian Notes and opens the note. Each item card provides a top-right overflow menu, right-click context menu, and mobile long-press sheet to execute file operations (Move, Rename, Delete) directly without requiring the file to be loaded in preview first. It supports dragging items and dropping onto subfolder cards, location breadcrumbs, or the grid background.
 _Avoid_: Folder grid, directory explorer, vault listing
 
 **Special Folders Toggle**:

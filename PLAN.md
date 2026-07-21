@@ -276,3 +276,38 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Implement optimistic UI updates for folder explorer row operations (inline rename, trash, moves).
     *   Add smooth fade/slide CSS transitions and content skeletons to the workspace pane to mask dynamic API data fetches.
 *   **Verification**: Perform folder renames, keep note pinning, and checklist checkmarks; verify UI updates instantly in the browser without waiting for server responses. Check that loading skeletons show gracefully during load times.
+
+### Milestone 42: Editor Padding, Checklist Ordering & Checkbox Styling Polish
+*   **Status**: Planned.
+*   **Goal**: Adjust Obsidian editor top/bottom/side padding, remove `AutoSortChecklist` plugin, and unify checkbox sizing and borders across Notes and Quick Notes.
+*   **Tasks**:
+    *   Update `.notes-editor.ProseMirror` padding in `app/globals.css` to `32px 24px 32px` (down from `96px 20px 72px`) to reduce top whitespace.
+    *   Remove the `AutoSortChecklist` extension from `components/filebucket-editor.tsx` so checked items retain their exact original order in both Notes and Quick Notes.
+    *   Update checkbox styles in `app/globals.css`: increase size from 14px to 18px (`1.125rem`), unify border color to light gray (`#64748b` / slate-500) for unchecked checkboxes across Notes and Quick Notes, and set filled Primary Blue background with white checkmark when checked.
+*   **Verification**: Open an Obsidian note; verify top padding is 32px. Toggle task checkboxes in Notes and Keep Notes; verify items do not auto-sort to the bottom, checkboxes are 18px with light gray border, and checked state fills with Primary Blue.
+
+### Milestone 43: Landing Page Branding & Favicon Integration
+*   **Status**: Planned.
+*   **Goal**: Update landing/login page color scheme to brand Blue and configure app-wide favicon.
+*   **Tasks**:
+    *   Update `app/login/page.tsx`: replace all purple/indigo background glows, gradient headings (`from-blue-600 to-indigo-600`), icon badges, input focus rings, and button gradients with cohesive brand Blue accents.
+    *   Configure `app/layout.tsx` metadata with `icons: { icon: "/icon.svg", shortcut: "/icon.svg", apple: "/icon.svg" }` and set app routing favicon so all browsers and PWA devices load `public/icon.svg` as the favicon.
+*   **Verification**: Navigate to `/login`; verify blue primary theme branding across headings, buttons, and badges. Check browser tab title bar; verify the app favicon renders cleanly.
+
+### Milestone 44: Skeleton Loading Bug Fix & Instant Directory State Sync
+*   **Status**: Planned.
+*   **Goal**: Resolve stuck skeleton loading states and eliminate page reloads for folder creation, file uploads, and file deletions.
+*   **Tasks**:
+    *   Fix stuck skeleton bug in `app/vault/vault-dashboard.tsx`: reset `isNoteLoading` and `isFolderLoading` state flags to `false` on mode transitions and navigation updates, and add a safety fetch timeout so skeletons never hang indefinitely.
+    *   Update folder creation (`createFolderAction`), media file uploads (`MediaUploadControl`), and file deletion handlers in `browser-toolbar.tsx`, `media-upload-control.tsx`, and action menus to dispatch `vault-mutate` custom events for immediate client state updates (`folders`, `mediaAssets`, `notes`) alongside `router.refresh()`.
+*   **Verification**: Rapidly switch between modes and click notes/folders; verify loading skeletons never hang. Create folders and upload/delete files; verify items appear and disappear immediately without needing a manual browser page reload.
+
+### Milestone 45: Thumbnail Grid Rendering, Compact Card Layout & Direct File Operations
+*   **Status**: Planned.
+*   **Goal**: Render live image/video thumbnails, compact card grid padding, and enable card file operations (Move/Rename/Delete) without preview loading.
+*   **Tasks**:
+    *   Update `FolderContentsView` in `app/vault/active-workspace.tsx`:
+        *   Render live `<img>` thumbnails for image media and `<video>` metadata thumbnails for video media inside an `aspect-video` container.
+        *   Reduce card outer padding from `p-4` to `p-2` with compact truncated filename footers for maximum visual area and higher density.
+        *   Add a top-right 3-dots overflow menu button to every file card, right-click context menu listener, and mobile long-press / touch sheet support to trigger Move, Rename, and Move to Trash operations directly on cards without loading file previews first.
+*   **Verification**: View a folder containing images/videos in Files Mode; verify live image/video thumbnails render inside compact `p-2` aspect-video cards. Click the 3-dots menu on a card without previewing; verify Move, Rename, and Delete work directly from the grid view and update client state instantly on mobile and desktop.
