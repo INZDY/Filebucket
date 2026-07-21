@@ -870,32 +870,62 @@ export function ActiveWorkspace({
                 ? "hover:border-red-500/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.05)]"
                 : "hover:border-slate-500/40";
 
+              const mediaUrl = getMediaAssetUrl(media.r2Key);
+
               return (
-                <Link
+                <div
                   key={media.id}
-                  href={media.folderId ? `/?folder=${media.folderId}&media=${media.id}` : `/?media=${media.id}`}
+                  className={cn(
+                    "group relative flex flex-col justify-between p-2 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 transition-all active:scale-95 duration-200",
+                    borderHoverClass
+                  )}
                   draggable={true}
                   onDragStart={(e) => {
                     e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "media", id: media.id }));
                     e.dataTransfer.effectAllowed = "move";
                   }}
-                  className={cn(
-                    "group flex flex-col justify-between p-4 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 transition-all active:scale-95 duration-200",
-                    borderHoverClass
-                  )}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-all duration-200", colorClass)}>
-                      <Icon className="h-5 w-5" />
+                  {/* Top-Right 3-dots actions menu for move/rename/delete without previewing */}
+                  <div className="absolute top-3 right-3 z-20 opacity-80 group-hover:opacity-100 transition-opacity">
+                    <MediaActionsMenu mediaAsset={media} destinations={folderDestinations} />
+                  </div>
+
+                  <Link
+                    href={media.folderId ? `/?folder=${media.folderId}&media=${media.id}` : `/?media=${media.id}`}
+                    draggable={true}
+                    className="block w-full"
+                  >
+                    {/* Thumbnail / Media Frame */}
+                    <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-[#0d0f14] border border-slate-800/60 mb-2 flex items-center justify-center">
+                      {isImg && mediaUrl ? (
+                        <img
+                          src={mediaUrl}
+                          alt={media.filename}
+                          className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105 duration-300"
+                        />
+                      ) : isVideo && mediaUrl ? (
+                        <video
+                          src={mediaUrl}
+                          preload="metadata"
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-all duration-200", colorClass)}>
+                          <Icon className="h-5 w-5" />
+                        </div>
+                      )}
                     </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-200 group-hover:text-slate-100 transition-colors">
+
+                    <div className="min-w-0 px-1 pb-1">
+                      <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-slate-100 transition-colors" title={media.filename}>
                         {media.filename}
                       </p>
-                      <p className="text-xs text-slate-500">File</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider font-medium">
+                        {isImg ? "Image" : isVideo ? "Video" : isAudio ? "Audio" : isPdf ? "PDF" : "File"}
+                      </p>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+                </div>
               );
             })}
           </div>
