@@ -27,7 +27,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       {/* Left Column: Landing / Marketing Feature Display (Visible on desktop) */}
       <section className="hidden lg:flex flex-col justify-between p-16 bg-gradient-to-br from-[#0c0c0e] via-[#0f0f13] to-[#0a0a0d] border-r border-slate-800/40 relative">
         {/* Subtle backdrop glow */}
-        <div className="absolute top-1/4 left-1/4 -z-10 h-72 w-72 rounded-full bg-purple-600/10 blur-[100px] pointer-events-none" />
+        <div className="absolute top-1/4 left-1/4 -z-10 h-72 w-72 rounded-full bg-blue-600/10 blur-[100px] pointer-events-none" />
         
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -46,7 +46,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <div className="space-y-4">
             <h2 className="text-4xl font-extrabold tracking-tight text-white leading-tight">
               Your personal, quiet <br />
-              <span className="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
                 markdown & media vault
               </span>
             </h2>
@@ -57,7 +57,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
           <div className="grid grid-cols-1 gap-5 pt-4">
             <div className="flex items-start gap-4 p-4 rounded-xl bg-slate-900/40 border border-slate-800/50 backdrop-blur-md">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-900/30 border border-purple-800/40 text-purple-400">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-900/30 border border-blue-800/40 text-blue-400">
                 <BookOpenText className="h-5 w-5" />
               </div>
               <div>
@@ -67,7 +67,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </div>
 
             <div className="flex items-start gap-4 p-4 rounded-xl bg-slate-900/40 border border-slate-800/50 backdrop-blur-md">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-900/30 border border-purple-800/40 text-purple-400">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-900/30 border border-blue-800/40 text-blue-400">
                 <ImagePlus className="h-5 w-5" />
               </div>
               <div>
@@ -77,7 +77,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </div>
 
             <div className="flex items-start gap-4 p-4 rounded-xl bg-slate-900/40 border border-slate-800/50 backdrop-blur-md">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-900/30 border border-purple-800/40 text-purple-400">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-900/30 border border-blue-800/40 text-blue-400">
                 <Tags className="h-5 w-5" />
               </div>
               <div>
@@ -87,7 +87,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </div>
 
             <div className="flex items-start gap-4 p-4 rounded-xl bg-slate-900/40 border border-slate-800/50 backdrop-blur-md">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-900/30 border border-purple-800/40 text-purple-400">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-900/30 border border-blue-800/40 text-blue-400">
                 <Download className="h-5 w-5" />
               </div>
               <div>
@@ -124,10 +124,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="w-full max-w-md">
           <Card className="glass-panel border-slate-800/80 bg-slate-950/40 shadow-2xl relative overflow-hidden">
             {/* Fine border decoration */}
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-purple-500/35 to-transparent" />
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/35 to-transparent" />
             
             <CardHeader className="space-y-3 pb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-950/40 border border-purple-800/30 text-purple-400 shadow-[0_0_10px_rgba(139,92,246,0.1)]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-950/40 border border-blue-800/30 text-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.1)]">
                 <LockKeyhole className="h-5 w-5" />
               </div>
               <div>
@@ -154,7 +154,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                       placeholder="admin@filebucket.local"
                       required
                       type="email"
-                      className="glass-input h-10 bg-slate-900/60 border-slate-800 text-slate-200 placeholder-slate-500 focus-visible:ring-1 focus-visible:ring-purple-500 text-sm"
+                      className="glass-input h-10 bg-slate-900/60 border-slate-800 text-slate-200 placeholder-slate-500 focus-visible:ring-1 focus-visible:ring-blue-500 text-sm"
                     />
                   </div>
 
@@ -169,7 +169,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                       placeholder="Enter password"
                       required
                       type="password"
-                      className="glass-input h-10 bg-slate-900/60 border-slate-800 text-slate-200 placeholder-slate-500 focus-visible:ring-1 focus-visible:ring-purple-500 text-sm"
+                      className="glass-input h-10 bg-slate-900/60 border-slate-800 text-slate-200 placeholder-slate-500 focus-visible:ring-1 focus-visible:ring-blue-500 text-sm"
                     />
                   </div>
 
@@ -181,7 +181,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                   )}
 
                   <Button 
-                    className="w-full h-10 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium shadow-md shadow-purple-600/10 hover:shadow-purple-600/25 transition-all duration-200" 
+                    className="w-full h-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium shadow-md shadow-blue-600/10 hover:shadow-blue-600/25 transition-all duration-200" 
                     type="submit"
                   >
                     Sign in

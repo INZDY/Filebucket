@@ -8,6 +8,11 @@ import { PwaRegistry } from "@/components/pwa-registry";
 export const metadata: Metadata = {
   title: "Filebucket",
   description: "Private file and note vault",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
