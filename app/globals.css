@@ -323,7 +323,8 @@
   }
 
   .ProseMirror li[data-type="taskItem"],
-  .ProseMirror li[data-checked] {
+  .ProseMirror li[data-checked],
+  .prose li.task-list-item {
     display: flex !important;
     align-items: flex-start;
     gap: 0.5rem;
@@ -332,8 +333,11 @@
   }
 
   .ProseMirror li[data-type="taskItem"] p,
-  .ProseMirror li[data-checked] p {
+  .ProseMirror li[data-checked] p,
+  .prose li.task-list-item p {
     margin: 0 !important;
+    display: inline !important;
+    line-height: 1.5;
   }
 
   .ProseMirror li[data-type="taskItem"] > label,
@@ -342,7 +346,8 @@
     pointer-events: auto;
     display: flex;
     align-items: center;
-    margin-top: 0.25rem;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
   }
 
   /* Checkbox base style */
@@ -365,6 +370,7 @@
     position: relative;
     transition: all 0.2s ease;
     flex-shrink: 0;
+    margin-top: 0.2rem;
   }
 
   /* Vector checkmark for checked state */
@@ -381,27 +387,6 @@
     transform: rotate(45deg) translate(-0.5px, -1px);
   }
 
-  /* Unified Light Gray Unchecked & Primary Blue Checked Checkboxes */
-  .ProseMirror li[data-type="taskItem"] > label input[type="checkbox"],
-  .ProseMirror li[data-checked] > label input[type="checkbox"],
-  .prose li.task-list-item > input[type="checkbox"],
-  input[type="checkbox"].keep-preview-checkbox {
-    border-color: #64748b;
-  }
-  .ProseMirror li[data-type="taskItem"] > label input[type="checkbox"]:hover,
-  .ProseMirror li[data-checked] > label input[type="checkbox"]:hover,
-  .prose li.task-list-item > input[type="checkbox"]:hover,
-  input[type="checkbox"].keep-preview-checkbox:hover {
-    border-color: #94a3b8;
-  }
-  .ProseMirror li[data-type="taskItem"] > label input[type="checkbox"]:checked,
-  .ProseMirror li[data-checked] > label input[type="checkbox"]:checked,
-  .prose li.task-list-item > input[type="checkbox"]:checked,
-  input[type="checkbox"].keep-preview-checkbox:checked {
-    background-color: #2563eb;
-    border-color: #3b82f6;
-  }
-
   .ProseMirror li[data-type="taskItem"] > div,
   .ProseMirror li[data-checked] > div {
     flex: 1;
@@ -413,41 +398,45 @@
     color: #64748b;
   }
 
-  /* Support standard remark-gfm checklist items in markdown previews */
-  .prose li.task-list-item {
-    display: flex !important;
-    align-items: flex-start;
-    gap: 0.5rem;
-    padding-left: 0 !important;
+  /* Mode-Aware Checkbox Theme Colors */
+
+  /* 1. Obsidian Notes Mode: Purple Theme */
+  .notes-editor li[data-type="taskItem"] > label input[type="checkbox"],
+  .notes-editor li[data-checked] > label input[type="checkbox"],
+  .notes-editor li.task-list-item > input[type="checkbox"] {
+    border-color: #64748b;
   }
-  .prose li.task-list-item::before {
-    display: none !important;
-    content: none !important;
+  .notes-editor li[data-type="taskItem"] > label input[type="checkbox"]:hover,
+  .notes-editor li[data-checked] > label input[type="checkbox"]:hover,
+  .notes-editor li.task-list-item > input[type="checkbox"]:hover {
+    border-color: #a855f7;
   }
-  .prose li.task-list-item > input[type="checkbox"] {
-    margin-top: 0.25rem;
-    margin-right: 0.25rem;
-    border-color: rgba(245, 158, 11, 0.4);
-  }
-  .prose li.task-list-item > input[type="checkbox"]:hover {
-    border-color: rgba(245, 158, 11, 0.7);
-  }
-  .prose li.task-list-item > input[type="checkbox"]:checked {
-    background-color: #f59e0b;
-    border-color: #fbbf24;
-  }
-  .prose li.task-list-item p {
-    margin: 0 !important;
-    display: inline !important;
+  .notes-editor li[data-type="taskItem"] > label input[type="checkbox"]:checked,
+  .notes-editor li[data-checked] > label input[type="checkbox"]:checked,
+  .notes-editor li.task-list-item > input[type="checkbox"]:checked {
+    background-color: #8b5cf6;
+    border-color: #a855f7;
   }
 
-  /* Keep Workspace card preview checkboxes */
+  /* 2. Keep Mode: Amber/Yellow Theme */
+  .keep-editor li[data-type="taskItem"] > label input[type="checkbox"],
+  .keep-editor li[data-checked] > label input[type="checkbox"],
+  .keep-editor li.task-list-item > input[type="checkbox"],
+  .keep-card-container input[type="checkbox"],
   input[type="checkbox"].keep-preview-checkbox {
-    border-color: rgba(245, 158, 11, 0.4);
+    border-color: rgba(245, 158, 11, 0.5);
   }
+  .keep-editor li[data-type="taskItem"] > label input[type="checkbox"]:hover,
+  .keep-editor li[data-checked] > label input[type="checkbox"]:hover,
+  .keep-editor li.task-list-item > input[type="checkbox"]:hover,
+  .keep-card-container input[type="checkbox"]:hover,
   input[type="checkbox"].keep-preview-checkbox:hover {
-    border-color: rgba(245, 158, 11, 0.7);
+    border-color: rgba(245, 158, 11, 0.8);
   }
+  .keep-editor li[data-type="taskItem"] > label input[type="checkbox"]:checked,
+  .keep-editor li[data-checked] > label input[type="checkbox"]:checked,
+  .keep-editor li.task-list-item > input[type="checkbox"]:checked,
+  .keep-card-container input[type="checkbox"]:checked,
   input[type="checkbox"].keep-preview-checkbox:checked {
     background-color: #f59e0b;
     border-color: #fbbf24;
