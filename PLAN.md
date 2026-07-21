@@ -278,7 +278,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Perform folder renames, keep note pinning, and checklist checkmarks; verify UI updates instantly in the browser without waiting for server responses. Check that loading skeletons show gracefully during load times.
 
 ### Milestone 42: Editor Padding, Checklist Ordering & Checkbox Styling Polish
-*   **Status**: Planned.
+*   **Status**: Completed & Verified (July 2026).
 *   **Goal**: Adjust Obsidian editor top/bottom/side padding, remove `AutoSortChecklist` plugin, and unify checkbox sizing and borders across Notes and Quick Notes.
 *   **Tasks**:
     *   Update `.notes-editor.ProseMirror` padding in `app/globals.css` to `32px 24px 32px` (down from `96px 20px 72px`) to reduce top whitespace.
@@ -287,7 +287,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Open an Obsidian note; verify top padding is 32px. Toggle task checkboxes in Notes and Keep Notes; verify items do not auto-sort to the bottom, checkboxes are 18px with light gray border, and checked state fills with Primary Blue.
 
 ### Milestone 43: Landing Page Branding & Favicon Integration
-*   **Status**: Planned.
+*   **Status**: Completed & Verified (July 2026).
 *   **Goal**: Update landing/login page color scheme to brand Blue and configure app-wide favicon.
 *   **Tasks**:
     *   Update `app/login/page.tsx`: replace all purple/indigo background glows, gradient headings (`from-blue-600 to-indigo-600`), icon badges, input focus rings, and button gradients with cohesive brand Blue accents.
@@ -295,7 +295,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Navigate to `/login`; verify blue primary theme branding across headings, buttons, and badges. Check browser tab title bar; verify the app favicon renders cleanly.
 
 ### Milestone 44: Skeleton Loading Bug Fix & Instant Directory State Sync
-*   **Status**: Planned.
+*   **Status**: Completed & Verified (July 2026).
 *   **Goal**: Resolve stuck skeleton loading states and eliminate page reloads for folder creation, file uploads, and file deletions.
 *   **Tasks**:
     *   Fix stuck skeleton bug in `app/vault/vault-dashboard.tsx`: reset `isNoteLoading` and `isFolderLoading` state flags to `false` on mode transitions and navigation updates, and add a safety fetch timeout so skeletons never hang indefinitely.
@@ -303,7 +303,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Rapidly switch between modes and click notes/folders; verify loading skeletons never hang. Create folders and upload/delete files; verify items appear and disappear immediately without needing a manual browser page reload.
 
 ### Milestone 45: Thumbnail Grid Rendering, Compact Card Layout & Direct File Operations
-*   **Status**: Planned.
+*   **Status**: Completed & Verified (July 2026).
 *   **Goal**: Render live image/video thumbnails, compact card grid padding, and enable card file operations (Move/Rename/Delete) without preview loading.
 *   **Tasks**:
     *   Update `FolderContentsView` in `app/vault/active-workspace.tsx`:
