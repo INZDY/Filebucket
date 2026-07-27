@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 
 import { getPresignedUploadUrlAction, createMediaAssetAction } from "@/app/media/actions";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, formatBytes } from "@/lib/utils";
 
 type UploadState = {
   id: string;
@@ -41,11 +41,7 @@ function isAccepted(file: File) {
 }
 
 function formatSize(size: number) {
-  if (size >= 1024 * 1024) {
-    return `${Math.round(size / 1024 / 1024)} MB`;
-  }
-
-  return `${Math.max(1, Math.round(size / 1024))} KB`;
+  return formatBytes(size, 1);
 }
 
 export function MediaUploadControl({ disabled, folderId }: MediaUploadControlProps) {

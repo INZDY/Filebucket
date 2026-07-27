@@ -16,7 +16,7 @@ import { restoreFolderAction, deleteFolderAction } from "@/app/folders/actions";
 import { compareAlphanumeric } from "@/lib/sorting";
 import { restoreNoteAction, deleteNoteAction } from "@/app/notes/actions";
 import { restoreMediaAssetAction, deleteMediaAssetAction } from "@/app/media/actions";
-import { getMediaAssetUrl } from "@/lib/utils";
+import { getMediaAssetUrl, formatBytes } from "@/lib/utils";
 
 type FolderEntry = {
   id: string;
@@ -176,7 +176,7 @@ export function TrashWorkspace({
         <div className="border-b border-slate-800 bg-[#191c22] px-5 py-4">
           <h2 className="text-lg font-semibold truncate">{selectedDeletedMedia.filename}</h2>
           <p className="text-xs text-slate-500 mt-1">
-            {selectedDeletedMedia.contentType} · {Math.max(1, Math.round(selectedDeletedMedia.sizeBytes / 1024))} KB
+            {selectedDeletedMedia.contentType} · {formatBytes(selectedDeletedMedia.sizeBytes)}
           </p>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto bg-[#101217] px-6 py-6 flex items-center justify-center text-sm text-slate-400">

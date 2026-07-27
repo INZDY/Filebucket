@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { getPresignedUploadUrlAction } from "@/app/media/actions";
 import { createChatAttachmentAction } from "@/app/media/actions";
 import { MangaReader, type ReaderPage } from "@/components/manga-reader";
-import { getMediaAssetUrl } from "@/lib/utils";
+import { getMediaAssetUrl, formatBytes } from "@/lib/utils";
 
 interface MediaAsset {
   id: string;
@@ -147,10 +147,7 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
 
   // 4. File sizing format
   function formatSize(bytes: number) {
-    if (bytes >= 1024 * 1024) {
-      return `${Math.round(bytes / 1024 / 1024)} MB`;
-    }
-    return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+    return formatBytes(bytes, 1);
   }
 
   // 5. Send message (upload attachments first if any)

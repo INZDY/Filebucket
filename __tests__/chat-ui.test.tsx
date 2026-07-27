@@ -111,7 +111,7 @@ describe("ChatWorkspace UI Component", () => {
 
     // Check file card
     expect(container.textContent).toContain("log.txt");
-    expect(container.textContent).toContain("2 KB");
+    expect(container.textContent).toContain("1.5 KB");
 
     await act(async () => {
       root.unmount();
