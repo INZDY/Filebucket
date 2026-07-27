@@ -386,4 +386,49 @@ describe("FolderContentsView in ActiveWorkspace", () => {
 
     root.unmount();
   });
+
+  it("should have subfolders with h-14 height class and media cards with active:scale-95 on the inner link", async () => {
+    const selectedFolder = allFolders.find(f => f.id === "user-folder-1") || null;
+
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <ActiveWorkspace
+          selectedNote={null}
+          selectedMedia={null}
+          selectedFolder={selectedFolder}
+          folderTrail={[selectedFolder!]}
+          folderDestinations={[]}
+          imageMediaAssets={[]}
+          tags={[]}
+          textPreviewContent=""
+          hasVaultContent={true}
+          browserTitle="Personal Work"
+          allMediaAssets={allMediaAssets}
+          allFolders={allFolders}
+          allNotes={allNotes as Parameters<typeof ActiveWorkspace>[0]["allNotes"]}
+        />
+      );
+    });
+
+    // 1. Check subfolder height class
+    const subfolderLink = container.querySelector("a[href='/?folder=user-folder-2']");
+    expect(subfolderLink).not.toBeNull();
+    expect(subfolderLink?.className).toContain("h-14");
+    expect(subfolderLink?.className).toContain("px-4");
+
+    // 2. Check media card container (no active:scale-95) and inner Link (contains active:scale-95)
+    const mediaCardName = container.querySelector("[title='audio.mp3']");
+    expect(mediaCardName).not.toBeNull();
+
+    const innerLink = mediaCardName?.closest("a");
+    expect(innerLink).not.toBeNull();
+    expect(innerLink?.className).toContain("active:scale-95");
+
+    const outerCard = innerLink?.parentElement;
+    expect(outerCard).not.toBeNull();
+    expect(outerCard?.className).not.toContain("active:scale-95");
+
+    root.unmount();
+  });
 });

@@ -22,7 +22,7 @@ import { moveMediaAssetAction } from "@/app/media/actions";
 import { NoteEditor } from "@/app/notes/note-editor";
 import { MediaActionsMenu } from "@/app/media/media-actions-menu";
 import { compareAlphanumeric } from "@/lib/sorting";
-import { getMediaAssetUrl, cn } from "@/lib/utils";
+import { getMediaAssetUrl, cn, formatBytes } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { MangaReader, type ReaderPage } from "@/components/manga-reader";
 
@@ -466,7 +466,7 @@ export function ActiveWorkspace({
                 <span className="max-w-56 truncate font-medium text-slate-200">{selectedMedia.filename}</span>
                 <span className="text-slate-500">•</span>
                 <span className="text-xs text-slate-500">
-                  {selectedMedia.contentType} · {Math.max(1, Math.round(selectedMedia.sizeBytes / 1024))} KB
+                  {selectedMedia.contentType} · {formatBytes(selectedMedia.sizeBytes)}
                 </span>
               </div>
             </div>
@@ -574,7 +574,7 @@ export function ActiveWorkspace({
                     </div>
                     <p className="mt-4 text-sm font-medium text-slate-100">{selectedMedia.filename}</p>
                     <p className="mt-1 text-[10px] font-mono text-slate-400 mb-6">
-                      {Math.max(1, Math.round(selectedMedia.sizeBytes / 1024 / 1024))} MB · Manga Archive
+                      {formatBytes(selectedMedia.sizeBytes)} · Manga Archive
                     </p>
                     {archiveError && (
                       <p className="text-xs text-rose-400 bg-rose-950/20 border border-rose-900/30 px-3 py-2 rounded-md mb-4 text-left">
@@ -801,7 +801,7 @@ export function ActiveWorkspace({
                           handleDrop(folder.id, e);
                         }}
                         className={cn(
-                          "group flex items-center justify-between h-12 px-3 rounded-xl border bg-[#14161d]/60 hover:bg-[#1a1d26] hover:border-amber-500/40 hover:shadow-[0_0_15px_rgba(245,158,11,0.05)] transition-all active:scale-95 duration-200",
+                          "group flex items-center justify-between h-14 px-4 rounded-xl border bg-[#14161d]/60 hover:bg-[#1a1d26] hover:border-amber-500/40 hover:shadow-[0_0_15px_rgba(245,158,11,0.05)] transition-all active:scale-95 duration-200",
                           dragOverFolderId === folder.id ? "border-amber-500 scale-95" : "border-slate-800/80"
                         )}
                       >
@@ -904,7 +904,7 @@ export function ActiveWorkspace({
                       <div
                         key={media.id}
                         className={cn(
-                          "group relative flex flex-col justify-between p-2 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 transition-all active:scale-95 duration-200",
+                          "group relative flex flex-col justify-between p-2 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80",
                           borderHoverClass
                         )}
                         draggable={true}
@@ -921,7 +921,7 @@ export function ActiveWorkspace({
                         <Link
                           href={media.folderId ? `/?folder=${media.folderId}&media=${media.id}` : `/?media=${media.id}`}
                           draggable={true}
-                          className="block w-full"
+                          className="block w-full transition-all active:scale-95 duration-200"
                         >
                           {/* Thumbnail / Media Frame */}
                           <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-[#0d0f14] border border-slate-800/60 mb-2 flex items-center justify-center">
