@@ -119,70 +119,70 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Remove tabs from Files Mode and fix visual indentation and item counts within the Vault Browser tree.
 *   **Tasks**:
-    *   **Files Mode Tabbing**: Completely hide/remove the tab bar inside Files Mode. Preview opened media assets directly in the workspace, with selecting a media file replacing the active preview layout.
-    *   **Vault Tree Indentation**: Shift the base padding of `NoteRow` and `MediaRow` elements in `BrowserTree` from `12px` to `28px` (yielding `28px + depth * 16px` padding) so their file icons align perfectly under sibling and parent folder icons.
-    *   **Remove Folder Children Count**: Remove children count indicator elements (`folder.count`) entirely from all folder rows (including user folders, reserved system folders, and the root `Vault` row) to achieve a clean, clutter-free sidebar.
+    *   **Files Mode Tabbing:** Completely hide/remove the tab bar inside Files Mode. Preview opened media assets directly in the workspace, with selecting a media file replacing the active preview layout.
+    *   **Vault Tree Indentation:** Shift the base padding of `NoteRow` and `MediaRow` elements in `BrowserTree` from `12px` to `28px` (yielding `28px + depth * 16px` padding) so their file icons align perfectly under sibling and parent folder icons.
+    *   **Remove Folder Children Count:** Remove children count indicator elements (`folder.count`) entirely from all folder rows (including user folders, reserved system folders, and the root `Vault` row) to achieve a clean, clutter-free sidebar.
 *   **Verification**: Verify Files Mode has no tab bar and displays files directly. Verify visual icon alignment in the sidebar browser. Verify no children count is displayed on any folder rows.
 
 ### Milestone 27: Responsive Mobile Manga Reader & Sidebar Drawer Triggers
 *   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Fix mobile Manga Reader controls, eliminate redundant drawer toggles, and optimize navigation bar padding.
 *   **Tasks**:
-    *   **Manga Reader Mobile Polish**: On mobile viewports (< 640px), make the Layout Mode toggles icon-only (hiding text labels) and swap the generic book icon for directional arrows: `ArrowRight` (LTR), `ArrowLeft` (RTL), and `ArrowUpDown` (Webtoon). Replace the aspect-ratio `<select>` dropdown with a single compact toggler button to switch between "Fit Width" and "Fit Height". Add max-width constraint to titles to guarantee truncation.
-    *   **Sidebar Toggle Restructuring**: Remove the floating workspace drawer toggle (`PanelLeft` button) completely. Show the header hamburger toggle button on all tablet and mobile screen sizes under 1024px (`lg:hidden` instead of `md:hidden`) to serve as the unified drawer trigger.
-    *   **Trash & Activity Bar Spacing**: Add a flex spacer (`hidden md:block md:flex-1`) in the Activity Bar on desktop to push the Trash icon cleanly to the bottom. Group and evenly distribute layout weights (`flex-1` for all 5 buttons) in the mobile Bottom Navigation Bar for perfect spacing.
+    *   **Manga Reader Mobile Polish:** On mobile viewports (< 640px), make the Layout Mode toggles icon-only (hiding text labels) and swap the generic book icon for directional arrows: `ArrowRight` (LTR), `ArrowLeft` (RTL), and `ArrowUpDown` (Webtoon). Replace the aspect-ratio `<select>` dropdown with a single compact toggler button to switch between "Fit Width" and "Fit Height". Add max-width constraint to titles to guarantee truncation.
+    *   **Sidebar Toggle Restructuring:** Remove the floating workspace drawer toggle (`PanelLeft` button) completely. Show the header hamburger toggle button on all tablet and mobile screen sizes under 1024px (`lg:hidden` instead of `md:hidden`) to serve as the unified drawer trigger.
+    *   **Trash & Activity Bar Spacing:** Add a flex spacer (`hidden md:block md:flex-1`) in the Activity Bar on desktop to push the Trash icon cleanly to the bottom. Group and evenly distribute layout weights (`flex-1` for all 5 buttons) in the mobile Bottom Navigation Bar for perfect spacing.
 *   **Verification**: Verify header controls do not overflow in mobile Manga Reader. Verify the floating left button is gone and the header hamburger menu toggles the sidebar on both mobile and tablet. Verify even button spacing in bottom nav.
 
 ### Milestone 28: Keep Cards Markdown Rendering & Chat Multiline Input
 *   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Render markdown inside Keep grid cards, increase font sizes, expand editor vertical space, and support multiline chat input.
 *   **Tasks**:
-    *   **Keep Note Font Size**: Increase card and modal text body font sizes from `text-xs` (12px) to `text-sm` (14px) for better readability.
-    *   **Markdown Keep Cards**: Parse and render standard Markdown in Keep note card grids (using a clean markdown preview renderer). Clamp notes in grid to a maximum height of `max-h-72` (280px) and apply a bottom fade-out gradient.
-    *   **Responsive Columns**: Set columns dynamically: 1 column on mobile (< 640px), 2 columns on tablet (640px - 1023px), 3 columns on small desktop (1024px - 1440px), and 4 columns on wide screens (> 1440px).
-    *   **Modal Height**: Increase the desktop editor modal maximum height to `95vh` to give maximum editing canvas space.
-    *   **Chat Multiline Input (Shift + Enter)**: Swap the single-line `<Input>` in `ChatWorkspace` with an auto-expanding `<textarea>` (default height `h-10`, auto-growing up to `max-h-36`). Configure key events so that hitting `Enter` sends the message, and `Shift + Enter` inputs a newline (mobile keyboard default remains newline insertion).
+    *   **Keep Note Font Size:** Increase card and modal text body font sizes from `text-xs` (12px) to `text-sm` (14px) for better readability.
+    *   **Markdown Keep Cards:** Parse and render standard Markdown in Keep note card grids (using a clean markdown preview renderer). Clamp notes in grid to a maximum height of `max-h-72` (280px) and apply a bottom fade-out gradient.
+    *   **Responsive Columns:** Set columns dynamically: 1 column on mobile (< 640px), 2 columns on tablet (640px - 1023px), 3 columns on small desktop (1024px - 1440px), and 4 columns on wide screens (> 1440px).
+    *   **Modal Height:** Increase the desktop editor modal maximum height to `95vh` to give maximum editing canvas space.
+    *   **Chat Multiline Input (Shift + Enter):** Swap the single-line `<Input>` in `ChatWorkspace` with an auto-expanding `<textarea>` (default height `h-10`, auto-growing up to `max-h-36`). Configure key events so that hitting `Enter` sends the message, and `Shift + Enter` inputs a newline (mobile keyboard default remains newline insertion).
 *   **Verification**: Verify card text size and markdown support. Verify chat input handles Shift+Enter newlines, and submits on Enter.
 
 ### Milestone 29: Sidebar Resizability & Persistence
 *   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Persist the width of the resizable Vault Browser panel and support fallback minimum size.
 *   **Tasks**:
-    *   **Width Persistence**: In `ResizableVault`, store the resized browser panel percentage or pixel width in `localStorage` (using key `filebucket_sidebar_width`).
-    *   **Hydration-Safe Restore**: Read the stored width in a `useEffect` after mounting to prevent SSR hydration mismatches, then apply the size dynamically to the `<Panel>` component.
-    *   **Minimum Default Size**: If no width has been saved in `localStorage`, default the sidebar size to its minimum possible width (e.g., `280px` or minimum percentage size).
+    *   **Width Persistence:** In `ResizableVault`, store the resized browser panel percentage or pixel width in `localStorage` (using key `filebucket_sidebar_width`).
+    *   **Hydration-Safe Restore:** Read the stored width in a `useEffect` after mounting to prevent SSR hydration mismatches, then apply the size dynamically to the `<Panel>` component.
+    *   **Minimum Default Size:** If no width has been saved in `localStorage`, default the sidebar size to its minimum possible width (e.g., `280px` or minimum percentage size).
 *   **Verification**: Resize the sidebar, reload the page, and verify the width is preserved. Clear `localStorage` and verify the sidebar defaults to its minimum width.
 
 ### Milestone 30: Files Mode Folder-Only Tree & Special Folders Visibility Toggle
 *   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Show folders only in Files Mode tree and implement a toggle to hide or show special reserved folders.
 *   **Tasks**:
-    *   **Folder-Only Filtering**: In Files Mode, update `BrowserTree` to filter out notes and media assets so that only the folder tree structure is shown.
-    *   **Special Folders Toggle**: Add a "Show/Hide Special Folders" button or icon to the vault browser toolbar when in Files Mode.
-    *   **Default Behavior**: Default the toggle to **hide** special folders (`Notes/`, `Quick Notes/`, `Chat Channels/`) at the root level.
-    *   **State Persistence**: Store the toggle state in `localStorage` so it persists across page reloads.
+    *   **Folder-Only Filtering:** In Files Mode, update `BrowserTree` to filter out notes and media assets so that only the folder tree structure is shown.
+    *   **Special Folders Toggle:** Add a "Show/Hide Special Folders" button or icon to the vault browser toolbar when in Files Mode.
+    *   **Default Behavior:** Default the toggle to **hide** special folders (`Notes/`, `Quick Notes/`, `Chat Channels/`) at the root level.
+    *   **State Persistence:** Store the toggle state in `localStorage` so it persists across page reloads.
 *   **Verification**: Enter Files Mode and verify no note or media rows are displayed in the tree. Verify that the `Notes/`, `Quick Notes/`, and `Chat Channels/` directories are hidden by default. Click the toggle to show them and verify they appear, then refresh the page and verify the state is preserved.
 
 ### Milestone 31: Main Content Pane Folder Contents View (Files Mode)
 *   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Render all contents of the selected folder in the main content panel in Files Mode.
 *   **Tasks**:
-    *   **Folder Contents Display**: When in Files Mode and a folder (or root) is active with no media preview open, render a `FolderContentsView` grid/list in the Main Content Pane.
-    *   **Mixed Child Listing**: Retrieve and render all direct children of the selected folder: subfolders (with custom icons), notes, and media assets.
-    *   **Navigation & Actions**:
+    *   **Folder Contents Display:** When in Files Mode and a folder (or root) is active with no media preview open, render a `FolderContentsView` grid/list in the Main Content Pane.
+    *   **Mixed Child Listing:** Retrieve and render all direct children of the selected folder: subfolders (with custom icons), notes, and media assets.
+    *   **Navigation & Actions:**
         *   Clicking a folder navigates the Vault Browser into that folder.
         *   Clicking a media asset opens its preview in the Main Content Pane.
         *   Clicking a note switches the mode to Obsidian Notes and opens the note.
-    *   **Empty State**: Handle empty folder states cleanly with helpful design.
+    *   **Empty State:** Handle empty folder states cleanly with helpful design.
 *   **Verification**: Click a folder in Files Mode tree. Verify the main content pane displays the items inside it. Click a subfolder in the grid to navigate deeper. Click a file to preview it. Click a note to switch to notes mode and edit it.
 
 ### Milestone 32: Tree Views Topmost Root Hiding
 *   **Status**: Completed & Verified (June 2026).
 *   **Goal**: Hide the topmost root header in the tree browser for a cleaner presentation.
 *   **Tasks**:
-    *   **Topmost Row Removal**: Update `BrowserTree` to omit rendering the topmost folder row (which shows "Vault", "Notes", or "Chat Channels" as the root node).
-    *   **Direct Child Rendering**: Render the first-level children of the root folder directly at the top level of the tree (with appropriate indentation).
-    *   **Root Drag & Drop Support**: Ensure the vault root drop zone remains operational so items can still be dragged and dropped into the root.
+    *   **Topmost Row Removal:** Update `BrowserTree` to omit rendering the topmost folder row (which shows "Vault", "Notes", or "Chat Channels" as the root node).
+    *   **Direct Child Rendering:** Render the first-level children of the root folder directly at the top level of the tree (with appropriate indentation).
+    *   **Root Drag & Drop Support:** Ensure the vault root drop zone remains operational so items can still be dragged and dropped into the root.
 *   **Verification**: Verify the "Vault", "Notes", or "Chat Channels" topmost rows are hidden and their child items are rendered at the root level of the sidebar tree. Verify drag-and-drop to root still works.
 
 ### Milestone 33: Keep Note Edit Modal React Portal Integration
@@ -341,3 +341,55 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Eliminate empty space under folder cards by giving folders a dedicated compact layout separate from tall file thumbnail heights.
     *   Ensure drag-and-drop support continues working seamlessly for both subfolder pills and file thumbnail cards.
 *   **Verification**: Open Files Mode in a folder containing both subfolders and media files; verify subfolders display in a clean compact top section with item counts and no empty vertical space, while media assets display in a responsive 16:9 thumbnail grid below. Verify drag-and-drop and context menus function properly in both sections.
+
+### Milestone 49: Fix Client-Side State Synchronization & Upload Crashes
+*   **Status**: Proposed.
+*   **Goal**: Fix the client exception during newly uploaded file previews and resolve errors when modifying optimistically created folders immediately.
+*   **Tasks**:
+    *   Update the returned object of `createMediaAssetAction` in `app/media/actions.ts` to include all database attributes (e.g. `r2Key`, `contentType`, `sizeBytes`, `createdAt`, etc.) instead of a trimmed projection.
+    *   Add defensive type guards in `getMediaPreviewKind` in `app/vault/active-workspace.tsx` (and other files) to return `"unsupported"` when `contentType` is undefined/null.
+    *   Add `useEffect` hooks in `VaultDashboard` (`app/vault/vault-dashboard.tsx`) to synchronize `initialFolders`, `initialNotes`, and `initialMediaAssets` with their respective state setters (`setFolders`, `setNotes`, `setMediaAssets`) upon prop updates. This guarantees optimistic `temp_` keys are seamlessly replaced by real DB keys on next-tick rendering updates.
+*   **Verification**: Upload a file in Files Mode and immediately preview it; verify it loads cleanly without throwing any client-side exception. Create a folder in Files Mode and immediately rename/delete/move it; verify the action executes successfully without server database errors.
+
+### Milestone 50: Card Grid Polish & Overflow Menu Warping Fix
+*   **Status**: Proposed.
+*   **Goal**: Increase subfolder card height for better visual breathing room and fix the overflow menu warping click bug.
+*   **Tasks**:
+    *   In `FolderContentsView` (`active-workspace.tsx`), increase the subfolder pill height from `h-12` to `h-14` (e.g., modifying class names to `h-14 px-4`).
+    *   Resolve card overflow menu click registering/warping by refactoring card components in `FolderContentsView`. Instead of applying `active:scale-95` on the outer relative wrapper container, apply the active transition scale to the inner `Link` wrapper. Keep the absolute-positioned 3-dots action menu wrapper outside the scaling link, ensuring the menu button remains perfectly static during mousedown/mouseup clicks.
+*   **Verification**: Visually inspect subfolder cards; verify their height is `h-14`. Hover and click the 3-dots overflow menu on note and media cards; verify the menu opens exactly under the cursor and actions register successfully without the button warping or scaling down.
+
+### Milestone 51: Unified File Size Scaling Utility
+*   **Status**: Proposed.
+*   **Goal**: Refactor byte formatting to scale dynamically to KB, MB, GB, etc., and unify it across the entire workspace.
+*   **Tasks**:
+    *   Create a single canonical `formatBytes(bytes: number, decimals = 1): string` utility inside `lib/utils.ts` that scales properly (B, KB, MB, GB, TB).
+    *   Replace ad-hoc formatting inline functions inside `app/media/media-upload-control.tsx`, `active-workspace.tsx`, `chat-workspace.tsx`, and `trash-workspace.tsx` with calls to the new `formatBytes` helper.
+*   **Verification**: Inspect file uploads, file cards, chat attachments, and trash view metadata; verify file sizes display with appropriate units (e.g. `512 B`, `24 KB`, `4.5 MB`, `1.2 GB`).
+
+### Milestone 52: Storage Usage Checker & Visualizer
+*   **Status**: Proposed.
+*   **Goal**: Enable checking the current vault storage usage dynamically against a default quota limit.
+*   **Tasks**:
+    *   Implement an API route `/api/storage/usage` (or server action) that aggregates the sum of `sizeBytes` of all `MediaAsset` records belonging to the authenticated user.
+    *   Create a clean, visual storage indicator component (progress bar displaying "Used X MB of Y GB", e.g. using a default quota of 10 GB).
+    *   Place the storage usage card at the bottom of the sidebar panel (`app/vault/sidebar-browser.tsx`), directly above the Trash bar separator.
+*   **Verification**: Upload multiple files and observe the storage usage progress bar updating dynamically in the sidebar.
+
+### Milestone 53: Video.js Media Player Integration
+*   **Status**: Proposed.
+*   **Goal**: Replace browser default audio/video players with a premium custom Video.js instance featuring minimal skins.
+*   **Tasks**:
+    *   Install `video.js` and `@types/video.js`.
+    *   Create a reusable, highly polished HTML5 media player component (`FilebucketPlayer`) wrapping Video.js with a sleek, borderless dark theme.
+    *   Integrate the player inside the media preview pane in `active-workspace.tsx` for video and audio content.
+*   **Verification**: Open video and audio assets in Files Mode; verify they load in a beautiful custom player instead of standard browser controls.
+
+### Milestone 54: Bulk Selection & Action / Card Menus Unification
+*   **Status**: Proposed.
+*   **Goal**: Implement bulk selection checkboxes and actions toolbar inside the Folder Contents View grid, and unify card actions for folders and notes.
+*   **Tasks**:
+    *   Add multi-select checklist capabilities to `FolderContentsView` items (shift-click or checkbox overlays on hover/selection mode).
+    *   Introduce a floating/docked "Bulk Actions" bar at the bottom of the main content pane when items are selected, supporting Move, Move to Trash, and Download ZIP.
+    *   Implement action overflow menus for folder cards and note cards inside the grid view, sharing the same underlying move/trash/rename forms.
+*   **Verification**: Select multiple file/folder cards in Files Mode; verify the selection bar appears and can move/delete all selected items at once.

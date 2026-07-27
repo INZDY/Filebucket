@@ -140,6 +140,18 @@ _Avoid_: Global export, backup, sync, archive
 An automated or recurring preservation process for vault content. Backup is a later automation concept, not the same thing as a user-initiated export.
 _Avoid_: Export, download, sync
 
+**Bulk Selection**:
+The capability to select multiple items (folders, notes, media assets) concurrently in the Folder Contents View.
+_Avoid_: Multi-select, checkbox mode, mass select
+
+**Bulk Action**:
+An operation (such as Move, Move to Trash, or Download ZIP) executed simultaneously on all items currently in the Bulk Selection.
+_Avoid_: Batch operation, group action
+
+**Storage Quota**:
+The total byte storage limit allocated to a user's vault, set to 10 GB. It covers all active and trashed media assets.
+_Avoid_: Disk limit, drive size, upload limit
+
 **Autosave**:
 Editing behavior where note title, body, or card changes are saved automatically without requiring a manual save command. Autosave saves after the user pauses typing for 1500-2000ms. If a user switches workspace modes or closes an active content tab/modal, the app instantly flushes and saves any pending edits. Autosave is not a domain entity.
 _Avoid_: Manual save, draft mode
