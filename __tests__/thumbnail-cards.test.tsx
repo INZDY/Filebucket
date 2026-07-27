@@ -108,4 +108,58 @@ describe("Folder Contents View Thumbnails & Card File Operations (TDD)", () => {
     });
     document.body.removeChild(container);
   });
+
+  it("should handle undefined or null contentType in media files gracefully and not crash", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    const sampleMedia = [
+      {
+        id: "media_unsupported",
+        filename: "test_file.xyz",
+        contentType: undefined as any,
+        sizeBytes: 500,
+        r2Key: "media/test_file.xyz",
+        folderId: "f1",
+      },
+    ];
+
+    const sampleFolder = {
+      id: "f1",
+      name: "Files",
+      parentId: null,
+    };
+
+    // Rendering should not throw/crash even when contentType is undefined
+    await act(async () => {
+      root.render(
+        <ActiveWorkspace
+          selectedNote={null}
+          selectedMedia={null}
+          selectedFolder={sampleFolder}
+          folderTrail={[sampleFolder]}
+          folderDestinations={[]}
+          imageMediaAssets={[]}
+          tags={[]}
+          textPreviewContent=""
+          hasVaultContent={true}
+          browserTitle="Files"
+          allMediaAssets={sampleMedia}
+          allFolders={[sampleFolder]}
+          allNotes={[]}
+        />
+      );
+    });
+
+    // Check that it rendered and falls back to standard file display
+    const label = container.textContent;
+    expect(label).toContain("test_file.xyz");
+    expect(label).toContain("File"); // fallback category
+
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
 });

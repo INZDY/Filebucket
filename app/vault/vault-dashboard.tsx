@@ -209,7 +209,8 @@ function getContentHref({
   return `/${hrefParams.toString() ? `?${hrefParams.toString()}` : ""}`;
 }
 
-function getMediaPreviewKind(contentType: string) {
+function getMediaPreviewKind(contentType: string | null | undefined) {
+  if (!contentType) return "unsupported";
   if (contentType.startsWith("image/")) return "image";
   if (contentType.startsWith("audio/")) return "audio";
   if (contentType.startsWith("video/")) return "video";
@@ -284,10 +285,39 @@ export function VaultDashboard({
   const [folders, setFolders] = useState<FolderListEntry[]>(initialFolders);
   const [notes, setNotes] = useState<NoteListEntry[]>(initialNotes);
   const [mediaAssets, setMediaAssets] = useState<MediaListEntry[]>(initialMediaAssets);
-  const [tags] = useState<TagEntry[]>(initialTags);
+  const [tags, setTags] = useState<TagEntry[]>(initialTags);
   const [deletedFolders, setDeletedFolders] = useState<DeletedFolderEntry[]>(initialDeletedFolders);
   const [deletedNotes, setDeletedNotes] = useState<DeletedNoteEntry[]>(initialDeletedNotes);
   const [deletedMediaAssets, setDeletedMediaAssets] = useState<DeletedMediaEntry[]>(initialDeletedMediaAssets);
+
+  // Sync props to state on updates
+  useEffect(() => {
+    setFolders(initialFolders);
+  }, [initialFolders]);
+
+  useEffect(() => {
+    setNotes(initialNotes);
+  }, [initialNotes]);
+
+  useEffect(() => {
+    setMediaAssets(initialMediaAssets);
+  }, [initialMediaAssets]);
+
+  useEffect(() => {
+    setTags(initialTags);
+  }, [initialTags]);
+
+  useEffect(() => {
+    setDeletedFolders(initialDeletedFolders);
+  }, [initialDeletedFolders]);
+
+  useEffect(() => {
+    setDeletedNotes(initialDeletedNotes);
+  }, [initialDeletedNotes]);
+
+  useEffect(() => {
+    setDeletedMediaAssets(initialDeletedMediaAssets);
+  }, [initialDeletedMediaAssets]);
 
   // Client Selection State
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(initialSearchParams?.folder ?? null);

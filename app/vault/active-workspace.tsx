@@ -92,7 +92,8 @@ interface ActiveWorkspaceProps {
   allNotes?: NoteEntry[];
 }
 
-function getMediaPreviewKind(contentType: string, filename = "") {
+function getMediaPreviewKind(contentType: string | null | undefined, filename = "") {
+  if (!contentType) return "unsupported";
   if (contentType.startsWith("image/")) return "image";
   if (contentType.startsWith("audio/")) return "audio";
   if (contentType.startsWith("video/")) return "video";

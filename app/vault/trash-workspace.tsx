@@ -64,7 +64,11 @@ interface TrashWorkspaceProps {
   resolveDisplayMarkdown: (body: string) => string;
 }
 
-function getMediaPreviewKind(contentType: string) {
+function getMediaPreviewKind(contentType: string | null | undefined) {
+  if (!contentType) {
+    return "unsupported";
+  }
+
   if (contentType.startsWith("image/")) {
     return "image";
   }

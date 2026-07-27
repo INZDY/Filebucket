@@ -283,7 +283,10 @@ export async function createMediaAssetAction(data: {
   const url = `${baseUrl}/${mediaAsset.r2Key.split("/").map(encodeURIComponent).join("/")}`;
 
   revalidatePath("/");
-  return { id: mediaAsset.id, folderId: mediaAsset.folderId, filename: mediaAsset.filename, url };
+  return {
+    ...mediaAsset,
+    url,
+  };
 }
 
 export async function createChatAttachmentAction(data: {
@@ -355,7 +358,10 @@ export async function createChatAttachmentAction(data: {
   const url = `${baseUrl}/${mediaAsset.r2Key.split("/").map(encodeURIComponent).join("/")}`;
 
   revalidatePath("/");
-  return { id: mediaAsset.id, folderId: mediaAsset.folderId, filename: mediaAsset.filename, url };
+  return {
+    ...mediaAsset,
+    url,
+  };
 }
 
 

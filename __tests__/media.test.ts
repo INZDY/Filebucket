@@ -99,6 +99,9 @@ describe("Media Server Actions", () => {
       expect(res.id).toBe("media-999");
       expect(res.filename).toBe("test.png");
       expect(res.url).toBe("https://cdn.filebucket.local/vaults/user-123/uuid-test.png");
+      expect(res.contentType).toBe("image/png");
+      expect(res.sizeBytes).toBe(1024);
+      expect(res.r2Key).toBe("vaults/user-123/uuid-test.png");
       expect(prisma.mediaAsset.create).toHaveBeenCalledWith({
         data: {
           userId: mockUserId,
