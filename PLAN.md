@@ -343,7 +343,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Open Files Mode in a folder containing both subfolders and media files; verify subfolders display in a clean compact top section with item counts and no empty vertical space, while media assets display in a responsive 16:9 thumbnail grid below. Verify drag-and-drop and context menus function properly in both sections.
 
 ### Milestone 49: Fix Client-Side State Synchronization & Upload Crashes
-*   **Status**: Proposed.
+*   **Status**: Completed & Verified (July 2026).
 *   **Goal**: Fix the client exception during newly uploaded file previews and resolve errors when modifying optimistically created folders immediately.
 *   **Tasks**:
     *   Update the returned object of `createMediaAssetAction` in `app/media/actions.ts` to include all database attributes (e.g. `r2Key`, `contentType`, `sizeBytes`, `createdAt`, etc.) instead of a trimmed projection.
