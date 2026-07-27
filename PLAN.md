@@ -352,7 +352,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Upload a file in Files Mode and immediately preview it; verify it loads cleanly without throwing any client-side exception. Create a folder in Files Mode and immediately rename/delete/move it; verify the action executes successfully without server database errors.
 
 ### Milestone 50: Card Grid Polish & Overflow Menu Warping Fix
-*   **Status**: Proposed.
+*   **Status**: Completed & Verified (July 2026).
 *   **Goal**: Increase subfolder card height for better visual breathing room and fix the overflow menu warping click bug.
 *   **Tasks**:
     *   In `FolderContentsView` (`active-workspace.tsx`), increase the subfolder pill height from `h-12` to `h-14` (e.g., modifying class names to `h-14 px-4`).
@@ -360,7 +360,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Visually inspect subfolder cards; verify their height is `h-14`. Hover and click the 3-dots overflow menu on note and media cards; verify the menu opens exactly under the cursor and actions register successfully without the button warping or scaling down.
 
 ### Milestone 51: Unified File Size Scaling Utility
-*   **Status**: Proposed.
+*   **Status**: Completed & Verified (July 2026).
 *   **Goal**: Refactor byte formatting to scale dynamically to KB, MB, GB, etc., and unify it across the entire workspace.
 *   **Tasks**:
     *   Create a single canonical `formatBytes(bytes: number, decimals = 1): string` utility inside `lib/utils.ts` that scales properly (B, KB, MB, GB, TB).
