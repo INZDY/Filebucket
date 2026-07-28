@@ -368,7 +368,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Inspect file uploads, file cards, chat attachments, and trash view metadata; verify file sizes display with appropriate units (e.g. `512 B`, `24 KB`, `4.5 MB`, `1.2 GB`).
 
 ### Milestone 52: Storage Usage Checker & Visualizer
-*   **Status**: Proposed.
+*   **Status**: Completed & Verified (July 2026).
 *   **Goal**: Enable checking the current vault storage usage dynamically against a default quota limit.
 *   **Tasks**:
     *   Implement an API route `/api/storage/usage` (or server action) that aggregates the sum of `sizeBytes` of all `MediaAsset` records belonging to the authenticated user.
@@ -377,7 +377,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Upload multiple files and observe the storage usage progress bar updating dynamically in the sidebar.
 
 ### Milestone 53: Video.js Media Player Integration
-*   **Status**: Proposed.
+*   **Status**: Completed & Verified (July 2026).
 *   **Goal**: Replace browser default audio/video players with a premium custom Video.js instance featuring minimal skins.
 *   **Tasks**:
     *   Install `video.js` and `@types/video.js`.
