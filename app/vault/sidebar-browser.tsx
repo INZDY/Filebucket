@@ -19,8 +19,9 @@ import { ClientForm } from "@/components/client-form";
 import { ConfirmForm } from "@/components/confirm-form";
 import { BrowserToolbar } from "./browser-toolbar";
 import { BrowserTree } from "./browser-tree";
-import { cn } from "@/lib/utils";
+import { cn, formatBytes } from "@/lib/utils";
 import { compareAlphanumeric } from "@/lib/sorting";
+import { Progress } from "@/components/ui/progress";
 
 import {
   restoreFolderAction,
@@ -141,6 +142,31 @@ export function SidebarBrowser({
   trashCount,
   activeMode,
 }: SidebarBrowserProps) {
+  const [usedBytes, setUsedBytes] = useState<number | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function fetchUsage() {
+      try {
+        const res = await fetch("/api/storage/usage");
+        if (res.ok) {
+          const data = await res.json();
+          if (active) {
+            setUsedBytes(data.usedBytes);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch storage usage:", err);
+      }
+    }
+    fetchUsage();
+    return () => {
+      active = false;
+    };
+  }, [mediaAssets.length, deletedMediaAssets.length]);
+
+  const TOTAL_QUOTA = 10 * 1024 * 1024 * 1024; // 10 GB
+  const percentage = usedBytes !== null ? Math.min((usedBytes / TOTAL_QUOTA) * 100, 100) : 0;
   
   const [searchFilter, setSearchFilter] = useState<"ALL" | "FILES" | "NOTES" | "CHATS">("ALL");
   const [showSpecialFolders, setShowSpecialFolders] = useState(false);
@@ -738,6 +764,14 @@ export function SidebarBrowser({
             </nav>
           </div>
         )}
+      </div>
+
+      <div className="border-t border-slate-800 p-4 bg-[#111318]/50 shrink-0">
+        <div className="flex items-center justify-between text-xs text-slate-400 mb-1.5 font-medium">
+          <span>Storage</span>
+          <span>{usedBytes !== null ? `${formatBytes(usedBytes)} / ${formatBytes(TOTAL_QUOTA)}` : "Loading..."}</span>
+        </div>
+        <Progress value={percentage} className="h-1.5 bg-slate-800 text-purple-600" />
       </div>
     </aside>
   );
