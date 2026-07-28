@@ -25,6 +25,7 @@ import { compareAlphanumeric } from "@/lib/sorting";
 import { getMediaAssetUrl, cn, formatBytes } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { MangaReader, type ReaderPage } from "@/components/manga-reader";
+import { FilebucketPlayer } from "@/components/filebucket-player";
 
 type FolderEntry = {
   id: string;
@@ -532,18 +533,14 @@ export function ActiveWorkspace({
                         <p className="truncate text-xs text-slate-500">{selectedMedia.contentType}</p>
                       </div>
                     </div>
-                    <audio className="w-full" controls src={previewUrl} />
+                    <FilebucketPlayer src={previewUrl} type={selectedMedia.contentType} isVideo={false} />
                   </div>
                 );
               }
 
               if (previewKind === "video" && previewUrl) {
                 return (
-                  <video
-                    className="max-h-[calc(100vh-220px)] max-w-full rounded-md bg-black"
-                    controls
-                    src={previewUrl}
-                  />
+                  <FilebucketPlayer src={previewUrl} type={selectedMedia.contentType} isVideo={true} />
                 );
               }
 
