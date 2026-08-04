@@ -386,10 +386,40 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Open video and audio assets in Files Mode; verify they load in a beautiful custom player instead of standard browser controls.
 
 ### Milestone 54: Bulk Selection & Action / Card Menus Unification
-*   **Status**: Proposed.
+*   **Status**: On Hold (Reverted).
 *   **Goal**: Implement bulk selection checkboxes and actions toolbar inside the Folder Contents View grid, and unify card actions for folders and notes.
 *   **Tasks**:
     *   Add multi-select checklist capabilities to `FolderContentsView` items (shift-click or checkbox overlays on hover/selection mode).
     *   Introduce a floating/docked "Bulk Actions" bar at the bottom of the main content pane when items are selected, supporting Move, Move to Trash, and Download ZIP.
     *   Implement action overflow menus for folder cards and note cards inside the grid view, sharing the same underlying move/trash/rename forms.
 *   **Verification**: Select multiple file/folder cards in Files Mode; verify the selection bar appears and can move/delete all selected items at once.
+
+### Milestone 55: E-Book Reader Integration (EPUB & TXT)
+*   **Status**: Proposed (Next Up).
+*   **Goal**: Build fullscreen Book Reader using `epubjs` for EPUBs and custom styling for TXT. Add theme support (Light Brown, Glass Dark, Light Mode), layout modes (Paged vs Scroll), search, and progress/reading speed footnotes.
+*   **Tasks**:
+    *   Integrate `epubjs` package for client-side rendering of EPUB archives.
+    *   Build a responsive Book Reader component supporting fullscreen overlay, paged vs. scroll layouts, and a Table of Contents navigation drawer.
+    *   Add a custom plain-text text reader view inside the same component to render `.txt` files with custom margins, font selections, and scroll progress tracking.
+    *   Support styling themes matching the system options (Glass Dark, Light Mode, and Light Brown) and customizable font size presets.
+*   **Verification**: Open an EPUB or TXT file inside Files Mode and launch the Book Reader. Toggle layout styles, themes, and font size, and verify the reader layout updates.
+
+### Milestone 56: Database Schema Expansion, Cloud Progress Sync & Offline Caching
+*   **Status**: Proposed.
+*   **Goal**: Sync reading position (CFI/percentage/page indexes) via `/api/media/progress` for both Manga and Book Readers, extend Prisma schema for `UserSettings` and `MediaProgress`, and cache files using PWA Service Worker.
+*   **Tasks**:
+    *   Extend Prisma schema: Add `UserSettings` (global theme, storage quota limit, default note font, autosave delay) and `MediaProgress` (active position, reading percentage, volume level, active settings) models.
+    *   Create `/api/media/progress` endpoint to record and synchronize reader states dynamically.
+    *   Implement client-side hooks inside Manga Reader and Book Reader to save and sync progress on exit, modes changes, page turn, or scroll debounce.
+    *   Update the PWA Service Worker script (`public/sw.js`) to cache media assets, notes, and local API responses for offline availability.
+*   **Verification**: Open an e-book or manga ZIP, progress several pages, reload or change mode, and reopen to verify the reading position is restored from the DB. Disable network connection and verify cached media assets load.
+
+### Milestone 57: Global Settings Dialog
+*   **Status**: Proposed.
+*   **Goal**: Modal to configure custom quota, themes (Glass Dark, Light, Light Brown), autosave delays, and default note editor fonts.
+*   **Tasks**:
+    *   Build a global Settings modal layout accessible from the bottom bar (Activity Bar on desktop, Sidebar on mobile).
+    *   Provide input fields to configure custom storage quota limits, select global active theme (Glass Dark, Light, Light Brown), modify debounced autosave delays, and select default note font styles.
+    *   Hook up preferences updates to instantly re-theme the application and update the storage progress visualizer.
+*   **Verification**: Open the settings modal, modify preferences, save, and check that visual themes, fonts, and limits update immediately.
+
