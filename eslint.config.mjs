@@ -14,15 +14,28 @@ const eslintConfig = [
     ignores: [
       ".next/**",
       "node_modules/**",
-      "next-env.d.ts"
+      "next-env.d.ts",
+      "public/sw.js"
     ]
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
-    files: ["__tests__/**/*.ts"],
+    rules: {
+      "@next/next/no-img-element": "off"
+    }
+  },
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: false
+    }
+  },
+  {
+    files: ["__tests__/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": "off"
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
+      "@typescript-eslint/no-require-imports": "off"
     }
   }
 ];

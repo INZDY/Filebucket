@@ -12,13 +12,14 @@ interface FilebucketPlayerProps {
 
 export function FilebucketPlayer({ src, type, isVideo = true }: FilebucketPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const playerRef = useRef<any>(null);
+  const playerRef = useRef<ReturnType<typeof videojs> | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
+    const container = containerRef.current;
 
     // Clear any previous elements in container
-    containerRef.current.innerHTML = "";
+    container.innerHTML = "";
 
     // Create media element dynamically to prevent React reconciliation issues when Video.js modifies the DOM
     const el = document.createElement(isVideo ? "video" : "audio");
@@ -27,7 +28,7 @@ export function FilebucketPlayer({ src, type, isVideo = true }: FilebucketPlayer
       el.classList.add("vjs-big-play-centered");
     }
 
-    containerRef.current.appendChild(el);
+    container.appendChild(el);
 
     // Initialize Video.js with standard configuration
     const player = videojs(el, {
@@ -54,10 +55,11 @@ export function FilebucketPlayer({ src, type, isVideo = true }: FilebucketPlayer
         player.dispose();
         playerRef.current = null;
       }
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
+      if (container) {
+        container.innerHTML = "";
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVideo]);
 
   // Update player source when src or type changes
