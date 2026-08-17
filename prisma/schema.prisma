@@ -20,6 +20,8 @@ model User {
   tags          Tag[]
   mediaAssets   MediaAsset[]
   chatMessages  ChatMessage[]
+  userSettings  UserSettings?
+  mediaProgress MediaProgress[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
@@ -145,6 +147,7 @@ model MediaAsset {
   note        Note?        @relation(fields: [noteId], references: [id], onDelete: SetNull)
   folder      Folder?      @relation(fields: [folderId], references: [id], onDelete: SetNull)
   chatMessage ChatMessage? @relation(fields: [chatMessageId], references: [id], onDelete: SetNull)
+  mediaProgresses MediaProgress[]
 
   @@index([userId, deletedAt])
   @@index([noteId])
@@ -173,4 +176,36 @@ enum FolderType {
   NOTES_ROOT
   KEEP_ROOT
   CHAT_ROOT
+}
+
+model UserSettings {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  theme           String   @default("dark")
+  quotaLimit      Float    @default(10737418240) // 10 GB in bytes
+  defaultNoteFont String   @default("sans")
+  autosaveDelay   Int      @default(1500)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MediaProgress {
+  id           String   @id @default(cuid())
+  userId       String
+  mediaAssetId String
+  position     String   // CFI string for EPUB, or line index string for TXT
+  percentage   Float    @default(0.0)
+  volumeLevel  Float    @default(1.0)
+  settings     Json?    // Reader specific preferences
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mediaAsset MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mediaAssetId])
+  @@index([userId])
+  @@index([mediaAssetId])
 }

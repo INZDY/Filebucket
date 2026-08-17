@@ -25,6 +25,7 @@ import { compareAlphanumeric } from "@/lib/sorting";
 import { getMediaAssetUrl, cn, formatBytes } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { MangaReader, type ReaderPage } from "@/components/manga-reader";
+import { BookReader } from "@/components/book-reader";
 import { FilebucketPlayer } from "@/components/filebucket-player";
 
 type FolderEntry = {
@@ -99,6 +100,7 @@ function getMediaPreviewKind(contentType: string | null | undefined, filename = 
   if (contentType.startsWith("audio/")) return "audio";
   if (contentType.startsWith("video/")) return "video";
   if (contentType === "application/pdf") return "pdf";
+  if (contentType === "application/epub+zip" || filename.endsWith(".epub")) return "epub";
   if (contentType.startsWith("text/") || contentType === "application/json") return "text";
   if (
     contentType === "application/zip" ||
@@ -119,7 +121,6 @@ export function ActiveWorkspace({
   folderDestinations,
   imageMediaAssets,
   tags,
-  textPreviewContent,
   allMediaAssets,
   allFolders = [],
   allNotes = [],
@@ -130,6 +131,7 @@ export function ActiveWorkspace({
 
   // Manga Reader states
   const [isReaderOpen, setIsReaderOpen] = useState(false);
+  const [isBookReaderOpen, setIsBookReaderOpen] = useState(false);
   const [archivePages, setArchivePages] = useState<ReaderPage[]>([]);
   const [isArchiveLoading, setIsArchiveLoading] = useState(false);
   const [archiveError, setArchiveError] = useState("");
@@ -553,12 +555,44 @@ export function ActiveWorkspace({
                 );
               }
 
-              if (previewKind === "text" && previewUrl) {
+               if (previewKind === "text" && previewUrl) {
                 return (
-                  <div className="w-full max-w-4xl rounded-md border border-slate-800 bg-[#0d0d11]/80 backdrop-blur-md p-6 overflow-auto">
-                    <pre className="text-xs font-mono text-slate-300 leading-relaxed whitespace-pre-wrap text-left">
-                      <code>{textPreviewContent}</code>
-                    </pre>
+                  <div className="w-full max-w-md rounded-md border border-slate-800 bg-[#191c22] p-6 text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-blue-950/40 text-blue-400">
+                      <BookOpen className="h-5 w-5" />
+                    </div>
+                    <p className="mt-4 text-sm font-medium text-slate-100">{selectedMedia.filename}</p>
+                    <p className="mt-1 text-[10px] font-mono text-slate-400 mb-6">
+                      {formatBytes(selectedMedia.sizeBytes)} · Text Document
+                    </p>
+                    <Button
+                      className="w-full h-10 bg-blue-600 hover:bg-blue-500 text-white active:scale-95 transition-transform text-xs font-semibold gap-1.5"
+                      onClick={() => setIsBookReaderOpen(true)}
+                      type="button"
+                    >
+                      Open in Book Reader
+                    </Button>
+                  </div>
+                );
+              }
+
+              if (previewKind === "epub" && previewUrl) {
+                return (
+                  <div className="w-full max-w-md rounded-md border border-slate-800 bg-[#191c22] p-6 text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-blue-950/40 text-blue-400">
+                      <BookOpen className="h-5 w-5" />
+                    </div>
+                    <p className="mt-4 text-sm font-medium text-slate-100">{selectedMedia.filename}</p>
+                    <p className="mt-1 text-[10px] font-mono text-slate-400 mb-6">
+                      {formatBytes(selectedMedia.sizeBytes)} · E-Book Document
+                    </p>
+                    <Button
+                      className="w-full h-10 bg-blue-600 hover:bg-blue-500 text-white active:scale-95 transition-transform text-xs font-semibold gap-1.5"
+                      onClick={() => setIsBookReaderOpen(true)}
+                      type="button"
+                    >
+                      Open in Book Reader
+                    </Button>
                   </div>
                 );
               }
@@ -650,6 +684,17 @@ export function ActiveWorkspace({
                 ? 0
                 : siblingMedia.findIndex((m) => m.id === selectedMedia.id)
             }
+          />
+        )}
+
+        {isBookReaderOpen && selectedMedia && (
+          <BookReader
+            isOpen={isBookReaderOpen}
+            onClose={() => setIsBookReaderOpen(false)}
+            title={selectedMedia.filename}
+            url={getMediaAssetUrl(selectedMedia.r2Key) || ""}
+            contentType={selectedMedia.contentType}
+            mediaId={selectedMedia.id}
           />
         )}
       </div>
