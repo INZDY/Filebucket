@@ -29,6 +29,26 @@ export async function GET(request: NextRequest) {
       return new Response("Not Found", { status: 404 });
     }
 
+    const filename = mediaAsset.filename || "";
+    const isArchiveOrBook =
+      mediaAsset.contentType === "application/epub+zip" ||
+      mediaAsset.contentType === "application/zip" ||
+      mediaAsset.contentType === "application/x-zip-compressed" ||
+      filename.endsWith(".epub") ||
+      filename.endsWith(".zip") ||
+      filename.endsWith(".cbz");
+
+    if (isArchiveOrBook) {
+      const buffer = await storageEngine.downloadFile(mediaAsset.r2Key);
+      return new Response(new Uint8Array(buffer), {
+        headers: {
+          "Content-Type": mediaAsset.contentType,
+          "Content-Length": String(buffer.length),
+          "Content-Disposition": `inline; filename="${encodeURIComponent(mediaAsset.filename)}"`,
+        },
+      });
+    }
+
     const presignedUrl = await storageEngine.presignDownloadUrl(mediaAsset.r2Key);
 
     return Response.redirect(presignedUrl, 307);

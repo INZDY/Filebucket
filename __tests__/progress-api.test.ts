@@ -45,7 +45,7 @@ describe("Media Progress API (/api/media/progress) - (TDD)", () => {
       expect(res.status).toBe(400);
     });
 
-    it("should return 404 if no progress is found for the media asset", async () => {
+    it("should return null if no progress is found for the media asset", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: mockUserId },
         expires: "tomorrow",
@@ -53,7 +53,9 @@ describe("Media Progress API (/api/media/progress) - (TDD)", () => {
       vi.mocked(prisma.mediaProgress.findUnique).mockResolvedValue(null);
       const req = new NextRequest("http://localhost/api/media/progress?mediaAssetId=media-123");
       const res = await GET(req);
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json).toBeNull();
       expect(prisma.mediaProgress.findUnique).toHaveBeenCalledWith({
         where: {
           userId_mediaAssetId: {

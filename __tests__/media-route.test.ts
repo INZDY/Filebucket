@@ -87,4 +87,28 @@ describe("Media API GET Route Handler", () => {
     expect(res.headers.get("Location")).toBe("https://r2.cloudflarestorage.com/vaults/user-123/pic.jpg?token=abc");
     expect(storageEngine.presignDownloadUrl).toHaveBeenCalledWith("vaults/user-123/pic.jpg");
   });
+
+  it("should return the file content as a direct stream if the file is an archive or book", async () => {
+    (vi.mocked(auth) as any).mockResolvedValue({
+      user: { id: mockUserId },
+      expires: "tomorrow",
+    });
+    vi.mocked(prisma.mediaAsset.findUnique).mockResolvedValue({
+      id: "media-123",
+      r2Key: "vaults/user-123/book.epub",
+      userId: mockUserId,
+      contentType: "application/epub+zip",
+      filename: "book.epub",
+    } as any);
+    const mockBuffer = Buffer.from("mock epub content");
+    vi.mocked(storageEngine.downloadFile).mockResolvedValue(mockBuffer);
+
+    const req = new NextRequest("http://localhost/api/media?key=vaults%2Fuser-123%2Fbook.epub");
+    const res = await GET(req);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toBe("application/epub+zip");
+    expect(res.headers.get("Content-Length")).toBe(String(mockBuffer.length));
+    expect(storageEngine.downloadFile).toHaveBeenCalledWith("vaults/user-123/book.epub");
+  });
 });

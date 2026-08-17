@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   });
 
   if (!progress) {
-    return NextResponse.json({ error: "Progress not found" }, { status: 404 });
+    return NextResponse.json(null);
   }
 
   return NextResponse.json(progress);
