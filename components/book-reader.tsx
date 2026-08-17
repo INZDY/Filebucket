@@ -314,8 +314,9 @@ export function BookReader({
 
         if (!active) return;
 
+        const blob = new Blob([buffer], { type: "application/epub+zip" });
         const epubCreator = typeof ePub === "function" ? ePub : (ePub as any).default;
-        bookInstance = epubCreator(buffer);
+        bookInstance = epubCreator(blob);
 
         renditionInstance = bookInstance.renderTo(viewerRef.current, {
           width: "100%",
