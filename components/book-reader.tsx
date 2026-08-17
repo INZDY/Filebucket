@@ -391,35 +391,49 @@ export function BookReader({
   useEffect(() => {
     if (!rendition) return;
 
-    // Register themes in epubjs iframe
+    const fontOverride = {
+      "font-family": `${epubFontFamilies[fontFamily]} !important`,
+    };
+
+    // Register themes in epubjs iframe dynamically incorporating active font family and text overlays
     rendition.themes.register("light", {
       body: {
         background: "#ffffff !important",
         color: "#0f172a !important",
+        ...fontOverride,
+      },
+      "p, span, div, h1, h2, h3, h4, h5, h6, li, a": {
+        color: "#0f172a !important",
+        ...fontOverride,
       },
     });
+
     rendition.themes.register("sepia", {
       body: {
         background: "#f4eccf !important",
         color: "#4a3b32 !important",
+        ...fontOverride,
+      },
+      "p, span, div, h1, h2, h3, h4, h5, h6, li, a": {
+        color: "#4a3b32 !important",
+        ...fontOverride,
       },
     });
+
     rendition.themes.register("dark", {
       body: {
         background: "#0d0f14 !important",
         color: "#f1f5f9 !important",
+        ...fontOverride,
+      },
+      "p, span, div, h1, h2, h3, h4, h5, h6, li, a": {
+        color: "#f1f5f9 !important",
+        ...fontOverride,
       },
     });
 
     rendition.themes.select(theme);
     rendition.themes.fontSize(epubFontSizes[fontSize]);
-    // Try to apply font-family if custom override is possible
-    rendition.themes.register("font-override", {
-      "*": {
-        "font-family": `${epubFontFamilies[fontFamily]} !important`,
-      },
-    });
-    rendition.themes.select("font-override");
   }, [rendition, theme, fontSize, fontFamily]);
 
   // EPUB Page Turning handlers
