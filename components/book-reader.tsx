@@ -295,6 +295,9 @@ export function BookReader({
   useEffect(() => {
     if (contentType === "text/plain" || !url || !isOpen || !viewerRef.current) return;
 
+    // Clear previous viewer content to prevent duplicate iframe nodes
+    viewerRef.current.innerHTML = "";
+
     setEpubLoading(true);
 
     let bookInstance: any = null;
@@ -303,7 +306,9 @@ export function BookReader({
 
     const initEpub = async () => {
       try {
-        const res = await fetch(url);
+        // Add cache-buster to prevent browser redirect caches
+        const cacheBustedUrl = `${url}${url.includes("?") ? "&" : "?"}_cb=${Date.now()}`;
+        const res = await fetch(cacheBustedUrl);
         if (!res.ok) throw new Error(`Failed to fetch EPUB: ${res.statusText}`);
         const buffer = await res.arrayBuffer();
 
@@ -718,7 +723,7 @@ export function BookReader({
               </div>
             )}
             {/* epubjs render element */}
-            <div ref={viewerRef} className="flex-1 w-full h-full p-2 relative" />
+            <div ref={viewerRef} className="w-full h-[calc(100dvh-85px)] p-2 relative" />
 
             {/* Paged Layout Overlay controls */}
             {layoutMode === "paged" && !epubLoading && (
