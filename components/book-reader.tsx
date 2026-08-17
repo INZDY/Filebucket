@@ -296,71 +296,82 @@ export function BookReader({
     if (contentType === "text/plain" || !url || !isOpen || !viewerRef.current) return;
 
     setEpubLoading(true);
-    const bookInstance = ePub(url);
 
-    const renditionInstance = bookInstance.renderTo(viewerRef.current, {
-      width: "100%",
-      height: "100%",
-      flow: layoutMode === "scroll" ? "scrolled" : "paginated",
-    });
-    setRendition(renditionInstance);
-    renditionRef.current = renditionInstance;
+    let bookInstance: any = null;
+    let renditionInstance: any = null;
+    let active = true;
 
-    // Load Table of Contents
-    bookInstance.loaded.navigation.then((nav: any) => {
-      setToc(nav.toc || []);
-    });
+    const initEpub = async () => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Failed to fetch EPUB: ${res.statusText}`);
+        const buffer = await res.arrayBuffer();
 
-    // Handle relocated event to track progress
-    renditionInstance.on("relocated", (location: any) => {
-      const cfi = location.start.cfi;
-      setCurrentCfi(cfi);
+        if (!active) return;
 
-      let pct = 0;
-      if (bookInstance.locations && bookInstance.locations.length > 0) {
-        pct = bookInstance.locations.percentageFromCfi(cfi) * 100;
-        setPercentage(pct);
-      }
-      saveProgressDebounced(cfi, pct);
-    });
+        bookInstance = ePub(buffer);
 
-    // Display book at initial CFI or start
-    bookInstance.ready
-      .then(() => {
-        // Display
-        const targetCfi = currentCfi || undefined;
-        return renditionInstance.display(targetCfi);
-      })
-      .then(() => {
-        setEpubLoading(false);
-        // Generate locations for percentage calculation
-        return bookInstance.locations.generate(1024);
-      })
-      .then(() => {
-        if (renditionRef.current && bookInstance.locations) {
-          const currentCfiVal = renditionRef.current.location?.start?.cfi;
-          if (currentCfiVal) {
-            const pct = bookInstance.locations.percentageFromCfi(currentCfiVal) * 100;
+        renditionInstance = bookInstance.renderTo(viewerRef.current, {
+          width: "100%",
+          height: "100%",
+          flow: layoutMode === "scroll" ? "scrolled" : "paginated",
+        });
+        setRendition(renditionInstance);
+        renditionRef.current = renditionInstance;
+
+        // Load Table of Contents
+        bookInstance.loaded.navigation.then((nav: any) => {
+          if (active) setToc(nav.toc || []);
+        });
+
+        // Handle relocated event to track progress
+        renditionInstance.on("relocated", (location: any) => {
+          const cfi = location.start.cfi;
+          setCurrentCfi(cfi);
+
+          let pct = 0;
+          if (bookInstance.locations && bookInstance.locations.length > 0) {
+            pct = bookInstance.locations.percentageFromCfi(cfi) * 100;
             setPercentage(pct);
           }
+          saveProgressDebounced(cfi, pct);
+        });
+
+        // Display book at initial CFI or start
+        await bookInstance.ready;
+        if (!active) return;
+
+        const targetCfi = currentCfi || undefined;
+        await renditionInstance.display(targetCfi);
+
+        if (active) setEpubLoading(false);
+
+        // Generate locations for percentage calculation
+        await bookInstance.locations.generate(1024);
+        if (active && renditionInstance.location?.start?.cfi) {
+          const pct = bookInstance.locations.percentageFromCfi(renditionInstance.location.start.cfi) * 100;
+          setPercentage(pct);
         }
-      })
-      .catch((err: any) => {
+      } catch (err) {
         console.error("Error loading EPUB book:", err);
-        setEpubLoading(false);
-      });
+        if (active) setEpubLoading(false);
+      }
+    };
+
+    initEpub();
 
     return () => {
+      active = false;
       try {
-        renditionInstance.destroy();
-        bookInstance.destroy();
+        if (renditionInstance) renditionInstance.destroy();
+        if (bookInstance) bookInstance.destroy();
       } catch (e) {
         console.error(e);
       }
       setRendition(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url, contentType, isOpen]);
+  }, [url, contentType, isOpen, layoutMode]);
 
   // Apply layout flow dynamically for EPUB
   useEffect(() => {

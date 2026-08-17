@@ -49,6 +49,7 @@ global.fetch = vi.fn().mockImplementation((url) => {
   return Promise.resolve({
     ok: true,
     text: () => Promise.resolve("mocked text content"),
+    arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
   } as any);
 });
 
