@@ -27,7 +27,10 @@ const ACCEPTED_TYPES = [
   "audio/",
   "video/",
   "application/pdf",
+  "application/epub+zip",
   "text/plain",
+  "text/markdown",
+  "application/json",
   "application/zip",
   "application/x-zip-compressed",
   "application/x-cbz",
@@ -36,7 +39,7 @@ const MAX_SIZE_BYTES = 4 * 1024 * 1024 * 1024; // 4 GB
 
 function isAccepted(file: File) {
   const isMimeAccepted = ACCEPTED_TYPES.some((type) => file.type === type || file.type.startsWith(type));
-  const isExtensionAccepted = /\.(zip|cbz)$/i.test(file.name);
+  const isExtensionAccepted = /\.(zip|cbz|epub|md|json)$/i.test(file.name);
   return isMimeAccepted || isExtensionAccepted;
 }
 
@@ -163,7 +166,7 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
     <div className="flex min-w-0 flex-col gap-1.5">
       <input
         ref={inputRef}
-        accept="image/*,audio/*,video/*,application/pdf,text/plain,.zip,.cbz"
+        accept="image/*,audio/*,video/*,application/pdf,application/epub+zip,text/plain,text/markdown,application/json,.zip,.cbz,.epub,.md,.json"
         className="sr-only"
         disabled={disabled}
         multiple
