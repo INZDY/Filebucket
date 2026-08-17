@@ -395,7 +395,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Select multiple file/folder cards in Files Mode; verify the selection bar appears and can move/delete all selected items at once.
 
 ### Milestone 55: E-Book Reader Integration (EPUB & TXT)
-*   **Status**: Proposed (Next Up).
+*   **Status**: Completed & Verified (August 2026).
 *   **Goal**: Build fullscreen Book Reader using `epubjs` for EPUBs and custom styling for TXT. Add theme support (Light Brown, Glass Dark, Light Mode), layout modes (Paged vs Scroll), search, and progress/reading speed footnotes.
 *   **Tasks**:
     *   Integrate `epubjs` package for client-side rendering of EPUB archives.
@@ -405,7 +405,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Open an EPUB or TXT file inside Files Mode and launch the Book Reader. Toggle layout styles, themes, and font size, and verify the reader layout updates.
 
 ### Milestone 56: Database Schema Expansion, Cloud Progress Sync & Offline Caching
-*   **Status**: Proposed.
+*   **Status**: Completed & Verified (August 2026).
 *   **Goal**: Sync reading position (CFI/percentage/page indexes) via `/api/media/progress` for both Manga and Book Readers, extend Prisma schema for `UserSettings` and `MediaProgress`, and cache files using PWA Service Worker.
 *   **Tasks**:
     *   Extend Prisma schema: Add `UserSettings` (global theme, storage quota limit, default note font, autosave delay) and `MediaProgress` (active position, reading percentage, volume level, active settings) models.
