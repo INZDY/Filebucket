@@ -67,6 +67,8 @@ export function BookReader({
   contentType,
   mediaId,
 }: BookReaderProps) {
+  console.log("[BOOK-READER-DIAG] Render:", { isOpen, contentType, url });
+
   // Mounting & Portal State
   const [mounted, setMounted] = useState(false);
 
@@ -105,8 +107,12 @@ export function BookReader({
 
   // SSR-safe mounting check
   useEffect(() => {
+    console.log("[BOOK-READER-DIAG] Mounted hook trigger");
     setMounted(true);
-    return () => setMounted(false);
+    return () => {
+      console.log("[BOOK-READER-DIAG] Unmount clean-up");
+      setMounted(false);
+    };
   }, []);
 
   // Fetch /api/media/progress on mount
@@ -519,7 +525,11 @@ export function BookReader({
   );
 
   // Early returns
-  if (!isOpen || !mounted) return null;
+  if (!isOpen || !mounted) {
+    console.log("[BOOK-READER-DIAG] Returning null from render: ", { isOpen, mounted });
+    return null;
+  }
+  console.log("[BOOK-READER-DIAG] Proceeding to full render, viewerElementExists: ", !!viewerElement);
 
   // Formatting variables for UI
   const themeClasses: Record<ThemeName, string> = {
@@ -629,7 +639,7 @@ export function BookReader({
   return createPortal(
     <div
       className={cn(
-        "fixed inset-0 z-[9999] flex flex-col select-none book-reader-overlay transition-colors duration-200 relative",
+        "fixed inset-0 z-[9999] flex flex-col select-none book-reader-overlay transition-colors duration-200",
         themeClasses[theme]
       )}
     >
