@@ -91,6 +91,11 @@ export function BookReader({
   // Common Progress States
   const [percentage, setPercentage] = useState<number>(0);
   const [progressLoaded, setProgressLoaded] = useState(false);
+  const [isUiVisible, setIsUiVisible] = useState(true);
+
+  const toggleUiVisibility = useCallback(() => {
+    setIsUiVisible((prev) => !prev);
+  }, []);
 
   // DOM Refs
   const [viewerElement, setViewerElement] = useState<HTMLDivElement | null>(null);
@@ -335,6 +340,30 @@ export function BookReader({
           console.error("[EPUB-DIAG] Rendition displayerror event:", err);
         });
 
+        // Add keyboard navigation inside the iframe
+        renditionInstance.on("keydown", (event: any) => {
+          if (event.key === "ArrowLeft") {
+            renditionInstance.prev();
+          } else if (event.key === "ArrowRight") {
+            renditionInstance.next();
+          }
+        });
+
+        // Add tap/click for page turns (sides) and UI toggle (middle)
+        renditionInstance.on("click", (event: any) => {
+          const target = event.currentTarget || event.target;
+          const ownerDoc = target?.ownerDocument;
+          const width = ownerDoc?.documentElement?.clientWidth || window.innerWidth;
+          const x = event.clientX;
+          if (x < width * 0.25) {
+            renditionInstance.prev();
+          } else if (x > width * 0.75) {
+            renditionInstance.next();
+          } else {
+            toggleUiVisibility();
+          }
+        });
+
         // Load Table of Contents
         bookInstance.loaded.navigation.then((nav: any) => {
           console.log("[EPUB-DIAG] Navigation loaded. Chapters count:", nav.toc?.length || 0);
@@ -392,7 +421,7 @@ export function BookReader({
       setRendition(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url, contentType, isOpen, layoutMode, viewerElement]);
+  }, [url, contentType, isOpen, layoutMode, viewerElement, toggleUiVisibility]);
 
   // Apply layout flow dynamically for EPUB
   useEffect(() => {
@@ -412,36 +441,36 @@ export function BookReader({
 
     // Register themes in epubjs iframe dynamically incorporating active font family and text overlays
     rendition.themes.register("light", {
-      body: {
+      "body.light": {
         background: "#ffffff !important",
         color: "#0f172a !important",
         ...fontOverride,
       },
-      "p, span, div, h1, h2, h3, h4, h5, h6, li, a": {
+      ".light p, .light span, .light div, .light h1, .light h2, .light h3, .light h4, .light h5, .light h6, .light li, .light a": {
         color: "#0f172a !important",
         ...fontOverride,
       },
     });
 
     rendition.themes.register("sepia", {
-      body: {
+      "body.sepia": {
         background: "#f4eccf !important",
         color: "#4a3b32 !important",
         ...fontOverride,
       },
-      "p, span, div, h1, h2, h3, h4, h5, h6, li, a": {
+      ".sepia p, .sepia span, .sepia div, .sepia h1, .sepia h2, .sepia h3, .sepia h4, .sepia h5, .sepia h6, .sepia li, .sepia a": {
         color: "#4a3b32 !important",
         ...fontOverride,
       },
     });
 
     rendition.themes.register("dark", {
-      body: {
+      "body.dark": {
         background: "#0d0f14 !important",
         color: "#f1f5f9 !important",
         ...fontOverride,
       },
-      "p, span, div, h1, h2, h3, h4, h5, h6, li, a": {
+      ".dark p, .dark span, .dark div, .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6, .dark li, .dark a": {
         color: "#f1f5f9 !important",
         ...fontOverride,
       },
@@ -459,6 +488,24 @@ export function BookReader({
   const handleEpubPrev = useCallback(() => {
     if (rendition) rendition.prev();
   }, [rendition]);
+
+  // Listen to keyboard navigation on parent window
+  useEffect(() => {
+    if (!isOpen || contentType === "text/plain") return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft") {
+        handleEpubPrev();
+      } else if (event.key === "ArrowRight") {
+        handleEpubNext();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, contentType, handleEpubPrev, handleEpubNext]);
 
   // Click handler for TOC navigation
   const handleTocClick = useCallback(
@@ -493,6 +540,13 @@ export function BookReader({
     sepia: "bg-[#7c695b] text-white hover:bg-[#6c594c]",
   };
 
+  const handleTxtPageClick = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("button")) {
+      return;
+    }
+    toggleUiVisibility();
+  };
+
   // Plain Text Content Renderer
   const renderTxtView = () => {
     if (txtLoading) {
@@ -507,7 +561,10 @@ export function BookReader({
     if (layoutMode === "paged") {
       const pageText = txtPages[txtPageIndex] || "";
       return (
-        <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden relative">
+        <div 
+          onClick={handleTxtPageClick}
+          className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden relative cursor-pointer"
+        >
           <div className="flex-1 flex items-center justify-center w-full max-w-3xl overflow-auto py-8">
             <div
               className={cn(
@@ -552,7 +609,8 @@ export function BookReader({
       <div
         ref={txtScrollContainerRef}
         onScroll={handleTxtScroll}
-        className="flex-1 overflow-y-auto px-6 py-12 select-text"
+        onClick={handleTxtPageClick}
+        className="flex-1 overflow-y-auto px-6 py-12 select-text cursor-pointer"
       >
         <div
           className={cn(
@@ -571,14 +629,15 @@ export function BookReader({
   return createPortal(
     <div
       className={cn(
-        "fixed inset-0 z-[9999] flex flex-col select-none book-reader-overlay transition-colors duration-200",
+        "fixed inset-0 z-[9999] flex flex-col select-none book-reader-overlay transition-colors duration-200 relative",
         themeClasses[theme]
       )}
     >
       {/* Top Header Controls Panel */}
       <header
         className={cn(
-          "flex flex-wrap items-center justify-between px-4 py-2.5 border-b shadow-md z-50",
+          "absolute top-0 left-0 right-0 h-14 flex items-center justify-between px-4 border-b shadow-md z-50 transition-opacity duration-150",
+          isUiVisible ? "opacity-100" : "opacity-0 pointer-events-none",
           controlClasses[theme]
         )}
       >
@@ -700,7 +759,12 @@ export function BookReader({
       </header>
 
       {/* Main Canvas Workspace */}
-      <main className="flex-1 flex overflow-hidden relative">
+      <main
+        className={cn(
+          "flex-1 flex overflow-hidden relative",
+          isUiVisible ? "pt-14 pb-8" : "pt-0 pb-0"
+        )}
+      >
         {/* Table of Contents Drawer (EPUB) */}
         {isTocOpen && contentType !== "text/plain" && (
           <aside
@@ -753,7 +817,7 @@ export function BookReader({
               </div>
             )}
             {/* epubjs render element */}
-            <div ref={setViewerElement} className="w-full h-[calc(100dvh-85px)] p-2 relative" />
+            <div ref={setViewerElement} className="w-full h-full p-2 relative" />
 
             {/* Paged Layout Overlay controls */}
             {layoutMode === "paged" && !epubLoading && (
@@ -795,7 +859,8 @@ export function BookReader({
       {/* Footnote Metadata Status Bar */}
       <footer
         className={cn(
-          "flex justify-between items-center px-4 py-1.5 border-t text-[10px] font-mono",
+          "absolute bottom-0 left-0 right-0 h-8 flex justify-between items-center px-4 border-t text-[10px] font-mono z-50 transition-opacity duration-150",
+          isUiVisible ? "opacity-100" : "opacity-0 pointer-events-none",
           controlClasses[theme]
         )}
       >
