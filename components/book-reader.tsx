@@ -326,8 +326,18 @@ export function BookReader({
         setRendition(renditionInstance);
         renditionRef.current = renditionInstance;
 
+        // Add error listeners to capture swallowed exceptions
+        bookInstance.on("openFailed", (err: any) => {
+          console.error("[EPUB-DIAG] ePub openFailed event:", err);
+        });
+
+        renditionInstance.on("displayerror", (err: any) => {
+          console.error("[EPUB-DIAG] Rendition displayerror event:", err);
+        });
+
         // Load Table of Contents
         bookInstance.loaded.navigation.then((nav: any) => {
+          console.log("[EPUB-DIAG] Navigation loaded. Chapters count:", nav.toc?.length || 0);
           if (active) setToc(nav.toc || []);
         });
 
@@ -345,11 +355,15 @@ export function BookReader({
         });
 
         // Display book at initial CFI or start
+        console.log("[EPUB-DIAG] Waiting for bookInstance.ready...");
         await bookInstance.ready;
+        console.log("[EPUB-DIAG] bookInstance.ready resolved.");
         if (!active) return;
 
         const targetCfi = currentCfi || undefined;
+        console.log("[EPUB-DIAG] Displaying book at targetCfi:", targetCfi);
         await renditionInstance.display(targetCfi);
+        console.log("[EPUB-DIAG] book displayed successfully.");
 
         if (active) setEpubLoading(false);
 
