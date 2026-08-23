@@ -93,7 +93,7 @@ export function BookReader({
   const [progressLoaded, setProgressLoaded] = useState(false);
 
   // DOM Refs
-  const viewerRef = useRef<HTMLDivElement>(null);
+  const [viewerElement, setViewerElement] = useState<HTMLDivElement | null>(null);
   const txtScrollContainerRef = useRef<HTMLDivElement>(null);
   const renditionRef = useRef<any>(null);
   const lastSavedRef = useRef<{ position: string; percentage: number } | null>(null);
@@ -293,10 +293,10 @@ export function BookReader({
 
   // EPUB initialization
   useEffect(() => {
-    if (contentType === "text/plain" || !url || !isOpen || !viewerRef.current) return;
+    if (contentType === "text/plain" || !url || !isOpen || !viewerElement) return;
 
     // Clear previous viewer content to prevent duplicate iframe nodes
-    viewerRef.current.innerHTML = "";
+    viewerElement.innerHTML = "";
 
     setEpubLoading(true);
 
@@ -318,7 +318,7 @@ export function BookReader({
         const epubCreator = typeof ePub === "function" ? ePub : (ePub as any).default;
         bookInstance = epubCreator(blob);
 
-        renditionInstance = bookInstance.renderTo(viewerRef.current, {
+        renditionInstance = bookInstance.renderTo(viewerElement, {
           width: "100%",
           height: "100%",
           flow: layoutMode === "scroll" ? "scrolled" : "paginated",
@@ -392,7 +392,7 @@ export function BookReader({
       setRendition(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url, contentType, isOpen, layoutMode]);
+  }, [url, contentType, isOpen, layoutMode, viewerElement]);
 
   // Apply layout flow dynamically for EPUB
   useEffect(() => {
@@ -753,7 +753,7 @@ export function BookReader({
               </div>
             )}
             {/* epubjs render element */}
-            <div ref={viewerRef} className="w-full h-[calc(100dvh-85px)] p-2 relative" />
+            <div ref={setViewerElement} className="w-full h-[calc(100dvh-85px)] p-2 relative" />
 
             {/* Paged Layout Overlay controls */}
             {layoutMode === "paged" && !epubLoading && (
