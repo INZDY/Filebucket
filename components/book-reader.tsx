@@ -75,6 +75,8 @@ export function BookReader({
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("paged");
   const [fontSize, setFontSize] = useState<FontSize>("md");
   const [fontFamily, setFontFamily] = useState<FontFamily>("sans");
+  const [fontWeight, setFontWeight] = useState<string>("normal");
+  const [lineHeight, setLineHeight] = useState<string>("1.5");
 
   // EPUB States
   const [rendition, setRendition] = useState<any>(null);
@@ -122,9 +124,7 @@ export function BookReader({
           if (active && data) {
             if (data.position) {
               if (contentType === "text/plain") {
-                if (layoutMode === "paged") {
-                  setTxtPageIndex(Number(data.position) || 0);
-                }
+                setTxtPageIndex(Number(data.position) || 0);
               } else {
                 setCurrentCfi(data.position);
               }
@@ -137,6 +137,8 @@ export function BookReader({
               if (data.settings.layoutMode) setLayoutMode(data.settings.layoutMode);
               if (data.settings.fontSize) setFontSize(data.settings.fontSize);
               if (data.settings.fontFamily) setFontFamily(data.settings.fontFamily);
+              if (data.settings.fontWeight) setFontWeight(data.settings.fontWeight);
+              if (data.settings.lineHeight) setLineHeight(data.settings.lineHeight);
             }
           }
         }
@@ -151,7 +153,7 @@ export function BookReader({
     return () => {
       active = false;
     };
-  }, [isOpen, mediaId, contentType, layoutMode]);
+  }, [isOpen, mediaId, contentType]);
 
   // Push progress save to DB
   const saveProgress = useCallback(
@@ -176,14 +178,14 @@ export function BookReader({
             mediaAssetId: mediaId,
             position,
             percentage: parseFloat(pct.toFixed(1)),
-            settings: { theme, layoutMode, fontSize, fontFamily },
+            settings: { theme, layoutMode, fontSize, fontFamily, fontWeight, lineHeight },
           }),
         });
       } catch (err) {
         console.error("Failed to save progress:", err);
       }
     },
-    [mediaId, theme, layoutMode, fontSize, fontFamily]
+    [mediaId, theme, layoutMode, fontSize, fontFamily, fontWeight, lineHeight]
   );
 
   // Debounced save reference
@@ -205,6 +207,10 @@ export function BookReader({
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
+    if (!progressLoaded) {
+      onClose();
+      return;
+    }
     const currentPosition =
       contentType === "text/plain"
         ? layoutMode === "paged"
@@ -218,7 +224,7 @@ export function BookReader({
       saveProgress(currentPosition, percentage);
     }
     onClose();
-  }, [contentType, layoutMode, txtPageIndex, currentCfi, percentage, saveProgress, onClose]);
+  }, [contentType, layoutMode, txtPageIndex, currentCfi, percentage, saveProgress, onClose, progressLoaded]);
 
   // Clean up debounce on unmount
   useEffect(() => {
@@ -259,14 +265,14 @@ export function BookReader({
 
   // Handle TXT Scroll progress tracking
   const handleTxtScroll = useCallback(() => {
-    if (layoutMode !== "scroll" || !txtScrollContainerRef.current) return;
+    if (layoutMode !== "scroll" || !txtScrollContainerRef.current || !progressLoaded) return;
     const el = txtScrollContainerRef.current;
     const maxScroll = el.scrollHeight - el.clientHeight;
     if (maxScroll <= 0) return;
     const pct = (el.scrollTop / maxScroll) * 100;
     setPercentage(pct);
     saveProgressDebounced(String(el.scrollTop), pct);
-  }, [layoutMode, saveProgressDebounced]);
+  }, [layoutMode, saveProgressDebounced, progressLoaded]);
 
   // Restore TXT scroll position once content is loaded
   useEffect(() => {
@@ -289,16 +295,16 @@ export function BookReader({
 
   // Sync paged txt changes to server
   useEffect(() => {
-    if (contentType === "text/plain" && layoutMode === "paged" && txtPages.length > 0) {
+    if (contentType === "text/plain" && layoutMode === "paged" && txtPages.length > 0 && progressLoaded) {
       const pct = txtPages.length > 1 ? (txtPageIndex / (txtPages.length - 1)) * 100 : 100;
       setPercentage(pct);
       saveProgressDebounced(String(txtPageIndex), pct);
     }
-  }, [txtPageIndex, layoutMode, txtPages.length, contentType, saveProgressDebounced]);
+  }, [txtPageIndex, layoutMode, txtPages.length, contentType, saveProgressDebounced, progressLoaded]);
 
   // EPUB initialization
   useEffect(() => {
-    if (contentType === "text/plain" || !url || !isOpen || !viewerElement) return;
+    if (contentType === "text/plain" || !url || !isOpen || !viewerElement || !progressLoaded) return;
 
     // Clear previous viewer content to prevent duplicate iframe nodes
     viewerElement.innerHTML = "";
@@ -421,7 +427,7 @@ export function BookReader({
       setRendition(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url, contentType, isOpen, layoutMode, viewerElement, toggleUiVisibility]);
+  }, [url, contentType, isOpen, layoutMode, viewerElement, toggleUiVisibility, progressLoaded]);
 
   // Apply layout flow dynamically for EPUB
   useEffect(() => {
@@ -435,8 +441,10 @@ export function BookReader({
   useEffect(() => {
     if (!rendition) return;
 
-    const fontOverride = {
+    const styleOverride = {
       "font-family": `${epubFontFamilies[fontFamily]} !important`,
+      "font-weight": `${fontWeight} !important`,
+      "line-height": `${lineHeight} !important`,
     };
 
     // Register themes in epubjs iframe dynamically incorporating active font family and text overlays
@@ -444,11 +452,11 @@ export function BookReader({
       "body.light": {
         background: "#ffffff !important",
         color: "#0f172a !important",
-        ...fontOverride,
+        ...styleOverride,
       },
       ".light p, .light span, .light div, .light h1, .light h2, .light h3, .light h4, .light h5, .light h6, .light li, .light a": {
         color: "#0f172a !important",
-        ...fontOverride,
+        ...styleOverride,
       },
     });
 
@@ -456,11 +464,11 @@ export function BookReader({
       "body.sepia": {
         background: "#f4eccf !important",
         color: "#4a3b32 !important",
-        ...fontOverride,
+        ...styleOverride,
       },
       ".sepia p, .sepia span, .sepia div, .sepia h1, .sepia h2, .sepia h3, .sepia h4, .sepia h5, .sepia h6, .sepia li, .sepia a": {
         color: "#4a3b32 !important",
-        ...fontOverride,
+        ...styleOverride,
       },
     });
 
@@ -468,17 +476,17 @@ export function BookReader({
       "body.dark": {
         background: "#0d0f14 !important",
         color: "#f1f5f9 !important",
-        ...fontOverride,
+        ...styleOverride,
       },
       ".dark p, .dark span, .dark div, .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6, .dark li, .dark a": {
         color: "#f1f5f9 !important",
-        ...fontOverride,
+        ...styleOverride,
       },
     });
 
     rendition.themes.select(theme);
     rendition.themes.fontSize(epubFontSizes[fontSize]);
-  }, [rendition, theme, fontSize, fontFamily]);
+  }, [rendition, theme, fontSize, fontFamily, fontWeight, lineHeight]);
 
   // EPUB Page Turning handlers
   const handleEpubNext = useCallback(() => {
@@ -581,10 +589,11 @@ export function BookReader({
           <div className="flex-1 flex items-center justify-center w-full max-w-3xl overflow-auto py-8">
             <div
               className={cn(
-                "whitespace-pre-wrap leading-relaxed max-w-full font-normal select-text txt-content-viewer px-6",
+                "whitespace-pre-wrap max-w-full select-text txt-content-viewer px-6",
                 fontSizes[fontSize],
                 fontFamilies[fontFamily]
               )}
+              style={{ fontWeight, lineHeight }}
             >
               {pageText}
             </div>
@@ -627,10 +636,11 @@ export function BookReader({
       >
         <div
           className={cn(
-            "max-w-2xl mx-auto whitespace-pre-wrap leading-relaxed txt-content-viewer",
+            "max-w-2xl mx-auto whitespace-pre-wrap txt-content-viewer",
             fontSizes[fontSize],
             fontFamilies[fontFamily]
           )}
+          style={{ fontWeight, lineHeight }}
         >
           {txtContent}
         </div>
@@ -738,9 +748,9 @@ export function BookReader({
             onChange={(e) => setFontFamily(e.target.value as FontFamily)}
             className={cn("h-8 rounded-md border text-xs px-2 bg-transparent outline-none", controlClasses[theme])}
           >
-            <option value="sans">Sans Serif</option>
-            <option value="serif">Serif</option>
-            <option value="mono">Monospace</option>
+            <option value="sans" className="bg-[#1e293b] text-white">Sans Serif</option>
+            <option value="serif" className="bg-[#1e293b] text-white">Serif</option>
+            <option value="mono" className="bg-[#1e293b] text-white">Monospace</option>
           </select>
 
           {/* Font Size Selection */}
@@ -749,10 +759,34 @@ export function BookReader({
             onChange={(e) => setFontSize(e.target.value as FontSize)}
             className={cn("h-8 rounded-md border text-xs px-2 bg-transparent outline-none", controlClasses[theme])}
           >
-            <option value="sm">Small</option>
-            <option value="md">Medium</option>
-            <option value="lg">Large</option>
-            <option value="xl">X-Large</option>
+            <option value="sm" className="bg-[#1e293b] text-white">Small</option>
+            <option value="md" className="bg-[#1e293b] text-white">Medium</option>
+            <option value="lg" className="bg-[#1e293b] text-white">Large</option>
+            <option value="xl" className="bg-[#1e293b] text-white">X-Large</option>
+          </select>
+
+          {/* Font Thickness Selection */}
+          <select
+            value={fontWeight}
+            onChange={(e) => setFontWeight(e.target.value)}
+            className={cn("h-8 rounded-md border text-xs px-2 bg-transparent outline-none", controlClasses[theme])}
+            title="Font Thickness"
+          >
+            <option value="normal" className="bg-[#1e293b] text-white">W: Normal</option>
+            <option value="500" className="bg-[#1e293b] text-white">W: Medium</option>
+            <option value="bold" className="bg-[#1e293b] text-white">W: Bold</option>
+          </select>
+
+          {/* Line Spacing Selection */}
+          <select
+            value={lineHeight}
+            onChange={(e) => setLineHeight(e.target.value)}
+            className={cn("h-8 rounded-md border text-xs px-2 bg-transparent outline-none", controlClasses[theme])}
+            title="Line Spacing"
+          >
+            <option value="1.2" className="bg-[#1e293b] text-white">S: Compact</option>
+            <option value="1.5" className="bg-[#1e293b] text-white">S: Normal</option>
+            <option value="1.8" className="bg-[#1e293b] text-white">S: Loose</option>
           </select>
 
           {/* Divider */}
