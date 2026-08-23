@@ -10,6 +10,7 @@ const FilebucketEditor = dynamic(
   () => import("@/components/filebucket-editor").then((mod) => mod.FilebucketEditor),
   { ssr: false }
 );
+import { useSettings } from "@/components/settings-context";
 
 import { updateNoteAction } from "@/app/notes/actions";
 import { getPresignedUploadUrlAction, createMediaAssetAction } from "@/app/media/actions";
@@ -55,8 +56,6 @@ function formatDate(value: Date | string | number | undefined | null) {
   }).format(date);
 }
 
-const AUTOSAVE_DELAY_MS = 20_000;
-
 export function NoteEditor({ imageMediaAssets, note, updatedAt, allTags, assignedTags }: NoteEditorProps) {
   return (
     <MilkdownNoteEditor
@@ -70,6 +69,7 @@ export function NoteEditor({ imageMediaAssets, note, updatedAt, allTags, assigne
 }
 
 function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assignedTags }: NoteEditorProps) {
+  const { settings } = useSettings();
   const handleLinkClick = useCallback((href: string, event: React.MouseEvent) => {
     const matchingAsset = imageMediaAssets.find(
       (asset) => asset.url === href || href.includes(asset.id)
@@ -326,9 +326,9 @@ function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assign
   );
 
   useEffect(() => {
-    const timeout = window.setTimeout(save, AUTOSAVE_DELAY_MS);
+    const timeout = window.setTimeout(save, settings.autosaveDelay);
     return () => window.clearTimeout(timeout);
-  }, [body, hasChanges, save, title]);
+  }, [body, hasChanges, save, title, settings.autosaveDelay]);
 
   const unmountSaveRef = useRef({
     noteId: note.id,

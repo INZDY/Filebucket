@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { act } from "react";
@@ -62,6 +62,41 @@ describe("ActivityBar Component", () => {
     const links = container.querySelectorAll("a");
     const trashLink = Array.from(links).find((l) => l.getAttribute("href") === "/?view=trash");
     expect(trashLink?.className).toContain("text-rose-400");
+
+    // Clean up
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
+
+  it("should render settings button and trigger onOpenSettings when clicked", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    const mockOnOpenSettings = vi.fn();
+
+    await act(async () => {
+      root.render(
+        <ActivityBar
+          activeMode="NOTES"
+          notesRootId="notes-123"
+          keepRootId="keep-456"
+          chatRootId="chat-789"
+          onOpenSettings={mockOnOpenSettings}
+        />
+      );
+    });
+
+    const button = container.querySelector("button[title='Settings']");
+    expect(button).not.toBeNull();
+    
+    // Simulate click
+    await act(async () => {
+      button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(mockOnOpenSettings).toHaveBeenCalled();
 
     // Clean up
     await act(async () => {

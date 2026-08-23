@@ -8,6 +8,10 @@ vi.mock("@/lib/prisma", () => ({
       findMany: vi.fn(),
       create: vi.fn(),
     },
+    userSettings: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+    },
   },
 }));
 
@@ -16,6 +20,7 @@ describe("initializeUserVault", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.userSettings.findUnique).mockResolvedValue(null);
   });
 
   it("should create all 3 reserved folders if none exist", async () => {
@@ -61,6 +66,19 @@ describe("initializeUserVault", () => {
         parentId: null,
       },
     });
+
+    expect(prisma.userSettings.findUnique).toHaveBeenCalledWith({
+      where: { userId: mockUserId },
+    });
+    expect(prisma.userSettings.create).toHaveBeenCalledWith({
+      data: {
+        userId: mockUserId,
+        theme: "dark",
+        quotaLimit: 10 * 1024 * 1024 * 1024,
+        defaultNoteFont: "sans",
+        autosaveDelay: 1500,
+      },
+    });
   });
 
   it("should not create folders that already exist", async () => {
@@ -98,9 +116,11 @@ describe("initializeUserVault", () => {
       { id: "f2", name: "Quick Notes", type: "KEEP_ROOT", userId: mockUserId, parentId: null } as any,
       { id: "f3", name: "Chat Channels", type: "CHAT_ROOT", userId: mockUserId, parentId: null } as any,
     ]);
+    vi.mocked(prisma.userSettings.findUnique).mockResolvedValue({ id: "settings-abc" } as any);
 
     await initializeUserVault(mockUserId);
 
     expect(prisma.folder.create).not.toHaveBeenCalled();
+    expect(prisma.userSettings.create).not.toHaveBeenCalled();
   });
 });

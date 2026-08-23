@@ -27,6 +27,7 @@ export default async function Home({ searchParams }: HomeProps) {
     tags,
     notes,
     mediaAssets,
+    userSettings,
   ] = await Promise.all([
     prisma.folder.findMany({
       where: {
@@ -160,6 +161,11 @@ export default async function Home({ searchParams }: HomeProps) {
         },
       },
     }),
+    prisma.userSettings.findUnique({
+      where: {
+        userId: session.user.id,
+      },
+    }),
   ]);
 
   return (
@@ -174,6 +180,7 @@ export default async function Home({ searchParams }: HomeProps) {
         initialDeletedFolders={deletedFolders}
         initialDeletedNotes={deletedNotes}
         initialDeletedMediaAssets={deletedMediaAssets}
+        initialUserSettings={userSettings}
         initialSearchParams={params ?? null}
       />
     </main>

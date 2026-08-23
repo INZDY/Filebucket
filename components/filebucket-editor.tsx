@@ -8,6 +8,7 @@ import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import Image from "@tiptap/extension-image";
 import { cn } from "@/lib/utils";
+import { useSettings } from "@/components/settings-context";
 
 type FilebucketEditorProps = {
   markdown: string;
@@ -31,6 +32,13 @@ export function FilebucketEditor({
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
+  const { settings } = useSettings();
+  const fontClass = settings.defaultNoteFont === "serif"
+    ? "font-serif"
+    : settings.defaultNoteFont === "mono"
+    ? "font-mono"
+    : "font-sans";
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -52,7 +60,8 @@ export function FilebucketEditor({
       attributes: {
         class: cn(
           "prose prose-slate max-w-none focus:outline-none h-full",
-          mode === "keep" ? "keep-editor" : "notes-editor"
+          mode === "keep" ? "keep-editor" : "notes-editor",
+          fontClass
         )
       }
     },

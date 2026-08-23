@@ -34,6 +34,21 @@ const user = await prisma.user.upsert({
 
 console.log(`Seeded Filebucket admin user: ${email}`);
 
+// 1.5 Seed default user settings for admin
+await prisma.userSettings.upsert({
+  where: { userId: user.id },
+  update: {},
+  create: {
+    userId: user.id,
+    theme: "dark",
+    quotaLimit: 10 * 1024 * 1024 * 1024, // 10 GB
+    defaultNoteFont: "sans",
+    autosaveDelay: 1500,
+  },
+});
+
+console.log("Seeded default user settings.");
+
 // 2. Seed reserved folders
 const reservedFolders = [
   { name: "Notes", type: "NOTES_ROOT" },

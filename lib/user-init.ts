@@ -44,4 +44,21 @@ export async function initializeUserVault(userId: string): Promise<void> {
       },
     });
   }
+
+  // Ensure default user settings are initialized
+  const existingSettings = await prisma.userSettings.findUnique({
+    where: { userId },
+  });
+
+  if (!existingSettings) {
+    await prisma.userSettings.create({
+      data: {
+        userId,
+        theme: "dark",
+        quotaLimit: 10 * 1024 * 1024 * 1024, // 10 GB
+        defaultNoteFont: "sans",
+        autosaveDelay: 1500, // 1.5 seconds
+      },
+    });
+  }
 }

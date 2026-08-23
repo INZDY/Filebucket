@@ -11,6 +11,7 @@ import {
   Tags,
   Trash,
   Trash2,
+  Settings,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { BrowserTree } from "./browser-tree";
 import { cn, formatBytes } from "@/lib/utils";
 import { compareAlphanumeric } from "@/lib/sorting";
 import { Progress } from "@/components/ui/progress";
+import { useSettings } from "@/components/settings-context";
 
 import {
   restoreFolderAction,
@@ -112,6 +114,7 @@ interface SidebarBrowserProps {
   trashCount: number;
   returnTo: string;
   activeMode: "FILES" | "NOTES" | "KEEP" | "CHAT" | "TRASH";
+  onOpenSettings?: () => void;
 }
 
 export function SidebarBrowser({
@@ -141,7 +144,9 @@ export function SidebarBrowser({
   tags,
   trashCount,
   activeMode,
+  onOpenSettings,
 }: SidebarBrowserProps) {
+  const { settings } = useSettings();
   const [usedBytes, setUsedBytes] = useState<number | null>(null);
 
   useEffect(() => {
@@ -165,7 +170,7 @@ export function SidebarBrowser({
     };
   }, [mediaAssets.length, deletedMediaAssets.length]);
 
-  const TOTAL_QUOTA = 10 * 1024 * 1024 * 1024; // 10 GB
+  const TOTAL_QUOTA = settings.quotaLimit;
   const percentage = usedBytes !== null ? Math.min((usedBytes / TOTAL_QUOTA) * 100, 100) : 0;
   
   const [searchFilter, setSearchFilter] = useState<"ALL" | "FILES" | "NOTES" | "CHATS">("ALL");
@@ -771,7 +776,17 @@ export function SidebarBrowser({
           <span>Storage</span>
           <span>{usedBytes !== null ? `${formatBytes(usedBytes)} / ${formatBytes(TOTAL_QUOTA)}` : "Loading..."}</span>
         </div>
-        <Progress value={percentage} className="h-1.5 bg-slate-800 text-purple-600" />
+        <Progress value={percentage} className="h-1.5 bg-slate-800 text-purple-600 mb-2" />
+        
+        {/* Settings button - mobile only */}
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          className="md:hidden w-full flex items-center justify-center gap-2 rounded-lg border border-slate-800 bg-[#111318] hover:bg-slate-800/50 hover:text-slate-100 py-1.5 text-xs text-slate-400 font-medium transition-colors mt-2"
+        >
+          <Settings className="h-3.5 w-3.5" />
+          Settings
+        </button>
       </div>
     </aside>
   );

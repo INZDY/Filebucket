@@ -1,11 +1,12 @@
 import React from "react";
-import { Folder, BookOpen, StickyNote, MessageSquare, Trash2 } from "lucide-react";
+import { Folder, BookOpen, StickyNote, MessageSquare, Trash2, Settings } from "lucide-react";
 
 interface ActivityBarProps {
   activeMode: "FILES" | "NOTES" | "KEEP" | "CHAT" | "TRASH";
   notesRootId: string | null;
   keepRootId: string | null;
   chatRootId: string | null;
+  onOpenSettings?: () => void;
 }
 
 const modeStyles = {
@@ -36,6 +37,7 @@ export function ActivityBar({
   notesRootId,
   keepRootId,
   chatRootId,
+  onOpenSettings,
 }: ActivityBarProps) {
   const mainItems = [
     {
@@ -101,6 +103,14 @@ export function ActivityBar({
           </React.Fragment>
         );
       })}
+      <button
+        type="button"
+        title="Settings"
+        onClick={onOpenSettings}
+        className="hidden md:flex group relative h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 border border-transparent text-slate-400 hover:bg-slate-800/30 hover:text-slate-200 hover:border-slate-500/20 shrink-0 mt-1 mb-2"
+      >
+        <Settings className="h-5 w-5 transition-transform duration-200 group-hover:rotate-45" />
+      </button>
     </nav>
   );
 }

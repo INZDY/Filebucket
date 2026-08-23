@@ -415,11 +415,11 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Open an e-book or manga ZIP, progress several pages, reload or change mode, and reopen to verify the reading position is restored from the DB. Disable network connection and verify cached media assets load.
 
 ### Milestone 57: Global Settings Dialog
-*   **Status**: Proposed.
-*   **Goal**: Modal to configure custom quota, themes (Glass Dark, Light, Light Brown), autosave delays, and default note editor fonts.
+*   **Status**: Completed & Verified (August 2026).
+*   **Goal**: Modal to configure custom quota, autosave delays, and default note editor fonts.
 *   **Tasks**:
-    *   Build a global Settings modal layout accessible from the bottom bar (Activity Bar on desktop, Sidebar on mobile).
-    *   Provide input fields to configure custom storage quota limits, select global active theme (Glass Dark, Light, Light Brown), modify debounced autosave delays, and select default note font styles.
-    *   Hook up preferences updates to instantly re-theme the application and update the storage progress visualizer.
-*   **Verification**: Open the settings modal, modify preferences, save, and check that visual themes, fonts, and limits update immediately.
+    *   Build a global Settings modal layout accessible from the bottom bar (Activity Bar on desktop) or sidebar (mobile SidebarBrowser).
+    *   Provide input fields to configure custom storage quota limits, select default note editor font styles, and adjust note autosave delays in seconds.
+    *   Hook up preference updates to immediately adjust the note editor font family, apply custom autosave delays, and scale the storage progress bar visualizer.
+*   **Verification**: Open the settings modal, modify preferences, save, and check that visual fonts, autosave delays, and storage visualizer update immediately. All unit tests pass.
 

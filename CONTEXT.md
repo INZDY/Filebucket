@@ -149,11 +149,11 @@ An operation (such as Move, Move to Trash, or Download ZIP) executed simultaneou
 _Avoid_: Batch operation, group action
 
 **Storage Quota**:
-The total byte storage limit allocated to a user's vault, set to 10 GB. It covers all active and trashed media assets.
+The total byte storage limit allocated to a user's vault, defaulting to 10 GB (customizable via user settings). It covers all active and trashed media assets.
 _Avoid_: Disk limit, drive size, upload limit
 
 **Autosave**:
-Editing behavior where note title, body, or card changes are saved automatically without requiring a manual save command. Autosave saves after the user pauses typing for 1500-2000ms. If a user switches workspace modes or closes an active content tab/modal, the app instantly flushes and saves any pending edits. Autosave is not a domain entity.
+Editing behavior where note title, body, or card changes are saved automatically without requiring a manual save command. Autosave saves after the user pauses typing for a duration configured in user settings (defaulting to 1.5 seconds). If a user switches workspace modes or closes an active content tab/modal, the app instantly flushes and saves any pending edits. Autosave is not a domain entity.
 _Avoid_: Manual save, draft mode
 
 **Folder Contents View**:
