@@ -67,8 +67,6 @@ export function BookReader({
   contentType,
   mediaId,
 }: BookReaderProps) {
-  console.log("[BOOK-READER-DIAG] Render:", { isOpen, contentType, url });
-
   // Mounting & Portal State
   const [mounted, setMounted] = useState(false);
 
@@ -107,12 +105,8 @@ export function BookReader({
 
   // SSR-safe mounting check
   useEffect(() => {
-    console.log("[BOOK-READER-DIAG] Mounted hook trigger");
     setMounted(true);
-    return () => {
-      console.log("[BOOK-READER-DIAG] Unmount clean-up");
-      setMounted(false);
-    };
+    return () => setMounted(false);
   }, []);
 
   // Fetch /api/media/progress on mount
@@ -361,9 +355,9 @@ export function BookReader({
           const ownerDoc = target?.ownerDocument;
           const width = ownerDoc?.documentElement?.clientWidth || window.innerWidth;
           const x = event.clientX;
-          if (x < width * 0.25) {
+          if (x < width * 0.3) {
             renditionInstance.prev();
-          } else if (x > width * 0.75) {
+          } else if (x > width * 0.7) {
             renditionInstance.next();
           } else {
             toggleUiVisibility();
@@ -525,11 +519,7 @@ export function BookReader({
   );
 
   // Early returns
-  if (!isOpen || !mounted) {
-    console.log("[BOOK-READER-DIAG] Returning null from render: ", { isOpen, mounted });
-    return null;
-  }
-  console.log("[BOOK-READER-DIAG] Proceeding to full render, viewerElementExists: ", !!viewerElement);
+  if (!isOpen || !mounted) return null;
 
   // Formatting variables for UI
   const themeClasses: Record<ThemeName, string> = {
@@ -554,7 +544,20 @@ export function BookReader({
     if ((e.target as HTMLElement).closest("button")) {
       return;
     }
-    toggleUiVisibility();
+
+    if (layoutMode === "paged") {
+      const width = e.currentTarget.clientWidth;
+      const x = e.clientX - e.currentTarget.getBoundingClientRect().left;
+      if (x < width * 0.3) {
+        setTxtPageIndex((p) => Math.max(0, p - 1));
+      } else if (x > width * 0.7) {
+        setTxtPageIndex((p) => Math.min(txtPages.length - 1, p + 1));
+      } else {
+        toggleUiVisibility();
+      }
+    } else {
+      toggleUiVisibility();
+    }
   };
 
   // Plain Text Content Renderer
