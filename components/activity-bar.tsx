@@ -76,7 +76,7 @@ export function ActivityBar({
 
   return (
     <nav
-      className="flex h-12 w-full flex-row items-center justify-around border-t border-slate-800/40 bg-[#0f0f13]/90 backdrop-blur-md md:h-full md:w-12 md:flex-col md:justify-start md:gap-3 md:border-r md:border-t-0 md:py-4 md:px-0"
+      className="flex h-12 w-full flex-row items-center justify-around border-t border-slate-800/40 bg-[#0f0f13]/90 backdrop-blur-md md:h-full md:w-12 md:flex-col md:justify-start md:gap-0 md:border-r md:border-t-0 md:py-0 md:px-0"
       aria-label="Activity Bar"
     >
       {items.map((item) => {
