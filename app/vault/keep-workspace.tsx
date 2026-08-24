@@ -180,7 +180,7 @@ export function KeepWorkspace({ notes, keepRootId, allTags }: KeepWorkspaceProps
   }
 
   return (
-    <div className="h-full min-h-0 overflow-y-auto px-4 py-6 md:px-8 space-y-8 bg-[#0a0a0d] text-slate-100 pb-16">
+    <div className="h-full min-h-0 overflow-y-auto px-4 py-6 md:px-8 space-y-8 bg-[#0a0a0d] text-slate-100 pb-12">
       
       {/* 1. Inline Creation Bar */}
       <div ref={creationContainerRef} className="max-w-xl mx-auto w-full">
