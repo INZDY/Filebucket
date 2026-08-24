@@ -79,6 +79,10 @@ _Avoid_: Scroll view, vertical mode
 A layout configuration inside the Manga Reader that displays images one-by-one, supporting horizontal page navigation (Left-to-Right or Right-to-Left).
 _Avoid_: Single page mode, flip mode
 
+**Book Reader**:
+A fullscreen overlay utility launched from an EPUB or plain text (`.txt`) media asset preview. It supports customizable reading themes (Light, Sepia, Glass Dark), adjustable typography styles (font family, font size, font weight, line spacing), layout configurations (Paged vs Scroll), Table of Contents sidebar navigation, and reading progress synchronization.
+_Avoid_: EPUB viewer, document reader, text viewer
+
 **Standalone Mode**:
 The display setting of the PWA when launched from the home screen or dock, running the application in a borderless window without standard browser navigation bars.
 _Avoid_: Fullscreen window, browser mode
