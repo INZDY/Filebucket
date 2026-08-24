@@ -668,22 +668,22 @@ export function BookReader({
           </div>
 
           {/* Navigation overlay buttons */}
-          <div className="absolute inset-y-0 left-2 flex items-center">
+          <div className="hidden md:flex absolute inset-y-0 left-2 items-center">
             <Button
               variant="outline"
               size="icon"
-              className={cn("rounded-full opacity-60 hover:opacity-100", controlClasses[theme])}
+              className={cn("rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200 shadow-lg", controlClasses[theme])}
               onClick={() => setTxtPageIndex((p) => Math.max(0, p - 1))}
               disabled={txtPageIndex === 0}
             >
               <ChevronLeft className="h-5 w-5" />
             </Button>
           </div>
-          <div className="absolute inset-y-0 right-2 flex items-center">
+          <div className="hidden md:flex absolute inset-y-0 right-2 items-center">
             <Button
               variant="outline"
               size="icon"
-              className={cn("rounded-full opacity-60 hover:opacity-100", controlClasses[theme])}
+              className={cn("rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200 shadow-lg", controlClasses[theme])}
               onClick={() => setTxtPageIndex((p) => Math.min(txtPages.length - 1, p + 1))}
               disabled={txtPageIndex >= txtPages.length - 1}
             >
@@ -991,12 +991,12 @@ export function BookReader({
             {/* Paged Layout Overlay controls */}
             {layoutMode === "paged" && !epubLoading && (
               <>
-                <div className="absolute inset-y-0 left-2 flex items-center z-20">
+                <div className="hidden md:flex absolute inset-y-0 left-2 items-center z-20">
                   <Button
                     variant="outline"
                     size="icon"
                     className={cn(
-                      "rounded-full opacity-60 md:opacity-0 md:hover:opacity-100 transition-opacity duration-200 shadow-lg",
+                      "rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200 shadow-lg",
                       controlClasses[theme]
                     )}
                     onClick={handleEpubPrev}
@@ -1004,12 +1004,12 @@ export function BookReader({
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
                 </div>
-                <div className="absolute inset-y-0 right-2 flex items-center z-20">
+                <div className="hidden md:flex absolute inset-y-0 right-2 items-center z-20">
                   <Button
                     variant="outline"
                     size="icon"
                     className={cn(
-                      "rounded-full opacity-60 md:opacity-0 md:hover:opacity-100 transition-opacity duration-200 shadow-lg",
+                      "rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200 shadow-lg",
                       controlClasses[theme]
                     )}
                     onClick={handleEpubNext}

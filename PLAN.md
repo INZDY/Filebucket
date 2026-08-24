@@ -430,11 +430,11 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   **Simultaneous 3-Dot Menus (Option A)**: Refactor `MediaActionsMenu` and `NoteActionsMenu` to listen to a global window event `close-actions-menus`. Before opening a menu, dispatch this event with the current item's ID as `exceptId` to close all other open instances.
     *   **Compact Mobile Navigation (Option A)**: Reduce mobile/tablet height of `ActivityBar` container in `components/activity-bar.tsx` from `h-16` to `h-12` (48px). Adjust button styling to retain `h-full flex-1` for optimal touch target areas (48px height) and update mobile bottom padding in `keep-workspace.tsx` from `pb-16` to `pb-12`.
     *   **Book Reader Settings Panel (Option A)**: Refactor `components/book-reader.tsx` to group typography, layout, and theme customization selectors under a single "Settings" button. Add a floating absolute-positioned settings dropdown panel that toggle-displays these controls, adjusts width responsively on mobile, and closes automatically on click-outside.
-    *   **Book Reader Mobile Tap Zones & Swipe**: Implement horizontal swipe gestures (`touchstart`/`touchend` handlers) inside the EPUB iframe in `components/book-reader.tsx`. Make the left/right chevron navigation overlay buttons visible by default on mobile/touchscreens using `opacity-60 md:opacity-0 md:hover:opacity-100`. Keep side tap-zones active across both layouts.
+    *   **Book Reader Mobile Tap Zones & Swipe**: Implement horizontal swipe gestures (`touchstart`/`touchend` handlers) inside the EPUB iframe in `components/book-reader.tsx`. Hide chevron navigation overlay buttons entirely on mobile/touch viewports (using `hidden md:flex`) and restore desktop chevron hover functionality (`opacity-0 hover:opacity-100` transition). Keep side tap-zones active across both layouts.
 *   **Verification**:
     *   Open multiple 3-dot card menus; verify only one menu is open at a time.
     *   Inspect mobile viewports; verify bottom navigation height is `h-12` (48px) and tap targets span the full height.
     *   Open Book Reader; verify header controls do not wrap on mobile, settings dropdown toggles properly, and click-outside closes the dropdown.
-    *   On touch/mobile simulator, verify side chevron buttons are semi-transparent and visible, horizontal swipe turns pages, and side taps turn pages in both paged and scroll modes.
+    *   On touch/mobile simulator, verify chevron page navigation buttons are completely hidden, horizontal swipe turns pages, and side taps turn pages in both paged and scroll modes.
 
 
