@@ -12,6 +12,7 @@ import {
   Loader2,
   Scroll,
   Columns,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -77,6 +78,10 @@ export function BookReader({
   const [fontFamily, setFontFamily] = useState<FontFamily>("sans");
   const [fontWeight, setFontWeight] = useState<string>("normal");
   const [lineHeight, setLineHeight] = useState<string>("1.5");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  const settingsRef = useRef<HTMLDivElement>(null);
+  const settingsBtnRef = useRef<HTMLButtonElement>(null);
 
   // EPUB States
   const [rendition, setRendition] = useState<any>(null);
@@ -110,6 +115,31 @@ export function BookReader({
     setMounted(true);
     return () => setMounted(false);
   }, []);
+
+  // Click outside to close settings dropdown
+  useEffect(() => {
+    if (!isSettingsOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        settingsRef.current &&
+        !settingsRef.current.contains(event.target as Node) &&
+        settingsBtnRef.current &&
+        !settingsBtnRef.current.contains(event.target as Node)
+      ) {
+        setIsSettingsOpen(false);
+      }
+    }
+
+    const timer = setTimeout(() => {
+      document.addEventListener("click", handleClickOutside);
+    }, 0);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [isSettingsOpen]);
 
   // Fetch /api/media/progress on mount
   useEffect(() => {
@@ -367,6 +397,44 @@ export function BookReader({
             renditionInstance.next();
           } else {
             toggleUiVisibility();
+          }
+        });
+
+        // Add touch/swipe navigation inside the iframe
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartTime = 0;
+
+        renditionInstance.on("touchstart", (event: TouchEvent) => {
+          if (event.touches.length === 1) {
+            touchStartX = event.touches[0].clientX;
+            touchStartY = event.touches[0].clientY;
+            touchStartTime = Date.now();
+          }
+        });
+
+        renditionInstance.on("touchend", (event: TouchEvent) => {
+          if (event.changedTouches.length === 1) {
+            const touchEndX = event.changedTouches[0].clientX;
+            const touchEndY = event.changedTouches[0].clientY;
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
+            const elapsedTime = Date.now() - touchStartTime;
+
+            // Swipe horizontal detection (threshold: 50px, duration < 500ms, mostly horizontal)
+            if (
+              elapsedTime < 500 &&
+              Math.abs(diffX) > 50 &&
+              Math.abs(diffY) < 100
+            ) {
+              if (diffX > 0) {
+                renditionInstance.prev();
+              } else {
+                renditionInstance.next();
+              }
+              // Prevent default click synthesis if it's a swipe
+              event.preventDefault();
+            }
           }
         });
 
@@ -672,7 +740,7 @@ export function BookReader({
         </div>
 
         {/* Reader Customization Options */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5 relative">
           {/* TOC Toggle (EPUB only) */}
           {contentType !== "text/plain" && (
             <Button
@@ -686,108 +754,162 @@ export function BookReader({
             </Button>
           )}
 
-          {/* Theme Selector */}
-          <div className="flex rounded-md border p-0.5 gap-0.5 border-slate-700 bg-black/10">
-            <button
-              data-testid="theme-toggle-light"
-              className={cn(
-                "px-2.5 py-1 text-[10px] font-medium rounded",
-                theme === "light"
-                  ? activeBtnClasses[theme]
-                  : "text-slate-400 hover:text-slate-200"
-              )}
-              onClick={() => setTheme("light")}
-            >
-              Light
-            </button>
-            <button
-              data-testid="theme-toggle-sepia"
-              className={cn(
-                "px-2.5 py-1 text-[10px] font-medium rounded",
-                theme === "sepia"
-                  ? activeBtnClasses[theme]
-                  : "text-[#7c695b] hover:text-[#5c4a3b]"
-              )}
-              onClick={() => setTheme("sepia")}
-            >
-              Sepia
-            </button>
-            <button
-              data-testid="theme-toggle-dark"
-              className={cn(
-                "px-2.5 py-1 text-[10px] font-medium rounded",
-                theme === "dark"
-                  ? activeBtnClasses[theme]
-                  : "text-slate-400 hover:text-slate-200"
-              )}
-              onClick={() => setTheme("dark")}
-            >
-              Glass Dark
-            </button>
-          </div>
-
-          {/* Layout Mode Toggler */}
+          {/* Settings Dropdown Button */}
           <Button
+            ref={settingsBtnRef}
             variant="outline"
-            size="icon"
-            data-testid="layout-toggle"
-            title={layoutMode === "paged" ? "Switch to Scroll" : "Switch to Paged"}
-            className={cn("h-8 w-8", controlClasses[theme])}
-            onClick={() => setLayoutMode(layoutMode === "paged" ? "scroll" : "paged")}
+            size="sm"
+            data-testid="settings-toggle"
+            className={cn("h-8 px-2.5 text-xs gap-1", controlClasses[theme])}
+            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
           >
-            {layoutMode === "paged" ? (
-              <Columns className="h-3.5 w-3.5" />
-            ) : (
-              <Scroll className="h-3.5 w-3.5" />
-            )}
+            <Settings className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Settings</span>
           </Button>
 
-          {/* Font Family Selection */}
-          <select
-            value={fontFamily}
-            onChange={(e) => setFontFamily(e.target.value as FontFamily)}
-            className={cn("h-8 rounded-md border text-xs px-2 bg-transparent outline-none", controlClasses[theme])}
-          >
-            <option value="sans" className="bg-[#1e293b] text-white">Sans Serif</option>
-            <option value="serif" className="bg-[#1e293b] text-white">Serif</option>
-            <option value="mono" className="bg-[#1e293b] text-white">Monospace</option>
-          </select>
+          {/* Dropdown panel */}
+          {isSettingsOpen && (
+            <div
+              ref={settingsRef}
+              data-testid="settings-dropdown"
+              className={cn(
+                "fixed right-2 left-2 top-16 md:absolute md:right-0 md:left-auto md:top-10 w-auto md:w-72 p-4 rounded-lg border shadow-xl z-[60] space-y-3.5",
+                controlClasses[theme]
+              )}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex flex-col gap-2.5">
+                {/* Theme Selector */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Theme</span>
+                  <div className="flex rounded-md border p-0.5 gap-0.5 border-slate-700 bg-black/10">
+                    <button
+                      data-testid="theme-toggle-light"
+                      className={cn(
+                        "flex-1 py-1 text-[10px] font-medium rounded text-center",
+                        theme === "light"
+                          ? activeBtnClasses[theme]
+                          : "text-slate-400 hover:text-slate-200"
+                      )}
+                      onClick={() => setTheme("light")}
+                    >
+                      Light
+                    </button>
+                    <button
+                      data-testid="theme-toggle-sepia"
+                      className={cn(
+                        "flex-1 py-1 text-[10px] font-medium rounded text-center",
+                        theme === "sepia"
+                          ? activeBtnClasses[theme]
+                          : "text-[#7c695b] hover:text-[#5c4a3b]"
+                      )}
+                      onClick={() => setTheme("sepia")}
+                    >
+                      Sepia
+                    </button>
+                    <button
+                      data-testid="theme-toggle-dark"
+                      className={cn(
+                        "flex-1 py-1 text-[10px] font-medium rounded text-center",
+                        theme === "dark"
+                          ? activeBtnClasses[theme]
+                          : "text-slate-400 hover:text-slate-200"
+                      )}
+                      onClick={() => setTheme("dark")}
+                    >
+                      Glass Dark
+                    </button>
+                  </div>
+                </div>
 
-          {/* Font Size Selection */}
-          <select
-            value={fontSize}
-            onChange={(e) => setFontSize(e.target.value as FontSize)}
-            className={cn("h-8 rounded-md border text-xs px-2 bg-transparent outline-none", controlClasses[theme])}
-          >
-            <option value="sm" className="bg-[#1e293b] text-white">Small</option>
-            <option value="md" className="bg-[#1e293b] text-white">Medium</option>
-            <option value="lg" className="bg-[#1e293b] text-white">Large</option>
-            <option value="xl" className="bg-[#1e293b] text-white">X-Large</option>
-          </select>
+                {/* Layout Mode */}
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Layout</span>
+                  <div className="flex rounded-md border p-0.5 gap-0.5 border-slate-700 bg-black/10 w-36">
+                    <button
+                      className={cn(
+                        "flex-1 py-1 text-[10px] font-medium rounded text-center",
+                        layoutMode === "paged"
+                          ? activeBtnClasses[theme]
+                          : "text-slate-400 hover:text-slate-200"
+                      )}
+                      onClick={() => setLayoutMode("paged")}
+                    >
+                      Paged
+                    </button>
+                    <button
+                      className={cn(
+                        "flex-1 py-1 text-[10px] font-medium rounded text-center",
+                        layoutMode === "scroll"
+                          ? activeBtnClasses[theme]
+                          : "text-slate-400 hover:text-slate-200"
+                      )}
+                      onClick={() => setLayoutMode("scroll")}
+                    >
+                      Scroll
+                    </button>
+                  </div>
+                </div>
 
-          {/* Font Thickness Selection */}
-          <select
-            value={fontWeight}
-            onChange={(e) => setFontWeight(e.target.value)}
-            className={cn("h-8 rounded-md border text-xs px-2 bg-transparent outline-none", controlClasses[theme])}
-            title="Font Thickness"
-          >
-            <option value="normal" className="bg-[#1e293b] text-white">W: Normal</option>
-            <option value="500" className="bg-[#1e293b] text-white">W: Medium</option>
-            <option value="bold" className="bg-[#1e293b] text-white">W: Bold</option>
-          </select>
+                {/* Font Family Selection */}
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Font</span>
+                  <select
+                    value={fontFamily}
+                    onChange={(e) => setFontFamily(e.target.value as FontFamily)}
+                    className={cn("h-7 rounded-md border text-xs px-2 bg-transparent outline-none w-36", controlClasses[theme])}
+                  >
+                    <option value="sans" className="bg-[#1e293b] text-white">Sans Serif</option>
+                    <option value="serif" className="bg-[#1e293b] text-white">Serif</option>
+                    <option value="mono" className="bg-[#1e293b] text-white">Monospace</option>
+                  </select>
+                </div>
 
-          {/* Line Spacing Selection */}
-          <select
-            value={lineHeight}
-            onChange={(e) => setLineHeight(e.target.value)}
-            className={cn("h-8 rounded-md border text-xs px-2 bg-transparent outline-none", controlClasses[theme])}
-            title="Line Spacing"
-          >
-            <option value="1.2" className="bg-[#1e293b] text-white">S: Compact</option>
-            <option value="1.5" className="bg-[#1e293b] text-white">S: Normal</option>
-            <option value="1.8" className="bg-[#1e293b] text-white">S: Loose</option>
-          </select>
+                {/* Font Size Selection */}
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Size</span>
+                  <select
+                    value={fontSize}
+                    onChange={(e) => setFontSize(e.target.value as FontSize)}
+                    className={cn("h-7 rounded-md border text-xs px-2 bg-transparent outline-none w-36", controlClasses[theme])}
+                  >
+                    <option value="sm" className="bg-[#1e293b] text-white">Small</option>
+                    <option value="md" className="bg-[#1e293b] text-white">Medium</option>
+                    <option value="lg" className="bg-[#1e293b] text-white">Large</option>
+                    <option value="xl" className="bg-[#1e293b] text-white">X-Large</option>
+                  </select>
+                </div>
+
+                {/* Font Thickness Selection */}
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Weight</span>
+                  <select
+                    value={fontWeight}
+                    onChange={(e) => setFontWeight(e.target.value)}
+                    className={cn("h-7 rounded-md border text-xs px-2 bg-transparent outline-none w-36", controlClasses[theme])}
+                  >
+                    <option value="normal" className="bg-[#1e293b] text-white">Normal</option>
+                    <option value="500" className="bg-[#1e293b] text-white">Medium</option>
+                    <option value="bold" className="bg-[#1e293b] text-white">Bold</option>
+                  </select>
+                </div>
+
+                {/* Line Spacing Selection */}
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Spacing</span>
+                  <select
+                    value={lineHeight}
+                    onChange={(e) => setLineHeight(e.target.value)}
+                    className={cn("h-7 rounded-md border text-xs px-2 bg-transparent outline-none w-36", controlClasses[theme])}
+                  >
+                    <option value="1.2" className="bg-[#1e293b] text-white">Compact</option>
+                    <option value="1.5" className="bg-[#1e293b] text-white">Normal</option>
+                    <option value="1.8" className="bg-[#1e293b] text-white">Loose</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Divider */}
           <div className="h-6 w-px bg-slate-800 mx-1 hidden sm:block" />
@@ -874,7 +996,7 @@ export function BookReader({
                     variant="outline"
                     size="icon"
                     className={cn(
-                      "rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200 shadow-lg",
+                      "rounded-full opacity-60 md:opacity-0 md:hover:opacity-100 transition-opacity duration-200 shadow-lg",
                       controlClasses[theme]
                     )}
                     onClick={handleEpubPrev}
@@ -887,7 +1009,7 @@ export function BookReader({
                     variant="outline"
                     size="icon"
                     className={cn(
-                      "rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200 shadow-lg",
+                      "rounded-full opacity-60 md:opacity-0 md:hover:opacity-100 transition-opacity duration-200 shadow-lg",
                       controlClasses[theme]
                     )}
                     onClick={handleEpubNext}
