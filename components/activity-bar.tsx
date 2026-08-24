@@ -92,7 +92,7 @@ export function ActivityBar({
             <a
               href={item.href}
               title={item.label}
-              className={`group relative flex items-center justify-center rounded-none transition-all duration-200 border flex-1 md:flex-initial h-full md:h-12 md:w-full ${
+              className={`group relative flex items-center justify-center rounded-none transition-all duration-200 border flex-1 md:flex-initial h-full md:h-16 md:w-full ${
                 isActive
                   ? `${styles.active}`
                   : `text-slate-400 border-transparent ${styles.hover} hover:bg-slate-800/30`
@@ -107,7 +107,7 @@ export function ActivityBar({
         type="button"
         title="Settings"
         onClick={onOpenSettings}
-        className="hidden md:flex group relative h-12 w-full items-center justify-center rounded-none transition-all duration-200 border border-transparent text-slate-400 hover:bg-slate-800/30 hover:text-slate-200 shrink-0"
+        className="hidden md:flex group relative h-16 w-full items-center justify-center rounded-none transition-all duration-200 border border-transparent text-slate-400 hover:bg-slate-800/30 hover:text-slate-200 shrink-0"
       >
         <Settings className="h-5 w-5 transition-transform duration-200 group-hover:rotate-45" />
       </button>
