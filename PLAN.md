@@ -423,18 +423,18 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Hook up preference updates to immediately adjust the note editor font family, apply custom autosave delays, and scale the storage progress bar visualizer.
 *   **Verification**: Open the settings modal, modify preferences, save, and check that visual fonts, autosave delays, and storage visualizer update immediately. All unit tests pass.
 
-### Milestone 58: Files Mode Card Menus, Mobile Nav, & Book Reader Improvements
-*   **Status**: In Progress.
+#### Milestone 58: Files Mode Card Menus, Mobile Nav, & Book Reader Improvements
+*   **Status**: Completed.
 *   **Goal**: Fix simultaneous card menu display, reduce mobile bottom navigation size, build a compact settings dropdown for the Book Reader, and polish mobile reader navigation.
 *   **Tasks**:
     *   **Simultaneous 3-Dot Menus (Option A)**: Refactor `MediaActionsMenu` and `NoteActionsMenu` to listen to a global window event `close-actions-menus`. Before opening a menu, dispatch this event with the current item's ID as `exceptId` to close all other open instances.
-    *   **Compact Mobile Navigation (Option A)**: Reduce mobile/tablet height of `ActivityBar` container in `components/activity-bar.tsx` from `h-16` to `h-12` (48px). Adjust button styling to retain `h-full flex-1` for optimal touch target areas (48px height) and update mobile bottom padding in `keep-workspace.tsx` from `pb-16` to `pb-12`.
+    *   **Compact Mobile Navigation (Option A)**: Reduce mobile/tablet height of `ActivityBar` container in `components/activity-bar.tsx` from `h-16` to `h-12` (48px). Adjust button styling to stack contiguously on desktop (`md:h-16 md:w-full rounded-none md:gap-0 md:py-0`) and retain `h-full flex-1` on mobile for optimal touch target areas (48px height), and update mobile bottom padding in `keep-workspace.tsx` from `pb-16` to `pb-12`.
     *   **Book Reader Settings Panel (Option A)**: Refactor `components/book-reader.tsx` to group typography, layout, and theme customization selectors under a single "Settings" button. Add a floating absolute-positioned settings dropdown panel that toggle-displays these controls, adjusts width responsively on mobile, and closes automatically on click-outside.
-    *   **Book Reader Mobile Tap Zones & Swipe**: Implement horizontal swipe gestures (`touchstart`/`touchend` handlers) inside the EPUB iframe in `components/book-reader.tsx`. Hide chevron navigation overlay buttons entirely on mobile/touch viewports (using `hidden md:flex`) and restore desktop chevron hover functionality (`opacity-0 hover:opacity-100` transition). Keep side tap-zones active across both layouts.
+    *   **Book Reader Mobile Tap Zones & Swipe**: Implement horizontal swipe gestures (`touchstart`/`touchend` handlers) inside the EPUB iframe and the plain text (TXT) reader. Hide chevron navigation overlay buttons entirely on mobile/touch viewports (using `hidden md:flex`) and restore desktop chevron hover functionality (`opacity-0 hover:opacity-100` transition). Keep side tap-zones active across both layouts.
+    *   **Realtime Reading Progress & Node Safeguards**: Correct locations `.length()` checks in the `relocated` handler for realtime page updates (`X of Y`). Implement Text node safety checks to prevent touch taps inside iframe from throwing runtime type exceptions. Group page info and progress bar on the right side of the footer on desktop, and stacked/centered on mobile.
 *   **Verification**:
     *   Open multiple 3-dot card menus; verify only one menu is open at a time.
     *   Inspect mobile viewports; verify bottom navigation height is `h-12` (48px) and tap targets span the full height.
     *   Open Book Reader; verify header controls do not wrap on mobile, settings dropdown toggles properly, and click-outside closes the dropdown.
     *   On touch/mobile simulator, verify chevron page navigation buttons are completely hidden, horizontal swipe turns pages, and side taps turn pages in both paged and scroll modes.
-
-
+    *   Verify realtime updates of the `X of Y` progress bar in the footer while reading, and ensure no crashes when tapping on book texts.

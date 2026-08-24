@@ -89,6 +89,8 @@ export function BookReader({
   const [isTocOpen, setIsTocOpen] = useState(false);
   const [epubLoading, setEpubLoading] = useState(false);
   const [currentCfi, setCurrentCfi] = useState<string>("");
+  const [epubCurrentPage, setEpubCurrentPage] = useState<number>(0);
+  const [epubTotalPages, setEpubTotalPages] = useState<number>(0);
 
   // TXT States
   const [txtContent, setTxtContent] = useState<string>("");
@@ -109,6 +111,7 @@ export function BookReader({
   const txtScrollContainerRef = useRef<HTMLDivElement>(null);
   const renditionRef = useRef<any>(null);
   const lastSavedRef = useRef<{ position: string; percentage: number } | null>(null);
+  const txtTouchStartRef = useRef<{ x: number; y: number; time: number }>({ x: 0, y: 0, time: 0 });
 
   // SSR-safe mounting check
   useEffect(() => {
@@ -387,8 +390,14 @@ export function BookReader({
 
         // Add tap/click for page turns (sides) and UI toggle (middle)
         renditionInstance.on("click", (event: any) => {
-          const target = event.currentTarget || event.target;
-          const ownerDoc = target?.ownerDocument;
+          let targetEl = event.target as HTMLElement | null;
+          if (targetEl && targetEl.nodeType === 3) {
+            targetEl = targetEl.parentElement;
+          }
+          if (targetEl && typeof targetEl.closest === "function" && (targetEl.closest("a") || targetEl.closest("button"))) {
+            return;
+          }
+          const ownerDoc = targetEl?.ownerDocument;
           const width = ownerDoc?.documentElement?.clientWidth || window.innerWidth;
           const x = event.clientX;
           if (x < width * 0.3) {
@@ -421,6 +430,14 @@ export function BookReader({
             const diffY = touchEndY - touchStartY;
             const elapsedTime = Date.now() - touchStartTime;
 
+            let targetEl = event.target as HTMLElement | null;
+            if (targetEl && targetEl.nodeType === 3) {
+              targetEl = targetEl.parentElement;
+            }
+            if (targetEl && typeof targetEl.closest === "function" && (targetEl.closest("a") || targetEl.closest("button"))) {
+              return;
+            }
+
             // Swipe horizontal detection (threshold: 50px, duration < 500ms, mostly horizontal)
             if (
               elapsedTime < 500 &&
@@ -433,6 +450,20 @@ export function BookReader({
                 renditionInstance.next();
               }
               // Prevent default click synthesis if it's a swipe
+              event.preventDefault();
+            } else if (elapsedTime < 300 && Math.abs(diffX) < 15 && Math.abs(diffY) < 15) {
+              // This is a tap!
+              const ownerDoc = targetEl?.ownerDocument;
+              const width = ownerDoc?.documentElement?.clientWidth || window.innerWidth;
+              const x = touchEndX;
+              if (x < width * 0.3) {
+                renditionInstance.prev();
+              } else if (x > width * 0.7) {
+                renditionInstance.next();
+              } else {
+                toggleUiVisibility();
+              }
+              // Prevent synthesized click
               event.preventDefault();
             }
           }
@@ -450,9 +481,13 @@ export function BookReader({
           setCurrentCfi(cfi);
 
           let pct = 0;
-          if (bookInstance.locations && bookInstance.locations.length > 0) {
+          if (bookInstance.locations && bookInstance.locations.length() > 0) {
             pct = bookInstance.locations.percentageFromCfi(cfi) * 100;
             setPercentage(pct);
+            const currPage = bookInstance.locations.locationFromCfi(cfi);
+            if (currPage !== -1) {
+              setEpubCurrentPage(currPage + 1);
+            }
           }
           saveProgressDebounced(cfi, pct);
         });
@@ -472,9 +507,18 @@ export function BookReader({
 
         // Generate locations for percentage calculation
         await bookInstance.locations.generate(1024);
-        if (active && renditionInstance.location?.start?.cfi) {
-          const pct = bookInstance.locations.percentageFromCfi(renditionInstance.location.start.cfi) * 100;
-          setPercentage(pct);
+        if (active) {
+          const totalLocs = bookInstance.locations.length();
+          setEpubTotalPages(totalLocs);
+          if (renditionInstance.location?.start?.cfi) {
+            const currentLocCfi = renditionInstance.location.start.cfi;
+            const pct = bookInstance.locations.percentageFromCfi(currentLocCfi) * 100;
+            setPercentage(pct);
+            const currPage = bookInstance.locations.locationFromCfi(currentLocCfi);
+            if (currPage !== -1) {
+              setEpubCurrentPage(currPage + 1);
+            }
+          }
         }
       } catch (err) {
         console.error("Error loading EPUB book:", err);
@@ -616,6 +660,60 @@ export function BookReader({
     sepia: "bg-[#7c695b] text-white hover:bg-[#6c594c]",
   };
 
+  const handleTxtTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      txtTouchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        time: Date.now(),
+      };
+    }
+  };
+
+  const handleTxtTouchEnd = (e: React.TouchEvent) => {
+    if (e.changedTouches.length === 1) {
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const diffX = touchEndX - txtTouchStartRef.current.x;
+      const diffY = touchEndY - txtTouchStartRef.current.y;
+      const elapsedTime = Date.now() - txtTouchStartRef.current.time;
+
+      const target = e.target as HTMLElement;
+      if (target && (target.closest("button") || target.closest("a"))) {
+        return;
+      }
+
+      if (
+        elapsedTime < 500 &&
+        Math.abs(diffX) > 50 &&
+        Math.abs(diffY) < 100
+      ) {
+        if (diffX > 0) {
+          setTxtPageIndex((p) => Math.max(0, p - 1));
+        } else {
+          setTxtPageIndex((p) => Math.min(txtPages.length - 1, p + 1));
+        }
+        e.preventDefault();
+      } else if (elapsedTime < 300 && Math.abs(diffX) < 15 && Math.abs(diffY) < 15) {
+        // It's a tap!
+        if (layoutMode === "paged") {
+          const width = e.currentTarget.clientWidth;
+          const x = touchEndX - e.currentTarget.getBoundingClientRect().left;
+          if (x < width * 0.3) {
+            setTxtPageIndex((p) => Math.max(0, p - 1));
+          } else if (x > width * 0.7) {
+            setTxtPageIndex((p) => Math.min(txtPages.length - 1, p + 1));
+          } else {
+            toggleUiVisibility();
+          }
+        } else {
+          toggleUiVisibility();
+        }
+        e.preventDefault();
+      }
+    }
+  };
+
   const handleTxtPageClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("button")) {
       return;
@@ -652,6 +750,8 @@ export function BookReader({
       return (
         <div 
           onClick={handleTxtPageClick}
+          onTouchStart={handleTxtTouchStart}
+          onTouchEnd={handleTxtTouchEnd}
           className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden relative cursor-pointer"
         >
           <div className="flex-1 flex items-center justify-center w-full max-w-3xl overflow-auto py-8">
@@ -700,6 +800,8 @@ export function BookReader({
         ref={txtScrollContainerRef}
         onScroll={handleTxtScroll}
         onClick={handleTxtPageClick}
+        onTouchStart={handleTxtTouchStart}
+        onTouchEnd={handleTxtTouchEnd}
         className="flex-1 overflow-y-auto px-6 py-12 select-text cursor-pointer"
       >
         <div
@@ -715,6 +817,34 @@ export function BookReader({
       </div>
     );
   };
+
+  // Progress Bar styling helpers
+  const progressFillClasses: Record<ThemeName, string> = {
+    dark: "bg-blue-600",
+    light: "bg-blue-600",
+    sepia: "bg-[#7c695b]",
+  };
+
+  const progressTrackClasses: Record<ThemeName, string> = {
+    dark: "bg-slate-800",
+    light: "bg-slate-200",
+    sepia: "bg-[#e2d7b4]",
+  };
+
+  const getPageLabel = () => {
+    if (contentType === "text/plain") {
+      if (layoutMode === "paged") {
+        return `${txtPageIndex + 1} of ${txtPages.length}`;
+      }
+      return "Reading Progress";
+    } else {
+      if (epubTotalPages > 0) {
+        return `${epubCurrentPage} of ${epubTotalPages}`;
+      }
+      return epubLoading || epubTotalPages === 0 ? "Calculating..." : "Reading Progress";
+    }
+  };
+  const pageLabel = getPageLabel();
 
   // Rendering inside portal on document.body
   return createPortal(
@@ -931,7 +1061,7 @@ export function BookReader({
       <main
         className={cn(
           "flex-1 flex overflow-hidden relative",
-          isUiVisible ? "pt-14 pb-8" : "pt-0 pb-0"
+          isUiVisible ? "pt-14 pb-12 md:pb-8" : "pt-0 pb-0"
         )}
       >
         {/* Table of Contents Drawer (EPUB) */}
@@ -1028,17 +1158,25 @@ export function BookReader({
       {/* Footnote Metadata Status Bar */}
       <footer
         className={cn(
-          "absolute bottom-0 left-0 right-0 h-8 flex justify-between items-center px-4 border-t text-[10px] font-mono z-50 transition-opacity duration-150",
+          "absolute bottom-0 left-0 right-0 h-12 md:h-8 flex items-center justify-between px-4 border-t text-[10px] font-mono z-50 transition-opacity duration-150",
           isUiVisible ? "opacity-100" : "opacity-0 pointer-events-none",
           controlClasses[theme]
         )}
       >
-        <span className="truncate max-w-[60%]">
-          {contentType === "text/plain" && layoutMode === "paged"
-            ? `Page ${txtPageIndex + 1} of ${txtPages.length}`
-            : `Reading Progress`}
-        </span>
-        <span>{percentage.toFixed(0)}% Read</span>
+        <div className="w-full flex flex-col md:flex-row md:items-center justify-center md:justify-end gap-1.5 md:gap-3">
+          {/* Page info label (Left of bar on desktop, Top on mobile) */}
+          <span className="shrink-0 text-slate-400 text-center md:text-left">
+            {pageLabel}
+          </span>
+
+          {/* Visual Progress Bar (Right of label on desktop, Bottom on mobile) */}
+          <div className={cn("w-32 md:w-48 h-1 rounded-full overflow-hidden self-center md:self-auto", progressTrackClasses[theme])}>
+            <div
+              className={cn("h-full transition-all duration-150", progressFillClasses[theme])}
+              style={{ width: `${Math.min(100, Math.max(0, percentage))}%` }}
+            />
+          </div>
+        </div>
       </footer>
     </div>,
     document.body
