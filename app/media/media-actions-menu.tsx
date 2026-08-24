@@ -45,7 +45,27 @@ export function MediaActionsMenu({ destinations, mediaAsset }: MediaActionsMenuP
     };
   }, [menu]);
 
+  useEffect(() => {
+    function handleCloseOthers(event: Event) {
+      const customEvent = event as CustomEvent<{ exceptId: string }>;
+      if (customEvent.detail?.exceptId !== mediaAsset.id) {
+        setMenu(null);
+      }
+    }
+
+    window.addEventListener("close-actions-menus", handleCloseOthers);
+
+    return () => {
+      window.removeEventListener("close-actions-menus", handleCloseOthers);
+    };
+  }, [mediaAsset.id]);
+
   function openMenu(x: number, y: number) {
+    window.dispatchEvent(
+      new CustomEvent("close-actions-menus", {
+        detail: { exceptId: mediaAsset.id },
+      })
+    );
     setMenu({
       x: Math.min(x, window.innerWidth - 240),
       y: Math.min(y, window.innerHeight - 180),
