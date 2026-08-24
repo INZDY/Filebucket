@@ -107,8 +107,17 @@ describe("BookReader Component (TDD)", () => {
       );
     });
 
+    // Open settings dropdown first
+    const settingsBtn = document.body.querySelector("[data-testid='settings-toggle']");
+    expect(settingsBtn).not.toBeNull();
+    if (settingsBtn) {
+      await act(async () => {
+        settingsBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    }
+
     // Verify presence of layout toggle button and theme options in document.body
-    const layoutToggle = document.body.querySelector("[data-testid='layout-toggle']");
+    const layoutToggle = document.body.querySelector("[data-testid='settings-dropdown']");
     expect(layoutToggle).not.toBeNull();
 
     const themeToggle = document.body.querySelector("[data-testid='theme-toggle-sepia']");
