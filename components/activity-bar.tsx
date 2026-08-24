@@ -11,24 +11,24 @@ interface ActivityBarProps {
 
 const modeStyles = {
   FILES: {
-    active: "bg-blue-600/20 text-blue-400 border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.15)]",
-    hover: "hover:bg-blue-600/10 hover:text-blue-300 hover:border-blue-500/20",
+    active: "bg-gradient-to-b from-blue-600/20 to-transparent md:bg-gradient-to-l md:from-blue-600/20 md:to-transparent text-blue-400 border-transparent shadow-none",
+    hover: "hover:bg-blue-600/10 hover:text-blue-300 hover:border-transparent",
   },
   NOTES: {
-    active: "bg-purple-600/20 text-purple-400 border-purple-500/30 shadow-[0_0_15px_rgba(139,92,246,0.15)]",
-    hover: "hover:bg-purple-600/10 hover:text-purple-300 hover:border-purple-500/20",
+    active: "bg-gradient-to-b from-purple-600/20 to-transparent md:bg-gradient-to-l md:from-purple-600/20 md:to-transparent text-purple-400 border-transparent shadow-none",
+    hover: "hover:bg-purple-600/10 hover:text-purple-300 hover:border-transparent",
   },
   KEEP: {
-    active: "bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]",
-    hover: "hover:bg-amber-500/5 hover:text-amber-400 hover:border-amber-500/10",
+    active: "bg-gradient-to-b from-amber-500/15 to-transparent md:bg-gradient-to-l md:from-amber-500/15 md:to-transparent text-amber-500 border-transparent shadow-none",
+    hover: "hover:bg-amber-500/5 hover:text-amber-400 hover:border-transparent",
   },
   CHAT: {
-    active: "bg-indigo-600/20 text-indigo-400 border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.15)]",
-    hover: "hover:bg-indigo-600/10 hover:text-indigo-300 hover:border-indigo-500/20",
+    active: "bg-gradient-to-b from-indigo-600/20 to-transparent md:bg-gradient-to-l md:from-indigo-600/20 md:to-transparent text-indigo-400 border-transparent shadow-none",
+    hover: "hover:bg-indigo-600/10 hover:text-indigo-300 hover:border-transparent",
   },
   TRASH: {
-    active: "bg-rose-600/20 text-rose-400 border-rose-500/30 shadow-[0_0_15px_rgba(244,63,94,0.15)]",
-    hover: "hover:bg-rose-600/10 hover:text-rose-300 hover:border-rose-500/20",
+    active: "bg-gradient-to-b from-rose-600/20 to-transparent md:bg-gradient-to-l md:from-rose-600/20 md:to-transparent text-rose-400 border-transparent shadow-none",
+    hover: "hover:bg-rose-600/10 hover:text-rose-300 hover:border-transparent",
   },
 };
 
@@ -92,7 +92,7 @@ export function ActivityBar({
             <a
               href={item.href}
               title={item.label}
-              className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 border flex-1 md:flex-initial h-full md:h-10 ${
+              className={`group relative flex h-10 w-10 items-center justify-center rounded-none md:rounded-xl transition-all duration-200 border flex-1 md:flex-initial h-full md:h-10 ${
                 isActive
                   ? `${styles.active}`
                   : `text-slate-400 border-transparent ${styles.hover} hover:bg-slate-800/30`
