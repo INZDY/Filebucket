@@ -5,8 +5,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import {
   Menu,
   Loader2,
-  ChevronLeft,
-  ChevronRight,
   Settings,
   X,
 } from "lucide-react";
@@ -619,34 +617,6 @@ export function BookReader({
               onClick={() => setTxtPageIndex((p) => Math.min(txtPages.length - 1, p + 1))}
             />
           </div>
-
-          {/* Desktop Navigation Chevrons */}
-          {isUiVisible && (
-            <>
-              <div className="hidden md:flex absolute inset-y-0 left-2 items-center z-30">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full bg-slate-900 border-slate-800 text-slate-100 hover:bg-slate-800 shadow-lg"
-                  onClick={() => setTxtPageIndex((p) => Math.max(0, p - 1))}
-                  disabled={txtPageIndex === 0}
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
-              </div>
-              <div className="hidden md:flex absolute inset-y-0 right-2 items-center z-30">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full bg-slate-900 border-slate-800 text-slate-100 hover:bg-slate-800 shadow-lg"
-                  onClick={() => setTxtPageIndex((p) => Math.min(txtPages.length - 1, p + 1))}
-                  disabled={txtPageIndex >= txtPages.length - 1}
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
-              </div>
-            </>
-          )}
         </div>
       );
     }
@@ -923,32 +893,6 @@ export function BookReader({
                   data-testid="epub-next-zone"
                 />
               </div>
-            )}
-
-            {/* Desktop Navigation Chevrons */}
-            {layoutMode === "paged" && !epubLoading && isUiVisible && (
-              <>
-                <div className="hidden md:flex absolute inset-y-0 left-2 items-center z-30">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="rounded-full bg-slate-900 border-slate-800 text-slate-100 hover:bg-slate-800 shadow-lg"
-                    onClick={handleEpubPrev}
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </Button>
-                </div>
-                <div className="hidden md:flex absolute inset-y-0 right-2 items-center z-30">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="rounded-full bg-slate-900 border-slate-800 text-slate-100 hover:bg-slate-800 shadow-lg"
-                    onClick={handleEpubNext}
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </Button>
-                </div>
-              </>
             )}
           </div>
         ) : (
