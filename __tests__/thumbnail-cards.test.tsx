@@ -163,7 +163,7 @@ describe("Folder Contents View Thumbnails & Card File Operations (TDD)", () => {
     document.body.removeChild(container);
   });
 
-  it("should render cover thumbnail with aspect-[3/4] for book/manga and custom TXT preview card styling", async () => {
+  it("should render cover thumbnail with uniform aspect-video frame using object-contain and custom TXT preview card styling", async () => {
     const container = document.createElement("div");
     document.body.appendChild(container);
     const root = createRoot(container);
@@ -214,13 +214,14 @@ describe("Folder Contents View Thumbnails & Card File Operations (TDD)", () => {
       );
     });
 
-    // 1. Verify EPUB cover thumbnail renders
-    const thumbImg = container.querySelector("img[src*='test_book.epub_thumbnail.png']");
+    // 1. Verify EPUB cover thumbnail renders and is center-fitted using object-contain
+    const thumbImg = container.querySelector("img[src*='test_book.epub_thumbnail.png']") as HTMLImageElement | null;
     expect(thumbImg).toBeDefined();
     expect(thumbImg).not.toBeNull();
+    expect(thumbImg?.className).toContain("object-contain");
 
-    // 2. Verify book aspect ratio [3/4] container exists
-    const aspectContainer = container.querySelector(".aspect-\\[3\\/4\\]");
+    // 2. Verify book card container matches uniform aspect-video instead of stretching to vertical aspect-[3/4]
+    const aspectContainer = container.querySelector(".aspect-video");
     expect(aspectContainer).toBeDefined();
     expect(aspectContainer).not.toBeNull();
 
@@ -228,6 +229,62 @@ describe("Folder Contents View Thumbnails & Card File Operations (TDD)", () => {
     const textLabel = container.textContent;
     expect(textLabel).toContain("TXT");
     expect(textLabel).toContain("notes.txt");
+
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
+
+  it("should render Obsidian Notes inside Files mode as stylized purple card previews with text body snippets", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    const sampleFolder = {
+      id: "f1",
+      name: "Library",
+      parentId: null,
+    };
+
+    const sampleNotes = [
+      {
+        id: "note_1",
+        title: "Grocery List",
+        body: "- [ ] Buy fresh milk\n- [ ] Buy organic eggs\n- [ ] Whole wheat bread",
+        folderId: "f1",
+        tags: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+    ];
+
+    await act(async () => {
+      root.render(
+        <ActiveWorkspace
+          selectedNote={null}
+          selectedMedia={null}
+          selectedFolder={sampleFolder}
+          folderTrail={[sampleFolder]}
+          folderDestinations={[]}
+          imageMediaAssets={[]}
+          tags={[]}
+          textPreviewContent=""
+          hasVaultContent={true}
+          browserTitle="Library"
+          allMediaAssets={[]}
+          allFolders={[sampleFolder]}
+          allNotes={sampleNotes}
+        />
+      );
+    });
+
+    // Verify Obsidian note custom card elements exist
+    const textContent = container.textContent;
+    expect(textContent).toContain("Grocery List");
+    expect(textContent).toContain("MD");
+    // Verify stripped body markdown snippet is rendered on the note card
+    expect(textContent).toContain("Buy fresh milk Buy organic eggs Whole wheat bread");
 
     await act(async () => {
       root.unmount();

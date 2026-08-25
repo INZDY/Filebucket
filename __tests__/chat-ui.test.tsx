@@ -68,6 +68,20 @@ describe("ChatWorkspace UI Component", () => {
             sizeBytes: 1536,
             r2Key: "attachments/log.txt",
           },
+          {
+            id: "asset-2",
+            filename: "document.pdf",
+            contentType: "application/pdf",
+            sizeBytes: 51200,
+            r2Key: "attachments/document.pdf",
+          },
+          {
+            id: "asset-3",
+            filename: "novel.epub",
+            contentType: "application/epub+zip",
+            sizeBytes: 102400,
+            r2Key: "attachments/novel.epub",
+          }
         ],
         user: { name: "Alice", email: "alice@example.com" },
       },
@@ -109,9 +123,23 @@ describe("ChatWorkspace UI Component", () => {
     expect(anchor).not.toBeNull();
     expect(anchor?.textContent).toBe("https://example.com");
 
-    // Check file card
+    // Check file cards exist
     expect(container.textContent).toContain("log.txt");
     expect(container.textContent).toContain("1.5 KB");
+    expect(container.textContent).toContain("document.pdf");
+    expect(container.textContent).toContain("novel.epub");
+
+    // Check text document uses cyan icon color class
+    const cyanIcon = container.querySelector(".text-cyan-400");
+    expect(cyanIcon).not.toBeNull();
+
+    // Check PDF document uses red icon color class
+    const redIcon = container.querySelector(".text-red-400");
+    expect(redIcon).not.toBeNull();
+
+    // Check EPUB uses purple icon color class
+    const purpleIcon = container.querySelector(".text-purple-400");
+    expect(purpleIcon).not.toBeNull();
 
     await act(async () => {
       root.unmount();

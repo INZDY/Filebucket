@@ -10,13 +10,17 @@ import {
   FileText, 
   BookOpen, 
   X,
-  MessageSquare
+  MessageSquare,
+  Music,
+  Video,
+  Archive,
+  FileQuestion
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPresignedUploadUrlAction } from "@/app/media/actions";
 import { createChatAttachmentAction } from "@/app/media/actions";
 import { MangaReader, type ReaderPage } from "@/components/manga-reader";
-import { getMediaAssetUrl, formatBytes } from "@/lib/utils";
+import { getMediaAssetUrl, formatBytes, cn } from "@/lib/utils";
 
 interface MediaAsset {
   id: string;
@@ -421,17 +425,46 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
                         );
                       }
 
+                      const isPdf = asset.contentType === "application/pdf" || asset.filename.toLowerCase().endsWith(".pdf");
+                      const isEpub = asset.contentType === "application/epub+zip" || asset.filename.toLowerCase().endsWith(".epub");
+                      const isManga = asset.filename.toLowerCase().endsWith(".cbz") || (asset.contentType.includes("zip") && !isEpub);
+                      const isText = asset.contentType.startsWith("text/") || asset.filename.toLowerCase().endsWith(".txt") || asset.filename.toLowerCase().endsWith(".md");
+                      const isAudio = asset.contentType.startsWith("audio/");
+                      const isVideo = asset.contentType.startsWith("video/");
+
+                      let AttachmentIcon = FileText;
+                      let iconColorClass = "text-slate-400";
+                      
+                      if (isPdf) {
+                        AttachmentIcon = FileText;
+                        iconColorClass = "text-red-400";
+                      } else if (isEpub || isManga) {
+                        AttachmentIcon = BookOpen;
+                        iconColorClass = "text-purple-400";
+                      } else if (isText) {
+                        AttachmentIcon = FileText;
+                        iconColorClass = "text-cyan-400";
+                      } else if (isAudio) {
+                        AttachmentIcon = Music;
+                        iconColorClass = "text-green-400";
+                      } else if (isVideo) {
+                        AttachmentIcon = Video;
+                        iconColorClass = "text-orange-400";
+                      } else if (asset.contentType.includes("zip") || asset.filename.toLowerCase().endsWith(".zip")) {
+                        AttachmentIcon = Archive;
+                        iconColorClass = "text-yellow-500";
+                      } else {
+                        AttachmentIcon = FileQuestion;
+                        iconColorClass = "text-slate-400";
+                      }
+
                       return (
                         <div 
                           key={asset.id} 
                           className="flex items-center gap-3 rounded-lg border border-slate-800 bg-[#161821]/60 px-3.5 py-2.5 max-w-[320px] hover:bg-[#1a1d29]/80 transition-colors"
                         >
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-slate-800/80 text-slate-400">
-                            {asset.contentType.includes("zip") || asset.filename.endsWith(".cbz") ? (
-                              <BookOpen className="h-4.5 w-4.5 text-purple-400" />
-                            ) : (
-                              <FileText className="h-4.5 w-4.5 text-slate-400" />
-                            )}
+                          <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded bg-slate-800/80", iconColorClass)}>
+                            <AttachmentIcon className="h-4.5 w-4.5" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-xs font-semibold text-slate-200" title={asset.filename}>

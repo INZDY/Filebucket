@@ -120,6 +120,17 @@ function getMediaPreviewKind(contentType: string | null | undefined, filename = 
   return "unsupported";
 }
 
+function getNoteSnippet(body: string, limit = 80): string {
+  if (!body) return "";
+  // Strip basic markdown symbols for cleaner text snippets
+  const plainText = body
+    .replace(/[-*#_`>]/g, "")
+    .replace(/\[[ xX]\]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return plainText.length > limit ? plainText.substring(0, limit) + "..." : plainText;
+}
+
 export function ActiveWorkspace({
   selectedNote,
   selectedMedia,
@@ -882,32 +893,43 @@ export function ActiveWorkspace({
                 )}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                   {/* Notes */}
-                  {childNotes.map((note) => (
-                    <Link
-                      key={note.id}
-                      href={note.folderId ? `/?folder=${note.folderId}&note=${note.id}` : `/?note=${note.id}`}
-                      draggable={true}
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "note", id: note.id }));
-                        e.dataTransfer.effectAllowed = "move";
-                      }}
-                      className="group flex flex-col justify-between p-3 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-purple-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.05)] transition-all active:scale-95 duration-200"
-                    >
-                      <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-[#0d0f14] border border-purple-500/10 mb-2 flex items-center justify-center">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 group-hover:bg-purple-500/20 transition-all duration-200">
-                          <FileText className="h-5 w-5" />
+                  {childNotes.map((note) => {
+                    const snippet = getNoteSnippet(note.body);
+                    return (
+                      <Link
+                        key={note.id}
+                        href={note.folderId ? `/?folder=${note.folderId}&note=${note.id}` : `/?note=${note.id}`}
+                        draggable={true}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "note", id: note.id }));
+                          e.dataTransfer.effectAllowed = "move";
+                        }}
+                        className="group flex flex-col justify-between p-3 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-purple-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.05)] transition-all active:scale-95 duration-200"
+                      >
+                        {/* Note stylized preview thumbnail */}
+                        <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-purple-500/10 mb-2 bg-[#131018] select-none text-left">
+                          <div className="w-full h-full flex flex-col p-3">
+                            <p className="text-[10px] text-purple-300/80 leading-relaxed font-normal overflow-hidden break-words line-clamp-4">
+                              {snippet || "Empty note"}
+                            </p>
+                            <div className="flex items-center gap-1.5 text-purple-450/70 mt-auto pt-1 border-t border-purple-500/10">
+                              <FileText className="h-3.5 w-3.5 text-purple-400" />
+                              <span className="text-[9px] font-mono uppercase tracking-wider font-semibold">MD</span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div className="min-w-0 px-1 pb-1">
-                        <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-slate-100 transition-colors" title={note.title}>
-                          {note.title}
-                        </p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider font-medium">
-                          Note
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
+
+                        <div className="min-w-0 px-1 pb-1">
+                          <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-slate-100 transition-colors" title={note.title}>
+                            {note.title}
+                          </p>
+                          <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider font-medium">
+                            Note
+                          </p>
+                        </div>
+                      </Link>
+                    );
+                  })}
 
                   {/* Media Files */}
                   {childMedia.map((media) => {
@@ -923,9 +945,9 @@ export function ActiveWorkspace({
                     const hasThumbnail = Boolean(media.thumbnailKey);
                     const thumbnailUrl = hasThumbnail ? getMediaAssetUrl(media.thumbnailKey!) : null;
 
-                    // Book/manga format cards look best in 3:4 vertical aspect ratio, others look best in 16:9 aspect-video
+                    // All card frames in Files mode grid use a uniform horizontal aspect-video frame wrapper
+                    const aspectClass = "aspect-video";
                     const isBookLayout = isEpub || isPdf || isManga;
-                    const aspectClass = isBookLayout ? "aspect-[3/4]" : "aspect-video";
 
                     const Icon = isImg
                       ? ImagePlus
@@ -1002,7 +1024,10 @@ export function ActiveWorkspace({
                               <img
                                 src={thumbnailUrl}
                                 alt={media.filename}
-                                className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105 duration-300"
+                                className={cn(
+                                  "w-full h-full rounded-lg transition-transform group-hover:scale-105 duration-300",
+                                  isBookLayout ? "object-contain bg-[#060709]" : "object-cover"
+                                )}
                               />
                             ) : isImg && mediaUrl ? (
                               <img
@@ -1041,7 +1066,7 @@ export function ActiveWorkspace({
                               {media.filename}
                             </p>
                             <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider font-medium">
-                              {isImg ? "Image" : isVideo ? "Video" : isAudio ? "Audio" : isPdf ? "PDF" : isEpub ? "EPUB" : isManga ? "Manga" : isText ? "Text" : "File"}
+                              {isImg ? "Image" : isVideo ? "Video" : isAudio ? "Audio" : isPdf ? "PDF" : "Epub" ? "EPUB" : isManga ? "Manga" : isText ? "Text" : "File"}
                             </p>
                           </div>
                         </Link>

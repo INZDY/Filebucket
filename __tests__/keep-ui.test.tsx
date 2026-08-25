@@ -56,6 +56,13 @@ describe("KeepWorkspace UI Component", () => {
     expect(container.textContent).toContain("Pinned");
     expect(container.textContent).toContain("Note 1");
 
+    // Check KeepCard container styling: max-h-72 and gradient fade-out exist
+    const cardContainer = container.querySelector(".keep-card-container");
+    expect(cardContainer).not.toBeNull();
+    expect(cardContainer?.className).toContain("max-h-72");
+    const fadeOverlay = container.querySelector(".bg-gradient-to-t");
+    expect(fadeOverlay).not.toBeNull();
+
     // Check others section and note 2 title
     expect(container.textContent).toContain("Note 2");
     // Check note 2 checklist items parsed
