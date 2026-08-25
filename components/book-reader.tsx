@@ -19,6 +19,7 @@ import {
   ReaderHeader,
   ReaderFooter,
   useReaderOverlay,
+  useReaderSwipe,
 } from "./reader-shared";
 
 type FontSize = "sm" | "md" | "lg" | "xl";
@@ -108,7 +109,6 @@ export function BookReader({
   const txtScrollContainerRef = useRef<HTMLDivElement>(null);
   const renditionRef = useRef<any>(null);
   const lastSavedRef = useRef<{ position: string; percentage: number } | null>(null);
-  const txtTouchStartRef = useRef<{ x: number; y: number; time: number }>({ x: 0, y: 0, time: 0 });
 
   // Click outside to close settings dropdown
   useEffect(() => {
@@ -325,6 +325,15 @@ export function BookReader({
     }
   }, [txtPageIndex, layoutMode, txtPages.length, contentType, saveProgressDebounced, progressLoaded]);
 
+  // Page turning handlers
+  const handleEpubNext = useCallback(() => {
+    if (rendition) rendition.next();
+  }, [rendition]);
+
+  const handleEpubPrev = useCallback(() => {
+    if (rendition) rendition.prev();
+  }, [rendition]);
+
   // EPUB initialization
   useEffect(() => {
     if (contentType === "text/plain" || !url || !isOpen || !viewerElement || !progressLoaded) return;
@@ -370,79 +379,6 @@ export function BookReader({
             renditionInstance.prev();
           } else if (event.key === "ArrowRight") {
             renditionInstance.next();
-          }
-        });
-
-        // Tap/click for page turns (sides) and UI toggle (middle)
-        renditionInstance.on("click", (event: any) => {
-          let targetEl = event.target as HTMLElement | null;
-          if (targetEl && targetEl.nodeType === 3) {
-            targetEl = targetEl.parentElement;
-          }
-          if (targetEl && typeof targetEl.closest === "function" && (targetEl.closest("a") || targetEl.closest("button"))) {
-            return;
-          }
-          const ownerDoc = targetEl?.ownerDocument;
-          const width = ownerDoc?.documentElement?.clientWidth || window.innerWidth;
-          const x = event.clientX;
-          if (x < width * 0.3) {
-            renditionInstance.prev();
-          } else if (x > width * 0.7) {
-            renditionInstance.next();
-          } else {
-            toggleUiVisibility();
-          }
-        });
-
-        // Touch/swipe navigation inside the EPUB iframe
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchStartTime = 0;
-
-        renditionInstance.on("touchstart", (event: TouchEvent) => {
-          if (event.touches.length === 1) {
-            touchStartX = event.touches[0].clientX;
-            touchStartY = event.touches[0].clientY;
-            touchStartTime = Date.now();
-          }
-        });
-
-        renditionInstance.on("touchend", (event: TouchEvent) => {
-          if (event.changedTouches.length === 1) {
-            const touchEndX = event.changedTouches[0].clientX;
-            const touchEndY = event.changedTouches[0].clientY;
-            const diffX = touchEndX - touchStartX;
-            const diffY = touchEndY - touchStartY;
-            const elapsedTime = Date.now() - touchStartTime;
-
-            let targetEl = event.target as HTMLElement | null;
-            if (targetEl && targetEl.nodeType === 3) {
-              targetEl = targetEl.parentElement;
-            }
-            if (targetEl && typeof targetEl.closest === "function" && (targetEl.closest("a") || targetEl.closest("button"))) {
-              return;
-            }
-
-            if (elapsedTime < 500 && Math.abs(diffX) > 50 && Math.abs(diffY) < 100) {
-              if (diffX > 0) {
-                renditionInstance.prev();
-              } else {
-                renditionInstance.next();
-              }
-              event.preventDefault();
-            } else if (elapsedTime < 300 && Math.abs(diffX) < 15 && Math.abs(diffY) < 15) {
-              const ownerDoc = targetEl?.ownerDocument;
-              const width = ownerDoc?.documentElement?.clientWidth || window.innerWidth;
-              const x = touchEndX;
-              if (x < width * 0.3) {
-                renditionInstance.prev();
-              } else if (x > width * 0.7) {
-                renditionInstance.next();
-              } else {
-                toggleUiVisibility();
-              }
-              event.preventDefault();
-            }
           }
         });
 
@@ -574,15 +510,6 @@ export function BookReader({
     rendition.themes.fontSize(epubFontSizes[fontSize]);
   }, [rendition, theme, fontSize, fontFamily, fontWeight, lineHeight]);
 
-  // Page turning handlers
-  const handleEpubNext = useCallback(() => {
-    if (rendition) rendition.next();
-  }, [rendition]);
-
-  const handleEpubPrev = useCallback(() => {
-    if (rendition) rendition.prev();
-  }, [rendition]);
-
   // Listen to keyboard navigation on parent window
   useEffect(() => {
     if (!isOpen || contentType === "text/plain") return;
@@ -611,74 +538,32 @@ export function BookReader({
     [rendition]
   );
 
-  const handleTxtTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 1) {
-      txtTouchStartRef.current = {
-        x: e.touches[0].clientX,
-        y: e.touches[0].clientY,
-        time: Date.now(),
-      };
-    }
-  };
-
-  const handleTxtTouchEnd = (e: React.TouchEvent) => {
-    if (e.changedTouches.length === 1) {
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
-      const diffX = touchEndX - txtTouchStartRef.current.x;
-      const diffY = touchEndY - txtTouchStartRef.current.y;
-      const elapsedTime = Date.now() - txtTouchStartRef.current.time;
-
-      const target = e.target as HTMLElement;
-      if (target && (target.closest("button") || target.closest("a"))) {
-        return;
-      }
-
-      if (elapsedTime < 500 && Math.abs(diffX) > 50 && Math.abs(diffY) < 100) {
-        if (diffX > 0) {
-          setTxtPageIndex((p) => Math.max(0, p - 1));
-        } else {
-          setTxtPageIndex((p) => Math.min(txtPages.length - 1, p + 1));
-        }
-        e.preventDefault();
-      } else if (elapsedTime < 300 && Math.abs(diffX) < 15 && Math.abs(diffY) < 15) {
-        if (layoutMode === "paged") {
-          const width = e.currentTarget.clientWidth;
-          const x = touchEndX - e.currentTarget.getBoundingClientRect().left;
-          if (x < width * 0.3) {
-            setTxtPageIndex((p) => Math.max(0, p - 1));
-          } else if (x > width * 0.7) {
-            setTxtPageIndex((p) => Math.min(txtPages.length - 1, p + 1));
-          } else {
-            toggleUiVisibility();
-          }
-        } else {
-          toggleUiVisibility();
-        }
-        e.preventDefault();
-      }
-    }
-  };
-
-  const handleTxtPageClick = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest("button")) {
-      return;
-    }
-
-    if (layoutMode === "paged") {
-      const width = e.currentTarget.clientWidth;
-      const x = e.clientX - e.currentTarget.getBoundingClientRect().left;
-      if (x < width * 0.3) {
-        setTxtPageIndex((p) => Math.max(0, p - 1));
-      } else if (x > width * 0.7) {
+  // Swipe gesture hooks
+  const handleSwipeLeft = useCallback(() => {
+    if (contentType === "text/plain") {
+      if (layoutMode === "paged") {
         setTxtPageIndex((p) => Math.min(txtPages.length - 1, p + 1));
-      } else {
-        toggleUiVisibility();
       }
     } else {
-      toggleUiVisibility();
+      handleEpubNext();
     }
-  };
+  }, [contentType, layoutMode, txtPages.length, handleEpubNext]);
+
+  const handleSwipeRight = useCallback(() => {
+    if (contentType === "text/plain") {
+      if (layoutMode === "paged") {
+        setTxtPageIndex((p) => Math.max(0, p - 1));
+      }
+    } else {
+      handleEpubPrev();
+    }
+  }, [contentType, layoutMode, handleEpubPrev]);
+
+  const swipeProps = useReaderSwipe({
+    onSwipeLeft: handleSwipeLeft,
+    onSwipeRight: handleSwipeRight,
+    isRtl: false,
+  });
 
   if (!isOpen) return null;
 
@@ -706,12 +591,7 @@ export function BookReader({
     if (layoutMode === "paged") {
       const pageText = txtPages[txtPageIndex] || "";
       return (
-        <div
-          onClick={handleTxtPageClick}
-          onTouchStart={handleTxtTouchStart}
-          onTouchEnd={handleTxtTouchEnd}
-          className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden relative cursor-pointer"
-        >
+        <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden relative">
           <div className="flex-1 flex items-center justify-center w-full max-w-3xl overflow-auto py-8">
             <div
               className={cn(
@@ -725,10 +605,26 @@ export function BookReader({
             </div>
           </div>
 
-          {/* Navigation overlay buttons */}
+          {/* Transparent click/swipe overlays */}
+          <div className="absolute inset-0 z-20 flex pointer-events-none" {...swipeProps}>
+            <div
+              className="w-[30%] h-full cursor-w-resize pointer-events-auto"
+              onClick={() => setTxtPageIndex((p) => Math.max(0, p - 1))}
+            />
+            <div
+              className="w-[40%] h-full cursor-pointer pointer-events-auto"
+              onClick={toggleUiVisibility}
+            />
+            <div
+              className="w-[30%] h-full cursor-e-resize pointer-events-auto"
+              onClick={() => setTxtPageIndex((p) => Math.min(txtPages.length - 1, p + 1))}
+            />
+          </div>
+
+          {/* Desktop Navigation Chevrons */}
           {isUiVisible && (
             <>
-              <div className="hidden md:flex absolute inset-y-0 left-2 items-center">
+              <div className="hidden md:flex absolute inset-y-0 left-2 items-center z-30">
                 <Button
                   variant="outline"
                   size="icon"
@@ -739,7 +635,7 @@ export function BookReader({
                   <ChevronLeft className="h-5 w-5" />
                 </Button>
               </div>
-              <div className="hidden md:flex absolute inset-y-0 right-2 items-center">
+              <div className="hidden md:flex absolute inset-y-0 right-2 items-center z-30">
                 <Button
                   variant="outline"
                   size="icon"
@@ -760,9 +656,7 @@ export function BookReader({
       <div
         ref={txtScrollContainerRef}
         onScroll={handleTxtScroll}
-        onClick={handleTxtPageClick}
-        onTouchStart={handleTxtTouchStart}
-        onTouchEnd={handleTxtTouchEnd}
+        onClick={toggleUiVisibility}
         className="flex-1 overflow-y-auto px-6 py-12 select-text cursor-pointer"
       >
         <div
@@ -1013,10 +907,31 @@ export function BookReader({
             )}
             <div ref={setViewerElement} className="w-full h-full p-2 relative" />
 
-            {/* Paged Layout Overlay controls */}
+            {/* Paged Layout Overlay click zones */}
+            {layoutMode === "paged" && !epubLoading && (
+              <div className="absolute inset-0 z-20 flex pointer-events-none" {...swipeProps}>
+                <div
+                  className="w-[30%] h-full cursor-w-resize pointer-events-auto"
+                  onClick={handleEpubPrev}
+                  data-testid="epub-prev-zone"
+                />
+                <div
+                  className="w-[40%] h-full cursor-pointer pointer-events-auto"
+                  onClick={toggleUiVisibility}
+                  data-testid="epub-toggle-zone"
+                />
+                <div
+                  className="w-[30%] h-full cursor-e-resize pointer-events-auto"
+                  onClick={handleEpubNext}
+                  data-testid="epub-next-zone"
+                />
+              </div>
+            )}
+
+            {/* Desktop Navigation Chevrons */}
             {layoutMode === "paged" && !epubLoading && isUiVisible && (
               <>
-                <div className="hidden md:flex absolute inset-y-0 left-2 items-center z-20">
+                <div className="hidden md:flex absolute inset-y-0 left-2 items-center z-30">
                   <Button
                     variant="outline"
                     size="icon"
@@ -1026,7 +941,7 @@ export function BookReader({
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
                 </div>
-                <div className="hidden md:flex absolute inset-y-0 right-2 items-center z-20">
+                <div className="hidden md:flex absolute inset-y-0 right-2 items-center z-30">
                   <Button
                     variant="outline"
                     size="icon"
