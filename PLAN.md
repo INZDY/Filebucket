@@ -506,7 +506,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Verify Chat Channel file attachments render as clean, single-row formatted bars.
 
 ### Milestone 64: Configurable File Card Aspect Ratio Settings
-*   **Status**: Proposed.
+*   **Status**: Completed.
 *   **Goal**: Allow users to customize the aspect ratio shape of item cards inside the Folder Contents View grid via User Settings, selecting from Landscape, Portrait, or Square options.
 *   **Tasks**:
     *   **Prisma Schema Migration**: Add `fileCardAspect` String field to the `UserSettings` database model in `prisma/schema.prisma` (defaulting to `"VIDEO"`). Generate a Prisma migration and regenerate the client.
