@@ -440,7 +440,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Verify realtime updates of the `X of Y` progress bar in the footer while reading, and ensure no crashes when tapping on book texts.
 
 ### Milestone 59: Shared Reader Layout Components & Hooks
-*   **Status**: Proposed.
+*   **Status**: Completed.
 *   **Goal**: Establish the base shared UI components and hooks for both readers to prevent code duplication, mount them cleanly using React Portals, and handle fullscreen state.
 *   **Tasks**:
     *   Build `ReaderContainer` component: manages full viewport overlay (`fixed inset-0 z-50`), body scroll lock (`overflow: hidden` on mount/unmount), escape key press listener to close, and HTML5 Fullscreen API toggle helper.
@@ -451,7 +451,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Write Vitest tests to check that `ReaderContainer` renders, sets body class scroll lock, handles ESC press close, and that `useReaderSwipe` correctly calculates swipe directions for LTR and RTL.
 
 ### Milestone 60: Redo Manga Reader Component (Sequential Images)
-*   **Status**: Proposed.
+*   **Status**: Completed.
 *   **Goal**: Re-implement `MangaReader` using the shared overlay components and new gesture/tap interactions.
 *   **Tasks**:
     *   Integrate `ReaderContainer`, `ReaderHeader`, `ReaderFooter`, and controls overlay.
@@ -463,7 +463,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Run manga reader tests; verify pages prefetch, swipe navigation works, tapping the center toggles the header/footer overlay, and closing the reader revokes all object URLs.
 
 ### Milestone 61: Redo Book/EPUB Reader Component
-*   **Status**: Proposed.
+*   **Status**: Completed.
 *   **Goal**: Re-implement `BookReader` supporting EPUB and plain text (`.txt`) files, typography/theme settings dropdown, Table of Contents drawer, and robust progress restoring.
 *   **Tasks**:
     *   Integrate `ReaderContainer`, `ReaderHeader`, `ReaderFooter`, and controls overlay. Ensure header and footer maintain standard dark styling, while only the page background changes to the active theme (Light, Sepia, Dark).
