@@ -4,7 +4,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import {
   Menu,
-  BookOpen,
   Loader2,
   ChevronLeft,
   ChevronRight,
@@ -692,8 +691,6 @@ export function BookReader({
     <ReaderContainer isOpen={isOpen} onClose={handleClose} className="book-reader-overlay">
       {/* Top Header Controls Panel - Always Dark */}
       <ReaderHeader title={title} onClose={handleClose} isVisible={isUiVisible}>
-        <BookOpen className="h-5 w-5 flex-shrink-0 text-blue-500 hidden sm:inline" />
-
         {/* TOC Toggle (EPUB only) */}
         {contentType !== "text/plain" && (
           <Button
