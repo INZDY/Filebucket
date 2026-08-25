@@ -476,7 +476,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Run book reader tests; verify changing layout to scroll or paged works, settings dropdown toggles, clicking the center of the EPUB iframe toggles overlay UI visibility, and invalid CFIs fall back safely without crashing.
 
 ### Milestone 62: Book Covers & File Card Previews
-*   **Status**: Proposed.
+*   **Status**: Completed.
 *   **Goal**: Extract and display cover thumbnails on file cards for manga (ZIP/CBZ), EPUB, and PDF files, customize TXT previews, and handle general ZIPs cleanly using client-side extraction during ingestion.
 *   **Tasks**:
     *   **Prisma Schema Migration**: Add `thumbnailKey` (String, nullable) to the `MediaAsset` model in `prisma/schema.prisma` and generate database migration.
@@ -490,4 +490,19 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
         *   For `.txt` and `.md` files, either display a stylized CSS-based card cover with the document title and a paper texture, or render a mini-preview snippet of the first few lines of the text.
         *   For general ZIP files (those that do not contain manga images), display a standard archive icon but list the top few files inside it or fall back cleanly.
 *   **Verification**: Upload sample manga ZIP/CBZ, EPUB, PDF, TXT, and general ZIP files. Verify that covers are extracted client-side, uploaded, and rendered on the cards with correct aspect ratios without full-file server downloads.
+
+### Milestone 63: Uniform File Card Layouts & Note Previews
+*   **Status**: Proposed.
+*   **Goal**: Normalize grid layout heights in Files Mode (using standard frames and center-fitting mixed aspect ratio previews), render stylized note preview cards for Obsidian Notes, enforce Keep Note masonry constraints, and format Chat Channel attachments.
+*   **Tasks**:
+    *   **Uniform Grid Frames**: Modify `FolderContentsView` in `app/vault/active-workspace.tsx` to set a standard card frame height. Use CSS `object-contain` on cover/image preview elements so that vertical book covers and horizontal image/video previews fit center-aligned without stretching card containers.
+    *   **Stylized Obsidian Note Cards**: Replace the default file icon in notes card thumbnails with a stylized note preview card themed in Obsidian Purple. Render a document header layout showing a snippet of the note's text body (clamped text content) rather than a fallback icon.
+    *   **Keep Note Masonry Constraints**: Update `app/vault/keep-workspace.tsx` Keep card container layout to enforce a maximum card height of `max-h-72` with a fade-out gradient panel overlay at the bottom to prevent layout breaks on long text or checklists.
+    *   **Format Chat Attachments**: Update `ChatWorkspace` to render non-image file attachments in a compact single-row visual format with format-specific icons (PDF, EPUB, ZIP, general files) and file sizes, keeping layout streams performant and clean.
+*   **Verification**: 
+    *   Upload images, PDFs, EPUBs, and notes. Verify they render side-by-side in Files Mode with identical outer card heights, and that previews fit neatly inside them.
+    *   Verify Obsidian Notes in Files Mode render text snippets on a purple paper layout.
+    *   Verify Keep Notes wrap with a max height of 280px (`max-h-72`) and bottom gradient fade.
+    *   Verify Chat Channel file attachments render as clean, single-row formatted bars.
+
 

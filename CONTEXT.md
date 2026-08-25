@@ -20,7 +20,7 @@ The primary mode of the vault, active at the root level and inside any non-reser
 _Avoid_: File vault, root directory, public folder
 
 **Keep Note**:
-A specialized note that exists only as a direct child of the reserved `Quick Notes/` folder. It is rendered in a grid layout, supports background card colors, can be pinned/unpinned, and can be viewed/edited as a rich-text document supporting mixed text and checklist items. Checklist items preserve their original order when checked.
+A specialized note that exists only as a direct child of the reserved `Quick Notes/` folder. It is rendered in a masonry grid layout with a maximum height limit and a bottom fade-out to ensure clean density, supports background card colors, can be pinned/unpinned, and can be viewed/edited as a rich-text document supporting mixed text and checklist items. Checklist items preserve their original order when checked.
 _Avoid_: Sticky note, keep card, board item
 
 **Chat Channel**:
@@ -28,7 +28,7 @@ A folder that exists only as a direct child of the reserved `Chat Channels/` fol
 _Avoid_: Chat room, text channel, conversation
 
 **Chat Message**:
-A single chronological entry within a Chat Channel. It contains text, hyperlinks, and optional Media Asset attachments stored in a dedicated `Chat Channels/Attachments/` folder at the vault root.
+A single chronological entry within a Chat Channel. It contains text, hyperlinks, and optional Media Asset attachments stored in a dedicated `Chat Channels/Attachments/` folder at the vault root. In the chat stream, attachments render as inline images or as lightweight, single-row file attachment blocks styled with specific format icons and file size labels.
 _Avoid_: Chat post, message row, channel text
 
 **Vault Browser**:
@@ -165,7 +165,7 @@ Editing behavior where note title, body, or card changes are saved automatically
 _Avoid_: Manual save, draft mode
 
 **Folder Contents View**:
-A workspace layout in the Main Content Pane, active in Files Mode when a folder (or the vault root) is selected without an active media asset preview. It organizes direct children into two distinct sections: a top section of compact, fixed-height subfolder pills (showing folder icon, name, item count, and overflow actions) to eliminate empty card space, and a bottom section of responsive 16:9 thumbnail cards for media assets and notes featuring live image/video previews and metadata footers. Selecting a child folder navigates into it, selecting a media asset opens its preview, and selecting a note switches the mode to Obsidian Notes and opens the note. Each item card provides a top-right overflow menu, right-click context menu, and mobile long-press sheet to execute file operations (Move, Rename, Delete) directly without requiring the file to be loaded in preview first. It supports dragging items and dropping onto subfolder cards, location breadcrumbs, or the grid background.
+A workspace layout in the Main Content Pane, active in Files Mode when a folder (or the vault root) is selected without an active media asset preview. It organizes direct children into two distinct sections: a top section of compact, fixed-height subfolder pills (showing folder icon, name, item count, and overflow actions) to eliminate empty card space, and a bottom section of responsive uniform-height thumbnail cards for media assets and notes featuring center-fitted previews (such as book covers and video thumbnails fitted inside standard frames) and metadata footers. Selecting a child folder navigates into it, selecting a media asset opens its preview, and selecting a note switches the mode to Obsidian Notes and opens the note. Each item card provides a top-right overflow menu, right-click context menu, and mobile long-press sheet to execute file operations (Move, Rename, Delete) directly without requiring the file to be loaded in preview first. It supports dragging items and dropping onto subfolder cards, location breadcrumbs, or the grid background.
 _Avoid_: Folder grid, directory explorer, vault listing
 
 **Special Folders Toggle**:
