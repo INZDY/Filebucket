@@ -505,4 +505,18 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Verify Keep Notes wrap with a max height of 280px (`max-h-72`) and bottom gradient fade.
     *   Verify Chat Channel file attachments render as clean, single-row formatted bars.
 
+### Milestone 64: Configurable File Card Aspect Ratio Settings
+*   **Status**: Proposed.
+*   **Goal**: Allow users to customize the aspect ratio shape of item cards inside the Folder Contents View grid via User Settings, selecting from Landscape, Portrait, or Square options.
+*   **Tasks**:
+    *   **Prisma Schema Migration**: Add `fileCardAspect` String field to the `UserSettings` database model in `prisma/schema.prisma` (defaulting to `"VIDEO"`). Generate a Prisma migration and regenerate the client.
+    *   **User Settings UI Panel**: Add a settings selector dropdown in the user settings dashboard modal under a new "Files & Media Grid" section, allowing users to toggle between Landscape (16:9), Portrait (3:4), and Square (1:1).
+    *   **Dynamic Grid Layout Rendering**: Update `app/vault/active-workspace.tsx` to read the active `fileCardAspect` value from settings. Dynamically bind the card's thumbnail wrapper aspect ratio class (`aspect-video`, `aspect-[3/4]`, or `aspect-square`).
+    *   **Card Preview Snippet Clamp Adjustments**: Dynamically adjust the text body clamping limits for note cards based on the active aspect ratio selection so that vertical portrait cards use the extra space for a longer snippet.
+*   **Verification**:
+    *   Change the aspect ratio setting to Portrait in settings, save, and verify that all cards in Files Mode switch to vertical proportions with uniform heights and center-containment.
+    *   Change the aspect ratio setting to Square, save, and verify cards update to uniform 1:1 boxes.
+    *   Write vitest unit/integration tests covering database setting storage and dynamic workspace class rendering.
+
+
 
