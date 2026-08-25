@@ -1092,7 +1092,7 @@ export function ActiveWorkspace({
                               {media.filename}
                             </p>
                             <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider font-medium">
-                              {isImg ? "Image" : isVideo ? "Video" : isAudio ? "Audio" : isPdf ? "PDF" : "Epub" ? "EPUB" : isManga ? "Manga" : isText ? "Text" : "File"}
+                              {isImg ? "Image" : isVideo ? "Video" : isAudio ? "Audio" : isPdf ? "PDF" : isEpub ? "EPUB" : isManga ? "Manga" : isText ? "Text" : "File"}
                             </p>
                           </div>
                         </Link>

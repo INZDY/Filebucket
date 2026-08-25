@@ -137,7 +137,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           quotaLimit: quotaGb * 1024 * 1024 * 1024,
           autosaveDelay: Math.round(delaySec * 1000),
           defaultNoteFont: fontFamily,
-          fileCardAspect: cardAspect as any,
+          fileCardAspect: cardAspect as "VIDEO" | "PORTRAIT" | "SQUARE",
         });
         onClose();
         router.refresh();

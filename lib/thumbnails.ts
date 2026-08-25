@@ -147,6 +147,7 @@ export async function extractPdfCover(file: File): Promise<Blob | null> {
     await page.render({
       canvasContext: context,
       viewport: viewport,
+      canvas: canvas,
     }).promise;
 
     return new Promise<Blob | null>((resolve) => {
