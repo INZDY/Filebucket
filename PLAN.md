@@ -438,3 +438,39 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Open Book Reader; verify header controls do not wrap on mobile, settings dropdown toggles properly, and click-outside closes the dropdown.
     *   On touch/mobile simulator, verify chevron page navigation buttons are completely hidden, horizontal swipe turns pages, and side taps turn pages in both paged and scroll modes.
     *   Verify realtime updates of the `X of Y` progress bar in the footer while reading, and ensure no crashes when tapping on book texts.
+
+### Milestone 59: Shared Reader Layout Components & Hooks
+*   **Status**: Proposed.
+*   **Goal**: Establish the base shared UI components and hooks for both readers to prevent code duplication, mount them cleanly using React Portals, and handle fullscreen state.
+*   **Tasks**:
+    *   Build `ReaderContainer` component: manages full viewport overlay (`fixed inset-0 z-50`), body scroll lock (`overflow: hidden` on mount/unmount), escape key press listener to close, and HTML5 Fullscreen API toggle helper.
+    *   Build `ReaderHeader` component: static dark style (`bg-[#111318]/95 border-slate-800 text-slate-100`), displays reader title, page index detail, settings toggle button, and exit button. Supports custom settings dropdown content slot.
+    *   Build `ReaderFooter` component: static dark style, displays progress status (percentage read, footnote details e.g., `X of Y` pages or scroll progress bar).
+    *   Build `useReaderSwipe` custom hook: captures `touchstart` and `touchend` events, detects horizontal swipe gestures, and triggers page transition callbacks. Inverts direction in RTL mode.
+    *   Build `useReaderOverlay` custom hook: manages visibility of the Overlay Reader UI. Sets a timer to auto-fade controls or toggles them on viewport center tap/click (middle 40% zone).
+*   **Verification**: Write Vitest tests to check that `ReaderContainer` renders, sets body class scroll lock, handles ESC press close, and that `useReaderSwipe` correctly calculates swipe directions for LTR and RTL.
+
+### Milestone 60: Redo Manga Reader Component (Sequential Images)
+*   **Status**: Proposed.
+*   **Goal**: Re-implement `MangaReader` using the shared overlay components and new gesture/tap interactions.
+*   **Tasks**:
+    *   Integrate `ReaderContainer`, `ReaderHeader`, `ReaderFooter`, and controls overlay.
+    *   Add middle-tap/click overlay UI toggle (middle 40% horizontal zone).
+    *   Implement LTR/RTL tap navigation (left 30% / right 30%) and LTR/RTL swipe gestures.
+    *   Implement image background prefetching for LTR and RTL page indexes.
+    *   Implement full Object URL lifetime tracking. Ensure all generated blob URLs are registered in a ref array and explicitly revoked using `URL.revokeObjectURL(url)` on reader close.
+    *   Retain Webtoon Mode continuous scroll lazy loading with `IntersectionObserver`.
+*   **Verification**: Run manga reader tests; verify pages prefetch, swipe navigation works, tapping the center toggles the header/footer overlay, and closing the reader revokes all object URLs.
+
+### Milestone 61: Redo Book/EPUB Reader Component
+*   **Status**: Proposed.
+*   **Goal**: Re-implement `BookReader` supporting EPUB and plain text (`.txt`) files, typography/theme settings dropdown, Table of Contents drawer, and robust progress restoring.
+*   **Tasks**:
+    *   Integrate `ReaderContainer`, `ReaderHeader`, `ReaderFooter`, and controls overlay. Ensure header and footer maintain standard dark styling, while only the page background changes to the active theme (Light, Sepia, Dark).
+    *   Build the settings dropdown panel containing: Theme switches, Font Family selectors, Font Size selectors, Font Weight, and Line Height adjustments. Ensure dropdown closes on click-outside.
+    *   Tunnel iframe clicks/taps/swipes: register event listeners in the `epubjs` rendition iframe, calculating horizontal coordinates (left 30% for prev, right 30% for next, center 40% for toggling overlay visibility) and touch swipe offsets.
+    *   Implement defensive `epubjs` rendition loading: wait for `book.ready` before displaying the saved CFI. Wrap the display in a `try/catch` and fallback to `rendition.display()` on error.
+    *   Re-integrate Table of Contents drawer navigation.
+    *   Re-integrate TXT files scroll progress/percentage tracking and tap-to-navigate zone overlays.
+    *   Connect client settings and progress to `/api/media/progress` with debounced sync on updates.
+*   **Verification**: Run book reader tests; verify changing layout to scroll or paged works, settings dropdown toggles, clicking the center of the EPUB iframe toggles overlay UI visibility, and invalid CFIs fall back safely without crashing.

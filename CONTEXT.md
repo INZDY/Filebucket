@@ -83,6 +83,10 @@ _Avoid_: Single page mode, flip mode
 A fullscreen overlay utility launched from an EPUB or plain text (`.txt`) media asset preview. It supports customizable reading themes (Light, Sepia, Glass Dark), adjustable typography styles (font family, font size, font weight, line spacing), layout configurations (Paged vs Scroll), Table of Contents sidebar navigation, and reading progress synchronization.
 _Avoid_: EPUB viewer, document reader, text viewer
 
+**Overlay Reader UI**:
+The user interface layer rendered on top of the reading content within the Manga Reader and Book Reader. It includes header controls (close button, title, settings, layout switches), footer controls (page number, progress bar), and side chevron navigation buttons on desktop. Tapping or clicking the middle region (e.g., center 40% horizontal zone) toggles the visibility of the overlay UI, enabling a distraction-free, borderless reading view without affecting page navigation or layout. The Overlay Reader UI maintains a consistent dark styling to frame the content, independent of the active reading theme (Light, Sepia, Dark) applied to the content page display.
+_Avoid_: Control bar, reader menus, toolbar controls
+
 **Standalone Mode**:
 The display setting of the PWA when launched from the home screen or dock, running the application in a borderless window without standard browser navigation bars.
 _Avoid_: Fullscreen window, browser mode
