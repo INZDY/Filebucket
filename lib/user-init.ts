@@ -58,6 +58,7 @@ export async function initializeUserVault(userId: string): Promise<void> {
         quotaLimit: 10 * 1024 * 1024 * 1024, // 10 GB
         defaultNoteFont: "sans",
         autosaveDelay: 1500, // 1.5 seconds
+        fileCardAspect: "VIDEO",
       },
     });
   }

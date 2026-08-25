@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { MangaReader, type ReaderPage } from "@/components/manga-reader";
 import { BookReader } from "@/components/book-reader";
 import { FilebucketPlayer } from "@/components/filebucket-player";
+import { useSettings } from "@/components/settings-context";
 
 type FolderEntry = {
   id: string;
@@ -143,6 +144,9 @@ export function ActiveWorkspace({
   allFolders = [],
   allNotes = [],
 }: ActiveWorkspaceProps) {
+
+  const { settings } = useSettings();
+  const fileCardAspect = settings.fileCardAspect || "VIDEO";
 
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -894,7 +898,18 @@ export function ActiveWorkspace({
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                   {/* Notes */}
                   {childNotes.map((note) => {
-                    const snippet = getNoteSnippet(note.body);
+                    const isPortrait = fileCardAspect === "PORTRAIT";
+                    const aspectClass = 
+                      fileCardAspect === "PORTRAIT" 
+                        ? "aspect-[3/4]" 
+                        : fileCardAspect === "SQUARE" 
+                        ? "aspect-square" 
+                        : "aspect-video";
+                    
+                    const snippetLimit = isPortrait ? 150 : 80;
+                    const lineClampClass = isPortrait ? "line-clamp-6" : "line-clamp-4";
+                    const snippet = getNoteSnippet(note.body, snippetLimit);
+                    
                     return (
                       <Link
                         key={note.id}
@@ -907,9 +922,9 @@ export function ActiveWorkspace({
                         className="group flex flex-col justify-between p-3 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-purple-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.05)] transition-all active:scale-95 duration-200"
                       >
                         {/* Note stylized preview thumbnail */}
-                        <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-purple-500/10 mb-2 bg-[#131018] select-none text-left">
+                        <div className={cn("relative w-full rounded-lg overflow-hidden border border-purple-500/10 mb-2 bg-[#131018] select-none text-left", aspectClass)}>
                           <div className="w-full h-full flex flex-col p-3">
-                            <p className="text-[10px] text-purple-300/80 leading-relaxed font-normal overflow-hidden break-words line-clamp-4">
+                            <p className={cn("text-[10px] text-purple-300/80 leading-relaxed font-normal overflow-hidden break-words", lineClampClass)}>
                               {snippet || "Empty note"}
                             </p>
                             <div className="flex items-center gap-1.5 text-purple-450/70 mt-auto pt-1 border-t border-purple-500/10">
@@ -945,8 +960,13 @@ export function ActiveWorkspace({
                     const hasThumbnail = Boolean(media.thumbnailKey);
                     const thumbnailUrl = hasThumbnail ? getMediaAssetUrl(media.thumbnailKey!) : null;
 
-                    // All card frames in Files mode grid use a uniform horizontal aspect-video frame wrapper
-                    const aspectClass = "aspect-video";
+                    // All card frames in Files mode grid use configured aspect ratio
+                    const aspectClass = 
+                      fileCardAspect === "PORTRAIT" 
+                        ? "aspect-[3/4]" 
+                        : fileCardAspect === "SQUARE" 
+                        ? "aspect-square" 
+                        : "aspect-video";
                     const isBookLayout = isEpub || isPdf || isManga;
 
                     const Icon = isImg
@@ -972,7 +992,7 @@ export function ActiveWorkspace({
                       : isVideo
                       ? "bg-orange-500/10 text-orange-400 border-orange-500/20 group-hover:bg-orange-500/20"
                       : isPdf
-                      ? "bg-red-500/10 text-red-400 border-red-500/20 group-hover:bg-red-500/20"
+                      ? "bg-red-500/10 text-red-400 border-red-500/25 group-hover:bg-red-500/20"
                       : isEpub || isManga
                       ? "bg-purple-500/10 text-purple-400 border-purple-500/20 group-hover:bg-purple-500/20"
                       : isText
@@ -1048,6 +1068,12 @@ export function ActiveWorkspace({
                                   <div className="h-1 bg-slate-500 rounded w-full"></div>
                                   <div className="h-1 bg-slate-500 rounded w-3/4"></div>
                                   <div className="h-1 bg-slate-500 rounded w-4/5"></div>
+                                  {(fileCardAspect === "PORTRAIT" || fileCardAspect === "SQUARE") && (
+                                    <>
+                                      <div className="h-1 bg-slate-500 rounded w-2/3"></div>
+                                      <div className="h-1 bg-slate-500 rounded w-5/6"></div>
+                                    </>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-1.5 text-cyan-400/70">
                                   <FileText className="h-3.5 w-3.5" />

@@ -134,6 +134,7 @@ type VaultDashboardProps = {
     quotaLimit: number;
     autosaveDelay: number;
     defaultNoteFont: string;
+    fileCardAspect: string;
   } | null;
   initialSearchParams: {
     folder?: string;
@@ -821,6 +822,7 @@ export function VaultDashboard({
     quotaLimit: 10 * 1024 * 1024 * 1024,
     autosaveDelay: 1500,
     defaultNoteFont: "sans",
+    fileCardAspect: "VIDEO",
   };
 
   return (
@@ -829,6 +831,7 @@ export function VaultDashboard({
         quotaLimit: userSettings.quotaLimit,
         autosaveDelay: userSettings.autosaveDelay,
         defaultNoteFont: (userSettings.defaultNoteFont as "sans" | "serif" | "mono") || "sans",
+        fileCardAspect: (userSettings.fileCardAspect as "VIDEO" | "PORTRAIT" | "SQUARE") || "VIDEO",
       }}
     >
       <main className="h-full overflow-hidden bg-[#0d0d11] text-slate-100">

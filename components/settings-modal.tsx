@@ -43,6 +43,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [customDelay, setCustomDelay] = useState<string>("1.5");
 
   const [fontFamily, setFontFamily] = useState<"sans" | "serif" | "mono">("sans");
+  const [cardAspect, setCardAspect] = useState<string>("VIDEO");
 
   const [isPending, setIsPending] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -78,6 +79,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
     // 3. Font family
     setFontFamily(settings.defaultNoteFont);
+
+    // 4. File Card Aspect
+    if (settings.fileCardAspect) {
+      setCardAspect(settings.fileCardAspect);
+    }
     setErrorMsg("");
   }, [isOpen, settings]);
 
@@ -122,6 +128,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     formData.append("quotaLimitGb", String(quotaGb));
     formData.append("autosaveDelaySec", String(delaySec));
     formData.append("defaultNoteFont", fontFamily);
+    formData.append("fileCardAspect", cardAspect);
 
     try {
       const res = await updateUserSettingsAction(formData);
@@ -130,6 +137,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           quotaLimit: quotaGb * 1024 * 1024 * 1024,
           autosaveDelay: Math.round(delaySec * 1000),
           defaultNoteFont: fontFamily,
+          fileCardAspect: cardAspect as any,
         });
         onClose();
         router.refresh();
@@ -282,6 +290,27 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </select>
               <p className="text-xs text-slate-500">
                 Choose the font family to apply cascadingly to the note editor text and headings.
+              </p>
+            </div>
+          </div>
+
+          {/* Files & Media Grid settings */}
+          <div className="space-y-4 border-t border-slate-800 pt-5">
+            <h3 className="text-sm font-medium text-slate-300">Files & Media Grid</h3>
+            <div className="space-y-2">
+              <label className="text-xs text-slate-400 font-medium">File Card Aspect Ratio</label>
+              <select
+                aria-label="File card aspect ratio settings"
+                value={cardAspect}
+                onChange={(e) => setCardAspect(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-slate-800 bg-[#111318] px-3 py-1 text-sm text-slate-100 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-slate-700"
+              >
+                <option value="VIDEO">Landscape (16:9)</option>
+                <option value="PORTRAIT">Portrait (3:4)</option>
+                <option value="SQUARE">Square (1:1)</option>
+              </select>
+              <p className="text-xs text-slate-500">
+                Choose the uniform grid height for displaying note and media file cards in folder views.
               </p>
             </div>
           </div>

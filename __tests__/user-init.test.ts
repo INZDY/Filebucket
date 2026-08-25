@@ -77,6 +77,7 @@ describe("initializeUserVault", () => {
         quotaLimit: 10 * 1024 * 1024 * 1024,
         defaultNoteFont: "sans",
         autosaveDelay: 1500,
+        fileCardAspect: "VIDEO",
       },
     });
   });

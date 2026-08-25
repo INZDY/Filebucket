@@ -15,10 +15,16 @@ export async function updateUserSettingsAction(formData: FormData): Promise<{ ok
   const quotaLimitGbStr = formData.get("quotaLimitGb");
   const autosaveDelaySecStr = formData.get("autosaveDelaySec");
   const defaultNoteFont = formData.get("defaultNoteFont");
+  const fileCardAspect = formData.get("fileCardAspect");
 
   // Validate Font
   if (defaultNoteFont !== "sans" && defaultNoteFont !== "serif" && defaultNoteFont !== "mono") {
     return { ok: false, error: "Font must be 'sans', 'serif', or 'mono'" };
+  }
+
+  // Validate File Card Aspect
+  if (fileCardAspect !== "VIDEO" && fileCardAspect !== "PORTRAIT" && fileCardAspect !== "SQUARE") {
+    return { ok: false, error: "Card aspect ratio must be 'VIDEO', 'PORTRAIT', or 'SQUARE'" };
   }
 
   // Validate Quota Limit
@@ -43,12 +49,14 @@ export async function updateUserSettingsAction(formData: FormData): Promise<{ ok
         quotaLimit: quotaLimitBytes,
         autosaveDelay: autosaveDelayMs,
         defaultNoteFont,
+        fileCardAspect,
       },
       create: {
         userId,
         quotaLimit: quotaLimitBytes,
         autosaveDelay: autosaveDelayMs,
         defaultNoteFont,
+        fileCardAspect,
         theme: "dark",
       },
     });

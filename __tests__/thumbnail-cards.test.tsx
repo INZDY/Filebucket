@@ -49,6 +49,7 @@ vi.mock("@/app/tags/actions", () => ({
 }));
 
 import { ActiveWorkspace } from "@/app/vault/active-workspace";
+import { SettingsProvider } from "@/components/settings-context";
 
 describe("Folder Contents View Thumbnails & Card File Operations (TDD)", () => {
   it("should render image thumbnails with aspect-video preview frame and 3-dots actions menu", async () => {
@@ -285,6 +286,83 @@ describe("Folder Contents View Thumbnails & Card File Operations (TDD)", () => {
     expect(textContent).toContain("MD");
     // Verify stripped body markdown snippet is rendered on the note card
     expect(textContent).toContain("Buy fresh milk Buy organic eggs Whole wheat bread");
+
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
+
+  it("should render cards with configurable aspect ratio settings (PORTRAIT) and render longer snippets with more mock lines", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    const sampleMedia = [
+      {
+        id: "text_doc_1",
+        filename: "notes.txt",
+        contentType: "text/plain",
+        sizeBytes: 1024,
+        r2Key: "media/notes.txt",
+        folderId: "f1",
+      }
+    ];
+
+    const sampleFolder = {
+      id: "f1",
+      name: "Library",
+      parentId: null,
+    };
+
+    const sampleNotes = [
+      {
+        id: "note_1",
+        title: "Grocery List",
+        body: "Line 1 text body\nLine 2 text body\nLine 3 text body\nLine 4 text body\nLine 5 text body\nLine 6 text body\nLine 7 text body\nLine 8 text body",
+        folderId: "f1",
+        tags: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+    ];
+
+    const mockSettings = {
+      quotaLimit: 10 * 1024 * 1024 * 1024,
+      autosaveDelay: 1500,
+      defaultNoteFont: "sans" as const,
+      fileCardAspect: "PORTRAIT" as const,
+    };
+
+    await act(async () => {
+      root.render(
+        <SettingsProvider initialSettings={mockSettings}>
+          <ActiveWorkspace
+            selectedNote={null}
+            selectedMedia={null}
+            selectedFolder={sampleFolder}
+            folderTrail={[sampleFolder]}
+            folderDestinations={[]}
+            imageMediaAssets={[]}
+            tags={[]}
+            textPreviewContent=""
+            hasVaultContent={true}
+            browserTitle="Library"
+            allMediaAssets={sampleMedia}
+            allFolders={[sampleFolder]}
+            allNotes={sampleNotes}
+          />
+        </SettingsProvider>
+      );
+    });
+
+    // 1. Verify portrait aspect ratio class is applied on card layout frame containers
+    const aspectContainer = container.querySelector(".aspect-\\[3\\/4\\]");
+    expect(aspectContainer).not.toBeNull();
+
+    // 2. Verify note card uses longer line clamping height styling
+    const clampedParagraph = container.querySelector(".line-clamp-6");
+    expect(clampedParagraph).not.toBeNull();
 
     await act(async () => {
       root.unmount();

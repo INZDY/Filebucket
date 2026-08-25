@@ -6,6 +6,7 @@ export type UserSettingsData = {
   quotaLimit: number; // in bytes
   autosaveDelay: number; // in ms
   defaultNoteFont: "sans" | "serif" | "mono";
+  fileCardAspect: "VIDEO" | "PORTRAIT" | "SQUARE";
 };
 
 type SettingsContextType = {
@@ -52,6 +53,7 @@ export function useSettings() {
         quotaLimit: 10 * 1024 * 1024 * 1024, // 10 GB
         autosaveDelay: 1500,
         defaultNoteFont: "sans" as const,
+        fileCardAspect: "VIDEO" as const,
       },
       updateSettings: () => {},
     };

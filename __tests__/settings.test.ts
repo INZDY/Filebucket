@@ -33,6 +33,7 @@ describe("User Settings Server Action - (TDD)", () => {
     formData.append("quotaLimitGb", "10");
     formData.append("autosaveDelaySec", "1.5");
     formData.append("defaultNoteFont", "sans");
+    formData.append("fileCardAspect", "VIDEO");
 
     const res = await updateUserSettingsAction(formData);
     expect(res.ok).toBe(false);
@@ -50,10 +51,29 @@ describe("User Settings Server Action - (TDD)", () => {
     formData.append("quotaLimitGb", "10");
     formData.append("autosaveDelaySec", "1.5");
     formData.append("defaultNoteFont", "invalid-font");
+    formData.append("fileCardAspect", "VIDEO");
 
     const res = await updateUserSettingsAction(formData);
     expect(res.ok).toBe(false);
     expect(res.error).toContain("Font must be 'sans', 'serif', or 'mono'");
+    expect(prisma.userSettings.upsert).not.toHaveBeenCalled();
+  });
+
+  it("should validate fileCardAspect values correctly", async () => {
+    vi.mocked(auth).mockResolvedValue({
+      user: { id: mockUserId, email: "admin@filebucket.local" },
+      expires: "tomorrow",
+    });
+
+    const formData = new FormData();
+    formData.append("quotaLimitGb", "10");
+    formData.append("autosaveDelaySec", "1.5");
+    formData.append("defaultNoteFont", "sans");
+    formData.append("fileCardAspect", "INVALID_ASPECT");
+
+    const res = await updateUserSettingsAction(formData);
+    expect(res.ok).toBe(false);
+    expect(res.error).toContain("Card aspect ratio must be 'VIDEO', 'PORTRAIT', or 'SQUARE'");
     expect(prisma.userSettings.upsert).not.toHaveBeenCalled();
   });
 
@@ -67,6 +87,7 @@ describe("User Settings Server Action - (TDD)", () => {
     formData.append("quotaLimitGb", "0");
     formData.append("autosaveDelaySec", "1.5");
     formData.append("defaultNoteFont", "sans");
+    formData.append("fileCardAspect", "VIDEO");
 
     const res = await updateUserSettingsAction(formData);
     expect(res.ok).toBe(false);
@@ -85,6 +106,7 @@ describe("User Settings Server Action - (TDD)", () => {
     formData1.append("quotaLimitGb", "10");
     formData1.append("autosaveDelaySec", "0.2");
     formData1.append("defaultNoteFont", "sans");
+    formData1.append("fileCardAspect", "VIDEO");
 
     const res1 = await updateUserSettingsAction(formData1);
     expect(res1.ok).toBe(false);
@@ -95,6 +117,7 @@ describe("User Settings Server Action - (TDD)", () => {
     formData2.append("quotaLimitGb", "10");
     formData2.append("autosaveDelaySec", "15");
     formData2.append("defaultNoteFont", "sans");
+    formData2.append("fileCardAspect", "VIDEO");
 
     const res2 = await updateUserSettingsAction(formData2);
     expect(res2.ok).toBe(false);
@@ -111,6 +134,7 @@ describe("User Settings Server Action - (TDD)", () => {
     formData.append("quotaLimitGb", "5"); // 5 GB
     formData.append("autosaveDelaySec", "2"); // 2s (2000ms)
     formData.append("defaultNoteFont", "serif");
+    formData.append("fileCardAspect", "PORTRAIT");
 
     vi.mocked(prisma.userSettings.upsert).mockResolvedValue({
       id: "settings-id",
@@ -118,6 +142,7 @@ describe("User Settings Server Action - (TDD)", () => {
       quotaLimit: 5 * 1024 * 1024 * 1024,
       autosaveDelay: 2000,
       defaultNoteFont: "serif",
+      fileCardAspect: "PORTRAIT",
       theme: "dark",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -131,12 +156,14 @@ describe("User Settings Server Action - (TDD)", () => {
         quotaLimit: 5 * 1024 * 1024 * 1024,
         autosaveDelay: 2000,
         defaultNoteFont: "serif",
+        fileCardAspect: "PORTRAIT",
       },
       create: {
         userId: mockUserId,
         quotaLimit: 5 * 1024 * 1024 * 1024,
         autosaveDelay: 2000,
         defaultNoteFont: "serif",
+        fileCardAspect: "PORTRAIT",
         theme: "dark",
       },
     });

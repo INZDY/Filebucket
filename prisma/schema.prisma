@@ -186,6 +186,7 @@ model UserSettings {
   quotaLimit      Float    @default(10737418240) // 10 GB in bytes
   defaultNoteFont String   @default("sans")
   autosaveDelay   Int      @default(1500)
+  fileCardAspect  String   @default("VIDEO")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
