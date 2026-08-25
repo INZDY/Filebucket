@@ -474,3 +474,20 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Re-integrate TXT files scroll progress/percentage tracking and tap-to-navigate zone overlays.
     *   Connect client settings and progress to `/api/media/progress` with debounced sync on updates.
 *   **Verification**: Run book reader tests; verify changing layout to scroll or paged works, settings dropdown toggles, clicking the center of the EPUB iframe toggles overlay UI visibility, and invalid CFIs fall back safely without crashing.
+
+### Milestone 62: Book Covers & File Card Previews
+*   **Status**: Proposed.
+*   **Goal**: Extract and display cover thumbnails on file cards for manga (ZIP/CBZ), EPUB, and PDF files, customize TXT previews, and handle general ZIPs cleanly using client-side extraction during ingestion.
+*   **Tasks**:
+    *   **Prisma Schema Migration**: Add `thumbnailKey` (String, nullable) to the `MediaAsset` model in `prisma/schema.prisma` and generate database migration.
+    *   **In-Browser Cover Extraction Utility**: Implement a client-side library `lib/thumbnails.ts` to extract covers directly in the browser during upload:
+        *   **Manga (ZIP/CBZ)**: Load ZIP index via JSZip, sort files alphanumeric-naturally using the existing `compareAlphanumeric` sorting helper, and extract the first image file.
+        *   **EPUB**: Load EPUB manifest, parse container XML and `.opf` metadata to find the cover image reference, and extract it.
+        *   **PDF**: Parse and render the first page of the PDF to an offscreen canvas using `pdf.js` and generate a image blob.
+    *   **Upload Pipeline Integration**: Update `app/media/media-upload-control.tsx` to extract the cover blob for supported book/manga files, request a presigned R2 upload URL for the thumbnail, PUT the thumbnail blob directly to R2, and pass the thumbnail R2 key (`thumbnailKey`) when calling `createMediaAssetAction`.
+    *   **Dashboard Visual Layout & Card Refinement**: Update card grid rendering in `app/vault/active-workspace.tsx` to detect `thumbnailKey`, generate the public URL, and display the cover image. Adjust book card aspect ratios to typical book dimensions (e.g., `aspect-[3/4]` or `aspect-[2/3]`) for EPUB, PDF, and manga instead of `aspect-video`.
+    *   **TXT & General ZIP Previews**:
+        *   For `.txt` and `.md` files, either display a stylized CSS-based card cover with the document title and a paper texture, or render a mini-preview snippet of the first few lines of the text.
+        *   For general ZIP files (those that do not contain manga images), display a standard archive icon but list the top few files inside it or fall back cleanly.
+*   **Verification**: Upload sample manga ZIP/CBZ, EPUB, PDF, TXT, and general ZIP files. Verify that covers are extracted client-side, uploaded, and rendered on the cards with correct aspect ratios without full-file server downloads.
+
