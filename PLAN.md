@@ -492,7 +492,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 *   **Verification**: Upload sample manga ZIP/CBZ, EPUB, PDF, TXT, and general ZIP files. Verify that covers are extracted client-side, uploaded, and rendered on the cards with correct aspect ratios without full-file server downloads.
 
 ### Milestone 63: Uniform File Card Layouts & Note Previews
-*   **Status**: Proposed.
+*   **Status**: Completed.
 *   **Goal**: Normalize grid layout heights in Files Mode (using standard frames and center-fitting mixed aspect ratio previews), render stylized note preview cards for Obsidian Notes, enforce Keep Note masonry constraints, and format Chat Channel attachments.
 *   **Tasks**:
     *   **Uniform Grid Frames**: Modify `FolderContentsView` in `app/vault/active-workspace.tsx` to set a standard card frame height. Use CSS `object-contain` on cover/image preview elements so that vertical book covers and horizontal image/video previews fit center-aligned without stretching card containers.
