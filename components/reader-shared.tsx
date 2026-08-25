@@ -101,7 +101,7 @@ export function ReaderHeader({
   return (
     <div
       className={cn(
-        "flex h-14 w-full items-center justify-between border-b border-slate-800/80 bg-[#111318]/95 px-4 backdrop-blur-md z-10 transition-opacity duration-300",
+        "flex h-14 w-full items-center justify-between border-b border-slate-800/80 bg-[#111318]/95 px-4 backdrop-blur-md z-30 transition-opacity duration-300",
         isVisible ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
         className
       )}
@@ -149,7 +149,7 @@ export function ReaderFooter({
   return (
     <div
       className={cn(
-        "flex h-12 w-full items-center justify-between border-t border-slate-800/80 bg-[#111318]/95 px-4 backdrop-blur-md z-10 transition-opacity duration-300",
+        "flex h-12 w-full items-center justify-between border-t border-slate-800/80 bg-[#111318]/95 px-4 backdrop-blur-md z-30 transition-opacity duration-300",
         isVisible ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
         className
       )}
