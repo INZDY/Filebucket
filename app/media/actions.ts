@@ -221,6 +221,7 @@ export async function createMediaAssetAction(data: {
   sizeBytes: number;
   r2Key: string;
   folderId: string | null;
+  thumbnailKey?: string | null;
   useAssetsFolder?: boolean;
 }) {
   const session = await requireSession();
@@ -275,6 +276,7 @@ export async function createMediaAssetAction(data: {
       contentType: data.contentType,
       sizeBytes: data.sizeBytes,
       r2Key: data.r2Key,
+      thumbnailKey: data.thumbnailKey ?? null,
       folderId: folder?.id ?? null,
     },
   });

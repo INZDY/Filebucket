@@ -62,10 +62,41 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
     updateUploadStatus(upload.id, { status: "uploading", progress: 0, error: "" });
 
     try {
-      // 1. Get presigned URL from server action
+      // 1. Extract cover thumbnail if supported
+      let thumbnailKey: string | null = null;
+      try {
+        const { extractCoverThumbnail } = await import("@/lib/thumbnails");
+        const thumbnailBlob = await extractCoverThumbnail(upload.file);
+        if (thumbnailBlob) {
+          const thumbnailFilename = `${upload.name}_thumbnail.png`;
+          const { uploadUrl: thumbUploadUrl, r2Key: thumbR2Key } = await getPresignedUploadUrlAction(
+            thumbnailFilename,
+            "image/png"
+          );
+
+          // Upload thumbnail blob directly to R2
+          const thumbRes = await fetch(thumbUploadUrl, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "image/png",
+            },
+            body: thumbnailBlob,
+          });
+
+          if (!thumbRes.ok) {
+            console.warn(`Thumbnail upload failed with status ${thumbRes.status}`);
+          } else {
+            thumbnailKey = thumbR2Key;
+          }
+        }
+      } catch (thumbErr) {
+        console.error("Failed to extract or upload cover thumbnail:", thumbErr);
+      }
+
+      // 2. Get presigned URL for the main file from server action
       const { uploadUrl, r2Key } = await getPresignedUploadUrlAction(upload.name, upload.file.type);
 
-      // 2. PUT file blob directly to Cloudflare R2
+      // 3. PUT main file blob directly to Cloudflare R2
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("PUT", uploadUrl);
@@ -93,12 +124,13 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
         xhr.send(upload.file);
       });
 
-      // 3. Create MediaAsset metadata in DB
+      // 4. Create MediaAsset metadata in DB (including thumbnailKey)
       const createdAsset = await createMediaAssetAction({
         filename: upload.name,
         contentType: upload.file.type,
         sizeBytes: upload.size,
         r2Key,
+        thumbnailKey,
         folderId: folderId ?? null,
       });
 

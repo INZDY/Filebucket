@@ -18,15 +18,24 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const mediaAsset = await prisma.mediaAsset.findUnique({
+    const mediaAsset = await prisma.mediaAsset.findFirst({
       where: {
-        r2Key: key,
         userId: session.user.id,
+        OR: [
+          { r2Key: key },
+          { thumbnailKey: key },
+        ],
       },
     });
 
     if (!mediaAsset) {
       return new Response("Not Found", { status: 404 });
+    }
+
+    // If the request is specifically for the thumbnail, serve it directly
+    if (mediaAsset.thumbnailKey === key) {
+      const presignedUrl = await storageEngine.presignDownloadUrl(mediaAsset.thumbnailKey);
+      return Response.redirect(presignedUrl, 307);
     }
 
     const filename = mediaAsset.filename || "";

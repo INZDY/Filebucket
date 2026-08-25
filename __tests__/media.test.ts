@@ -109,6 +109,7 @@ describe("Media Server Actions", () => {
           contentType: "image/png",
           sizeBytes: 1024,
           r2Key: "vaults/user-123/uuid-test.png",
+          thumbnailKey: null,
           folderId: null,
         },
       });

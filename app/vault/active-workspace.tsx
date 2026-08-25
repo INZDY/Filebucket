@@ -60,6 +60,7 @@ type MediaEntry = {
   contentType: string;
   sizeBytes: number;
   r2Key: string;
+  thumbnailKey?: string | null;
   folder?: {
     id: string;
     name: string;
@@ -88,6 +89,7 @@ interface ActiveWorkspaceProps {
     filename: string;
     contentType: string;
     r2Key: string;
+    thumbnailKey?: string | null;
     folderId: string | null;
   }[];
   allFolders?: FolderEntry[];
@@ -914,6 +916,16 @@ export function ActiveWorkspace({
                     const isAudio = previewKind === "audio";
                     const isVideo = previewKind === "video";
                     const isPdf = previewKind === "pdf";
+                    const isEpub = previewKind === "epub";
+                    const isManga = previewKind === "archive";
+                    const isText = previewKind === "text";
+
+                    const hasThumbnail = Boolean(media.thumbnailKey);
+                    const thumbnailUrl = hasThumbnail ? getMediaAssetUrl(media.thumbnailKey!) : null;
+
+                    // Book/manga format cards look best in 3:4 vertical aspect ratio, others look best in 16:9 aspect-video
+                    const isBookLayout = isEpub || isPdf || isManga;
+                    const aspectClass = isBookLayout ? "aspect-[3/4]" : "aspect-video";
 
                     const Icon = isImg
                       ? ImagePlus
@@ -922,6 +934,12 @@ export function ActiveWorkspace({
                       : isVideo
                       ? Video
                       : isPdf
+                      ? FileText
+                      : isEpub
+                      ? BookOpen
+                      : isManga
+                      ? BookOpen
+                      : isText
                       ? FileText
                       : FileQuestion;
 
@@ -933,6 +951,10 @@ export function ActiveWorkspace({
                       ? "bg-orange-500/10 text-orange-400 border-orange-500/20 group-hover:bg-orange-500/20"
                       : isPdf
                       ? "bg-red-500/10 text-red-400 border-red-500/20 group-hover:bg-red-500/20"
+                      : isEpub || isManga
+                      ? "bg-purple-500/10 text-purple-400 border-purple-500/20 group-hover:bg-purple-500/20"
+                      : isText
+                      ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 group-hover:bg-cyan-500/20"
                       : "bg-slate-500/10 text-slate-400 border-slate-500/20 group-hover:bg-slate-500/20";
 
                     const borderHoverClass = isImg
@@ -943,6 +965,10 @@ export function ActiveWorkspace({
                       ? "hover:border-orange-500/40 hover:shadow-[0_0_15px_rgba(249,115,22,0.05)]"
                       : isPdf
                       ? "hover:border-red-500/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.05)]"
+                      : isEpub || isManga
+                      ? "hover:border-purple-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.05)]"
+                      : isText
+                      ? "hover:border-cyan-500/40 hover:shadow-[0_0_15px_rgba(6,182,212,0.05)]"
                       : "hover:border-slate-500/40";
 
                     const mediaUrl = getMediaAssetUrl(media.r2Key);
@@ -971,8 +997,14 @@ export function ActiveWorkspace({
                           className="block w-full transition-all active:scale-95 duration-200"
                         >
                           {/* Thumbnail / Media Frame */}
-                          <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-[#0d0f14] border border-slate-800/60 mb-2 flex items-center justify-center">
-                            {isImg && mediaUrl ? (
+                          <div className={cn("relative w-full rounded-lg overflow-hidden bg-[#0d0f14] border border-slate-800/60 mb-2 flex items-center justify-center", aspectClass)}>
+                            {thumbnailUrl ? (
+                              <img
+                                src={thumbnailUrl}
+                                alt={media.filename}
+                                className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105 duration-300"
+                              />
+                            ) : isImg && mediaUrl ? (
                               <img
                                 src={mediaUrl}
                                 alt={media.filename}
@@ -984,6 +1016,19 @@ export function ActiveWorkspace({
                                 preload="metadata"
                                 className="w-full h-full object-cover rounded-lg"
                               />
+                            ) : isText ? (
+                              <div className="w-full h-full flex flex-col justify-between p-3 bg-[#171a22] rounded-lg border border-slate-800/80 shadow-inner select-none">
+                                <div className="space-y-1.5 opacity-40">
+                                  <div className="h-1 bg-slate-500 rounded w-5/6"></div>
+                                  <div className="h-1 bg-slate-500 rounded w-full"></div>
+                                  <div className="h-1 bg-slate-500 rounded w-3/4"></div>
+                                  <div className="h-1 bg-slate-500 rounded w-4/5"></div>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-cyan-400/70">
+                                  <FileText className="h-3.5 w-3.5" />
+                                  <span className="text-[9px] font-mono uppercase tracking-wider font-semibold">TXT</span>
+                                </div>
+                              </div>
                             ) : (
                               <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-all duration-200", colorClass)}>
                                 <Icon className="h-5 w-5" />
@@ -996,7 +1041,7 @@ export function ActiveWorkspace({
                               {media.filename}
                             </p>
                             <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider font-medium">
-                              {isImg ? "Image" : isVideo ? "Video" : isAudio ? "Audio" : isPdf ? "PDF" : "File"}
+                              {isImg ? "Image" : isVideo ? "Video" : isAudio ? "Audio" : isPdf ? "PDF" : isEpub ? "EPUB" : isManga ? "Manga" : isText ? "Text" : "File"}
                             </p>
                           </div>
                         </Link>

@@ -133,6 +133,7 @@ model MediaAsset {
   noteId      String?
   folderId    String?
   r2Key       String    @unique
+  thumbnailKey String?
   filename    String
   contentType String
   sizeBytes   Int

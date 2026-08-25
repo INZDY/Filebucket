@@ -162,4 +162,77 @@ describe("Folder Contents View Thumbnails & Card File Operations (TDD)", () => {
     });
     document.body.removeChild(container);
   });
+
+  it("should render cover thumbnail with aspect-[3/4] for book/manga and custom TXT preview card styling", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    const sampleMedia = [
+      {
+        id: "epub_book_1",
+        filename: "test_book.epub",
+        contentType: "application/epub+zip",
+        sizeBytes: 204800,
+        r2Key: "media/test_book.epub",
+        thumbnailKey: "media/test_book.epub_thumbnail.png",
+        folderId: "f1",
+      },
+      {
+        id: "text_doc_1",
+        filename: "notes.txt",
+        contentType: "text/plain",
+        sizeBytes: 1024,
+        r2Key: "media/notes.txt",
+        folderId: "f1",
+      }
+    ];
+
+    const sampleFolder = {
+      id: "f1",
+      name: "Library",
+      parentId: null,
+    };
+
+    await act(async () => {
+      root.render(
+        <ActiveWorkspace
+          selectedNote={null}
+          selectedMedia={null}
+          selectedFolder={sampleFolder}
+          folderTrail={[sampleFolder]}
+          folderDestinations={[]}
+          imageMediaAssets={[]}
+          tags={[]}
+          textPreviewContent=""
+          hasVaultContent={true}
+          browserTitle="Library"
+          allMediaAssets={sampleMedia}
+          allFolders={[sampleFolder]}
+          allNotes={[]}
+        />
+      );
+    });
+
+    // 1. Verify EPUB cover thumbnail renders
+    const thumbImg = container.querySelector("img[src*='test_book.epub_thumbnail.png']");
+    expect(thumbImg).toBeDefined();
+    expect(thumbImg).not.toBeNull();
+
+    // 2. Verify book aspect ratio [3/4] container exists
+    const aspectContainer = container.querySelector(".aspect-\\[3\\/4\\]");
+    expect(aspectContainer).toBeDefined();
+    expect(aspectContainer).not.toBeNull();
+
+    // 3. Verify text card custom layout renders (with TXT tag)
+    const textLabel = container.textContent;
+    expect(textLabel).toContain("TXT");
+    expect(textLabel).toContain("notes.txt");
+
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
 });
+

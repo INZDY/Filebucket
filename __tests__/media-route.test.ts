@@ -12,6 +12,7 @@ vi.mock("@/auth", () => ({
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     mediaAsset: {
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
     },
   },
@@ -59,7 +60,7 @@ describe("Media API GET Route Handler", () => {
       user: { id: mockUserId },
       expires: "tomorrow",
     });
-    vi.mocked(prisma.mediaAsset.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.mediaAsset.findFirst).mockResolvedValue(null);
     const req = new NextRequest("http://localhost/api/media?key=nonexistent-key");
 
     const res = await GET(req);
@@ -72,7 +73,7 @@ describe("Media API GET Route Handler", () => {
       user: { id: mockUserId },
       expires: "tomorrow",
     });
-    vi.mocked(prisma.mediaAsset.findUnique).mockResolvedValue({
+    vi.mocked(prisma.mediaAsset.findFirst).mockResolvedValue({
       id: "media-123",
       r2Key: "vaults/user-123/pic.jpg",
       userId: mockUserId,
@@ -88,12 +89,34 @@ describe("Media API GET Route Handler", () => {
     expect(storageEngine.presignDownloadUrl).toHaveBeenCalledWith("vaults/user-123/pic.jpg");
   });
 
+  it("should return redirect to thumbnail URL when requesting thumbnailKey", async () => {
+    (vi.mocked(auth) as any).mockResolvedValue({
+      user: { id: mockUserId },
+      expires: "tomorrow",
+    });
+    vi.mocked(prisma.mediaAsset.findFirst).mockResolvedValue({
+      id: "media-123",
+      r2Key: "vaults/user-123/book.epub",
+      thumbnailKey: "vaults/user-123/book.epub_thumbnail.png",
+      userId: mockUserId,
+      contentType: "application/epub+zip",
+    } as any);
+    vi.mocked(storageEngine.presignDownloadUrl).mockResolvedValue("https://r2.cloudflarestorage.com/vaults/user-123/book.epub_thumbnail.png?token=thumb");
+
+    const req = new NextRequest("http://localhost/api/media?key=vaults%2Fuser-123%2Fbook.epub_thumbnail.png");
+    const res = await GET(req);
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get("Location")).toBe("https://r2.cloudflarestorage.com/vaults/user-123/book.epub_thumbnail.png?token=thumb");
+    expect(storageEngine.presignDownloadUrl).toHaveBeenCalledWith("vaults/user-123/book.epub_thumbnail.png");
+  });
+
   it("should return the file content as a direct stream if the file is an archive or book", async () => {
     (vi.mocked(auth) as any).mockResolvedValue({
       user: { id: mockUserId },
       expires: "tomorrow",
     });
-    vi.mocked(prisma.mediaAsset.findUnique).mockResolvedValue({
+    vi.mocked(prisma.mediaAsset.findFirst).mockResolvedValue({
       id: "media-123",
       r2Key: "vaults/user-123/book.epub",
       userId: mockUserId,

@@ -63,6 +63,7 @@ type MediaListEntry = {
   noteId: string | null;
   folderId: string | null;
   r2Key: string;
+  thumbnailKey?: string | null;
   filename: string;
   contentType: string;
   sizeBytes: number;
