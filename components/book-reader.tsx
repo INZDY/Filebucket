@@ -528,7 +528,53 @@ export function BookReader({
   const handleTocClick = useCallback(
     (href: string) => {
       if (rendition) {
-        rendition.display(href);
+        let displayTarget = href;
+
+        // Resolve TOC relative path to spine items to avoid "No Section Found" error
+        const book = rendition.book;
+        if (book && book.spine) {
+          // Direct check first
+          let section = book.spine.get(href);
+          if (!section) {
+            // Strip fragment if any
+            const [pathPart, fragment] = href.split("#");
+            section = book.spine.get(pathPart);
+
+            if (!section) {
+              // Try matching by checking suffix & ignoring extensions
+              const clean = (p: string) => {
+                const normalized = p.replace(/^\.\//, "");
+                const lastSlash = normalized.lastIndexOf("/");
+                const filename = lastSlash !== -1 ? normalized.substring(lastSlash + 1) : normalized;
+                const lastDot = filename.lastIndexOf(".");
+                const nameNoExt = lastDot !== -1 ? filename.substring(0, lastDot) : filename;
+                const dir = lastSlash !== -1 ? normalized.substring(0, lastSlash) : "";
+                return dir ? `${dir}/${nameNoExt}` : nameNoExt;
+              };
+
+              const targetClean = clean(pathPart);
+              const found = book.spine.spineItems?.find((item: any) => {
+                if (!item.href) return false;
+                const itemClean = clean(item.href);
+                return (
+                  itemClean === targetClean ||
+                  itemClean.endsWith("/" + targetClean) ||
+                  targetClean.endsWith("/" + itemClean)
+                );
+              });
+
+              if (found) {
+                section = found;
+              }
+            }
+
+            if (section && section.href) {
+              displayTarget = fragment ? `${section.href}#${fragment}` : section.href;
+            }
+          }
+        }
+
+        rendition.display(displayTarget);
         setIsTocOpen(false);
       }
     },

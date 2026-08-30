@@ -21,20 +21,46 @@ vi.mock("epubjs", () => {
   const mockBook = {
     renderTo: vi.fn(() => mockRendition),
     ready: Promise.resolve(),
+    opened: Promise.resolve(),
+    on: vi.fn(),
     locations: {
       generate: vi.fn().mockResolvedValue([]),
       percentageFromCfi: vi.fn().mockReturnValue(0.5),
+      locationFromCfi: vi.fn().mockReturnValue(0),
+      length: vi.fn().mockReturnValue(100),
     },
     navigation: {
       toc: [
         { label: "Chapter 1", href: "chap-1" },
-        { label: "Chapter 2", href: "chap-2" },
+        { label: "Chapter 2", href: "chap-2#section-2" },
       ],
     },
+    loaded: {
+      navigation: Promise.resolve({
+        toc: [
+          { label: "Chapter 1", href: "chap-1" },
+          { label: "Chapter 2", href: "chap-2#section-2" },
+        ]
+      })
+    },
+    spine: {
+      spineItems: [
+        { href: "OEBPS/chap-1.xhtml", index: 0 },
+        { href: "OEBPS/chap-2.xhtml", index: 1 },
+      ],
+      get: vi.fn((target) => {
+        if (target === "OEBPS/chap-1.xhtml") return { href: "OEBPS/chap-1.xhtml", index: 0 };
+        if (target === "OEBPS/chap-2.xhtml") return { href: "OEBPS/chap-2.xhtml", index: 1 };
+        return null;
+      }),
+    }
   };
+  (mockRendition as any).book = mockBook;
   const mockEpub = vi.fn(() => mockBook);
   return {
     default: mockEpub,
+    mockBook,
+    mockRendition,
   };
 });
 
@@ -156,6 +182,82 @@ describe("BookReader Component (TDD)", () => {
       });
       expect(onCloseSpy).toHaveBeenCalled();
     }
+
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
+
+  it("should resolve TOC path mismatch and preserve hash fragment on TOC item click", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <BookReader
+          isOpen={true}
+          onClose={vi.fn()}
+          title="Test Book.epub"
+          url="http://localhost/test.epub"
+          contentType="application/epub+zip"
+          mediaId="media-123"
+        />
+      );
+    });
+
+    // 1. Open the TOC drawer
+    const buttons = Array.from(document.body.querySelectorAll("button"));
+    const tocBtn = buttons.find((btn) => btn.textContent?.includes("TOC"));
+    expect(tocBtn).not.toBeNull();
+    if (tocBtn) {
+      await act(async () => {
+        tocBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    }
+
+    // 2. Find TOC buttons inside aside
+    const chapButtons = Array.from(document.body.querySelectorAll("aside button"));
+    const chap1Btn = chapButtons.find((btn) => btn.textContent?.includes("Chapter 1"));
+    expect(chap1Btn).not.toBeNull();
+
+    // 3. Click Chapter 1
+    if (chap1Btn) {
+      await act(async () => {
+        chap1Btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+    }
+
+    const { mockRendition } = await import("epubjs") as any;
+    expect(mockRendition.display).toHaveBeenCalledWith("OEBPS/chap-1.xhtml");
+
+    // 4. Click Chapter 2 (with hash fragment 'chap-2#section-2')
+    const chap2Btn = chapButtons.find((btn) => btn.textContent?.includes("Chapter 2"));
+    expect(chap2Btn).not.toBeNull();
+    if (chap2Btn) {
+      await act(async () => {
+        // Re-open TOC drawer if closed by handleTocClick
+        const buttonsAfterClick = Array.from(document.body.querySelectorAll("button"));
+        const tocBtn2 = buttonsAfterClick.find((btn) => btn.textContent?.includes("TOC"));
+        if (tocBtn2) {
+          tocBtn2.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        }
+      });
+
+      // Find chap2Btn again after re-rendering
+      const chapButtons2 = Array.from(document.body.querySelectorAll("aside button"));
+      const chap2BtnRef = chapButtons2.find((btn) => btn.textContent?.includes("Chapter 2"));
+      expect(chap2BtnRef).not.toBeNull();
+
+      if (chap2BtnRef) {
+        await act(async () => {
+          chap2BtnRef.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        });
+      }
+    }
+
+    expect(mockRendition.display).toHaveBeenCalledWith("OEBPS/chap-2.xhtml#section-2");
 
     await act(async () => {
       root.unmount();
