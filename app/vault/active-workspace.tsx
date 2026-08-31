@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 import {
@@ -14,11 +15,16 @@ import {
   BookOpen,
   Loader2,
   Folder,
+  Check,
+  Move,
+  Trash2,
+  Download,
 } from "lucide-react";
 import { NoteActionsMenu } from "@/app/notes/note-actions-menu";
 import { moveFolderAction } from "@/app/folders/actions";
 import { moveNoteAction } from "@/app/notes/actions";
 import { moveMediaAssetAction } from "@/app/media/actions";
+import { bulkMoveItemsAction, bulkTrashItemsAction } from "@/app/bulk/actions";
 import { NoteEditor } from "@/app/notes/note-editor";
 import { MediaActionsMenu } from "@/app/media/media-actions-menu";
 import { compareAlphanumeric } from "@/lib/sorting";
@@ -146,6 +152,7 @@ export function ActiveWorkspace({
 }: ActiveWorkspaceProps) {
 
   const { settings } = useSettings();
+  const router = useRouter();
   const fileCardAspect = settings.fileCardAspect || "VIDEO";
 
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -158,6 +165,20 @@ export function ActiveWorkspace({
   const [isArchiveLoading, setIsArchiveLoading] = useState(false);
   const [archiveError, setArchiveError] = useState("");
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
+
+  // Bulk Selection state (local to this workspace)
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [moveOpen, setMoveOpen] = useState(false);
+  const [bulkError, setBulkError] = useState("");
+
+  // Auto-exit selection mode when opening an item, switching modes, or navigating folders
+  useEffect(() => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+    setMoveOpen(false);
+    setBulkError("");
+  }, [selectedFolder?.id, selectedMedia?.id, selectedNote?.id]);
 
   const folderMap = new Map(allFolders.map((f) => [f.id, f]));
   function getItemMode(folderId: string | null): "FILES" | "NOTES" | "KEEP" | "CHAT" {
@@ -751,6 +772,95 @@ export function ActiveWorkspace({
     (m) => m.folderId === (selectedFolder?.id ?? null)
   ).sort((a, b) => compareAlphanumeric(a.filename, b.filename));
 
+  // Bulk Selection helpers (Files Mode: folders and media assets only)
+  const currentFolderMode = getItemMode(selectedFolder?.id ?? null);
+  const childItems: { type: "folder" | "media"; id: string }[] = [
+    ...childFolders.map((f) => ({ type: "folder" as const, id: f.id })),
+    ...childMedia.map((m) => ({ type: "media" as const, id: m.id })),
+  ];
+  const selectedItems = childItems.filter((item) => selectedIds.has(item.id));
+  const allChildIds = childItems.map((item) => item.id);
+  const allSelected = allChildIds.length > 0 && allChildIds.every((id) => selectedIds.has(id));
+
+  function toggleSelection(type: "folder" | "media", id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        allChildIds.forEach((id) => next.delete(id));
+      } else {
+        allChildIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  }
+
+  function clearSelection() {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+    setMoveOpen(false);
+    setBulkError("");
+  }
+
+  async function handleBulkMove(targetFolderId: string | null) {
+    if (selectedItems.length === 0) return;
+    const result = await bulkMoveItemsAction(
+      selectedItems.map(({ type, id }) => ({ type, id })),
+      targetFolderId
+    );
+    const failedIds = new Set(result.failures.map((f) => f.id));
+    for (const item of selectedItems) {
+      if (failedIds.has(item.id)) continue;
+      window.dispatchEvent(
+        new CustomEvent("vault-mutate", {
+          detail:
+            item.type === "folder"
+              ? { type: "move-folder", folderId: item.id, parentId: targetFolderId }
+              : { type: "move-media", mediaAssetId: item.id, parentId: targetFolderId },
+        })
+      );
+    }
+    if (result.failures.length > 0) {
+      setBulkError(result.failures.map((f) => `${f.name || "Item"}: ${f.reason}`).join(" | "));
+    } else {
+      clearSelection();
+    }
+    router.refresh();
+  }
+
+  async function handleBulkTrash() {
+    if (selectedItems.length === 0) return;
+    const result = await bulkTrashItemsAction(selectedItems.map(({ type, id }) => ({ type, id })));
+    const failedIds = new Set(result.failures.map((f) => f.id));
+    for (const item of selectedItems) {
+      if (failedIds.has(item.id)) continue;
+      window.dispatchEvent(
+        new CustomEvent("vault-mutate", {
+          detail:
+            item.type === "folder"
+              ? { type: "trash-folder", folderId: item.id }
+              : { type: "trash-media", mediaAssetId: item.id },
+        })
+      );
+    }
+    if (result.failures.length > 0) {
+      setBulkError(result.failures.map((f) => `${f.name || "Item"}: ${f.reason}`).join(" | "));
+    } else {
+      clearSelection();
+    }
+    router.refresh();
+  }
+
+  const bulkDownloadHref = `/api/export?ids=${encodeURIComponent(selectedItems.map((item) => `${item.type}:${item.id}`).join(","))}`;
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Folder Contents Header Breadcrumbs */}
@@ -802,6 +912,44 @@ export function ActiveWorkspace({
             </span>
           ))}
         </div>
+
+        {currentFolderMode === "FILES" && (
+          <div className="flex shrink-0 items-center gap-2">
+            {selectionMode ? (
+              <>
+                <Button
+                  className="h-8 gap-1.5 px-3 text-xs"
+                  onClick={toggleSelectAll}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  {allSelected ? "Deselect all" : "Select all"}
+                </Button>
+                <Button
+                  className="h-8 px-3 text-xs"
+                  onClick={clearSelection}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <Button
+                className="h-8 px-3 text-xs"
+                onClick={() => setSelectionMode(true)}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                Select
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Grid of Folder Contents */}
@@ -847,8 +995,16 @@ export function ActiveWorkspace({
                       <Link
                         key={folder.id}
                         href={`/?folder=${folder.id}`}
-                        draggable={true}
+                        draggable={!selectionMode}
+                        onClick={(e) => {
+                          if (selectionMode) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleSelection("folder", folder.id);
+                          }
+                        }}
                         onDragStart={(e) => {
+                          if (selectionMode) return;
                           e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "folder", id: folder.id }));
                           e.dataTransfer.effectAllowed = "move";
                         }}
@@ -864,11 +1020,27 @@ export function ActiveWorkspace({
                           e.stopPropagation();
                           handleDrop(folder.id, e);
                         }}
+                        data-selected={selectedIds.has(folder.id)}
                         className={cn(
-                          "group flex items-center justify-between h-14 px-4 rounded-xl border bg-[#14161d]/60 hover:bg-[#1a1d26] hover:border-amber-500/40 hover:shadow-[0_0_15px_rgba(245,158,11,0.05)] transition-all active:scale-95 duration-200",
-                          dragOverFolderId === folder.id ? "border-amber-500 scale-95" : "border-slate-800/80"
+                          "group relative flex items-center justify-between h-14 px-4 rounded-xl border bg-[#14161d]/60 hover:bg-[#1a1d26] hover:border-amber-500/40 hover:shadow-[0_0_15px_rgba(245,158,11,0.05)] transition-all active:scale-95 duration-200",
+                          dragOverFolderId === folder.id ? "border-amber-500 scale-95" : "border-slate-800/80",
+                          selectionMode && selectedIds.has(folder.id) && "border-blue-500/70 bg-blue-500/10"
                         )}
                       >
+                        {selectionMode && (
+                          <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-end rounded-xl p-2">
+                            <div
+                              className={cn(
+                                "flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors",
+                                selectedIds.has(folder.id)
+                                  ? "border-blue-300 bg-blue-600 text-white"
+                                  : "border-slate-300 bg-slate-900/70 text-transparent"
+                              )}
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                            </div>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 group-hover:bg-amber-500/20 transition-all duration-200">
                             <Folder className="h-4 w-4" />
@@ -1020,22 +1192,53 @@ export function ActiveWorkspace({
                         key={media.id}
                         className={cn(
                           "group relative flex flex-col justify-between p-2 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80",
-                          borderHoverClass
+                          borderHoverClass,
+                          selectionMode && selectedIds.has(media.id) && "border-blue-500/70 bg-blue-500/10"
                         )}
-                        draggable={true}
+                        draggable={!selectionMode}
+                        onClick={() => {
+                          if (selectionMode) toggleSelection("media", media.id);
+                        }}
                         onDragStart={(e) => {
+                          if (selectionMode) return;
                           e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "media", id: media.id }));
                           e.dataTransfer.effectAllowed = "move";
                         }}
+                        data-selected={selectedIds.has(media.id)}
                       >
+                        {/* Selection check indicator */}
+                        {selectionMode && (
+                          <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-end rounded-xl p-2">
+                            <div
+                              className={cn(
+                                "flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors",
+                                selectedIds.has(media.id)
+                                  ? "border-blue-300 bg-blue-600 text-white"
+                                  : "border-slate-300 bg-slate-900/70 text-transparent"
+                              )}
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                            </div>
+                          </div>
+                        )}
+
                         {/* Top-Right 3-dots actions menu for move/rename/delete without previewing */}
-                        <div className="absolute top-3 right-3 z-20 opacity-80 group-hover:opacity-100 transition-opacity">
-                          <MediaActionsMenu mediaAsset={media} destinations={folderDestinations} />
-                        </div>
+                        {!selectionMode && (
+                          <div className="absolute top-3 right-3 z-20 opacity-80 group-hover:opacity-100 transition-opacity">
+                            <MediaActionsMenu mediaAsset={media} destinations={folderDestinations} />
+                          </div>
+                        )}
 
                         <Link
                           href={media.folderId ? `/?folder=${media.folderId}&media=${media.id}` : `/?media=${media.id}`}
-                          draggable={true}
+                          draggable={!selectionMode}
+                          onClick={(e) => {
+                            if (selectionMode) {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggleSelection("media", media.id);
+                            }
+                          }}
                           className="block w-full transition-all active:scale-95 duration-200"
                         >
                           {/* Thumbnail / Media Frame */}
@@ -1113,6 +1316,97 @@ export function ActiveWorkspace({
           </div>
         )}
       </div>
+
+      {/* Docked Bulk Actions Bar */}
+      {selectionMode && selectedItems.length > 0 && (
+        <div className="shrink-0 border-t border-slate-800 bg-[#191c22] px-5 py-3">
+          {bulkError ? (
+            <div className="flex items-center justify-between gap-3">
+              <p className="min-w-0 flex-1 truncate text-xs text-rose-400">{bulkError}</p>
+              <Button
+                className="h-8 px-3 text-xs"
+                onClick={() => setBulkError("")}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                Dismiss
+              </Button>
+            </div>
+          ) : moveOpen ? (
+            <form
+              name="bulk-move"
+              className="flex items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const targetFolderId = String(formData.get("targetFolderId") ?? "").trim() || null;
+                handleBulkMove(targetFolderId);
+              }}
+            >
+              <select
+                autoFocus
+                className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                defaultValue=""
+                name="targetFolderId"
+              >
+                <option value="">Vault</option>
+                {folderDestinations.map((destination) => (
+                  <option key={destination.id} value={destination.id}>
+                    {destination.name}
+                  </option>
+                ))}
+              </select>
+              <Button className="h-8 px-3 text-xs" size="sm" type="submit">
+                Move
+              </Button>
+              <Button
+                className="h-8 px-3 text-xs"
+                onClick={() => setMoveOpen(false)}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                Cancel
+              </Button>
+            </form>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-slate-400">
+                <span className="font-semibold text-slate-100">{selectedItems.length}</span> selected
+              </p>
+              <div className="flex shrink-0 items-center gap-2">
+                <Button
+                  className="h-8 gap-1.5 px-3 text-xs"
+                  onClick={() => setMoveOpen(true)}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  <Move className="h-3.5 w-3.5" />
+                  Move
+                </Button>
+                <Button
+                  className="h-8 gap-1.5 px-3 text-xs"
+                  onClick={handleBulkTrash}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Move to Trash
+                </Button>
+                <Button asChild className="h-8 gap-1.5 px-3 text-xs" size="sm" variant="default">
+                  <a href={bulkDownloadHref}>
+                    <Download className="h-3.5 w-3.5" />
+                    Download ZIP
+                  </a>
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

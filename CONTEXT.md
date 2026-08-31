@@ -149,7 +149,7 @@ An automated or recurring preservation process for vault content. Backup is a la
 _Avoid_: Export, download, sync
 
 **Bulk Selection**:
-The capability to select multiple items (folders, notes, media assets) concurrently in the Folder Contents View.
+The capability to select multiple items concurrently in the Folder Contents View. In Files Mode this covers folders and media assets; note cards do not appear in the Files Mode grid, so notes are not bulk-selectable there. Bulk Selection is entered and exited via a selection-mode toggle in the Folder Contents View breadcrumb bar; while active, card click/tap toggles membership instead of navigating.
 _Avoid_: Multi-select, checkbox mode, mass select
 
 **Bulk Action**:
@@ -165,7 +165,7 @@ Editing behavior where note title, body, or card changes are saved automatically
 _Avoid_: Manual save, draft mode
 
 **Folder Contents View**:
-A workspace layout in the Main Content Pane, active in Files Mode when a folder (or the vault root) is selected without an active media asset preview. It organizes direct children into two distinct sections: a top section of compact, fixed-height subfolder pills (showing folder icon, name, item count, and overflow actions) to eliminate empty card space, and a bottom section of responsive uniform-height thumbnail cards for media assets and notes featuring center-fitted previews (such as book covers and video thumbnails fitted inside standard frames, whose aspect ratio is customizable via user settings) and metadata footers. Selecting a child folder navigates into it, selecting a media asset opens its preview, and selecting a note switches the mode to Obsidian Notes and opens the note. Each item card provides a top-right overflow menu, right-click context menu, and mobile long-press sheet to execute file operations (Move, Rename, Delete) directly without requiring the file to be loaded in preview first. It supports dragging items and dropping onto subfolder cards, location breadcrumbs, or the grid background.
+A workspace layout in the Main Content Pane, active in Files Mode when a folder (or the vault root) is selected without an active media asset preview. It organizes direct children into two distinct sections: a top section of compact, fixed-height subfolder pills (showing folder icon, name, item count, and overflow actions) to eliminate empty card space, and a bottom section of responsive uniform-height thumbnail cards for media assets and notes featuring center-fitted previews (such as book covers and video thumbnails fitted inside standard frames, whose aspect ratio is customizable via user settings) and metadata footers. Outside Bulk Selection, selecting a child folder navigates into it, selecting a media asset opens its preview, and selecting a note switches the mode to Obsidian Notes and opens the note. During Bulk Selection, card click/tap toggles membership instead, and card-level interactions (navigation, drag-and-drop, overflow menus, context menus, long-press sheets) are suppressed. Each item card provides a top-right overflow menu, right-click context menu, and mobile long-press sheet to execute file operations (Move, Rename, Delete) directly without requiring the file to be loaded in preview first. It supports dragging items and dropping onto subfolder cards, location breadcrumbs, or the grid background.
 _Avoid_: Folder grid, directory explorer, vault listing
 
 **Special Folders Toggle**:

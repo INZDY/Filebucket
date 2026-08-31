@@ -4,6 +4,27 @@ import { storageEngine } from "@/lib/storage";
 import JSZip from "jszip";
 import { namespaceManager } from "@/lib/namespace";
 
+type SelectionEntry = {
+  type: "folder" | "media";
+  id: string;
+};
+
+function parseSelectionIds(raw: string): SelectionEntry[] {
+  const entries: SelectionEntry[] = [];
+  for (const part of raw.split(",")) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    const separator = trimmed.indexOf(":");
+    if (separator <= 0) continue;
+    const type = trimmed.slice(0, separator);
+    const id = trimmed.slice(separator + 1);
+    if (!id) continue;
+    if (type === "folder") entries.push({ type: "folder", id });
+    else if (type === "media") entries.push({ type: "media", id });
+  }
+  return entries;
+}
+
 function getRelativePath(fromZipPath: string, toZipPath: string): string {
   const fromParts = fromZipPath.split("/");
   const toParts = toZipPath.split("/");
@@ -39,12 +60,14 @@ export async function GET(req: Request) {
     let noteId: string | null = null;
     let chatFolderId: string | null = null;
     let folderId: string | null = null;
+    let idsParam: string | null = null;
 
     if (req) {
       const { searchParams } = new URL(req.url);
       noteId = searchParams.get("noteId");
       chatFolderId = searchParams.get("chatFolderId");
       folderId = searchParams.get("folderId");
+      idsParam = searchParams.get("ids");
     }
 
     // 1. Contextual single note markdown export
@@ -187,7 +210,49 @@ export async function GET(req: Request) {
     let exportNotes = notes;
     let exportMediaAssets = mediaAssets;
 
-    if (folderId && targetFolder) {
+    if (idsParam) {
+      // Explicit selection set: union selected folder subtrees and selected media, deduping.
+      const selection = parseSelectionIds(idsParam);
+      const selectedFolderIds = new Set<string>();
+      const selectedMediaIds = new Set<string>();
+
+      for (const entry of selection) {
+        if (entry.type === "folder") {
+          if (!folders.some((folder) => folder.id === entry.id)) {
+            return new Response("Selection contains an item that was not found", { status: 404 });
+          }
+          selectedFolderIds.add(entry.id);
+        } else {
+          if (!mediaAssets.some((media) => media.id === entry.id)) {
+            return new Response("Selection contains an item that was not found", { status: 404 });
+          }
+          selectedMediaIds.add(entry.id);
+        }
+      }
+
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const folder of folders) {
+          if (folder.parentId && selectedFolderIds.has(folder.parentId) && !selectedFolderIds.has(folder.id)) {
+            selectedFolderIds.add(folder.id);
+            changed = true;
+          }
+        }
+      }
+
+      for (const media of mediaAssets) {
+        if (media.folderId && selectedFolderIds.has(media.folderId)) selectedMediaIds.add(media.id);
+      }
+      const selectedNoteIds = new Set<string>();
+      for (const note of notes) {
+        if (note.folderId && selectedFolderIds.has(note.folderId)) selectedNoteIds.add(note.id);
+      }
+
+      exportFolders = folders.filter((f) => selectedFolderIds.has(f.id));
+      exportNotes = notes.filter((n) => selectedNoteIds.has(n.id));
+      exportMediaAssets = mediaAssets.filter((m) => selectedMediaIds.has(m.id));
+    } else if (folderId && targetFolder) {
       const targetFolderZipPath = paths.folders.get(folderId);
       if (!targetFolderZipPath) {
         return new Response("Folder not found", { status: 404 });
@@ -286,7 +351,11 @@ export async function GET(req: Request) {
     // Generate ZIP file buffer
     const zipBlob = await zip.generateAsync({ type: "blob" });
 
-    const zipFilename = folderId && targetFolder ? `${targetFolder.name}.zip` : "filebucket-export.zip";
+    const zipFilename = idsParam
+      ? "filebucket-selection.zip"
+      : folderId && targetFolder
+        ? `${targetFolder.name}.zip`
+        : "filebucket-export.zip";
 
     return new Response(zipBlob, {
       status: 200,

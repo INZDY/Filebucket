@@ -256,4 +256,70 @@ describe("ZIP Export Route Handler", () => {
     const failedMedia = manifest.mediaAssets.find((m: any) => m.id === "mediafail");
     expect(failedMedia.downloadFailed).toBe(true);
   });
+
+  it("should export exactly the selected folder subtrees and media via the ids param, deduping", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: mockUserId },
+      expires: "tomorrow",
+    } as any);
+
+    const mockFolders = [
+      { id: "folderA", name: "Alpha", parentId: null },
+      { id: "folderB", name: "Beta", parentId: "folderA" },
+      { id: "folderC", name: "Gamma", parentId: null },
+    ];
+    const mockNotes = [
+      { id: "noteAB", title: "Deep", body: "inside", folderId: "folderB", tags: [] },
+      { id: "noteRoot", title: "RootNote", body: "root", folderId: null, tags: [] },
+    ];
+    const mockMediaAssets = [
+      { id: "mediaA", filename: "alpha.png", contentType: "image/png", sizeBytes: 1, r2Key: "k-a", folderId: "folderA" },
+      { id: "mediaRoot", filename: "root.bin", contentType: "application/octet-stream", sizeBytes: 1, r2Key: "k-r", folderId: null },
+      { id: "mediaC", filename: "gamma.bin", contentType: "application/octet-stream", sizeBytes: 1, r2Key: "k-c", folderId: "folderC" },
+    ];
+
+    vi.mocked(prisma.folder.findMany).mockResolvedValue(mockFolders as any);
+    vi.mocked(prisma.note.findMany).mockResolvedValue(mockNotes as any);
+    vi.mocked(prisma.mediaAsset.findMany).mockResolvedValue(mockMediaAssets as any);
+    vi.mocked(storageEngine.downloadFile).mockImplementation(async () => Buffer.from("x"));
+
+    // Select folderA (unioning its subtree incl. mediaA) plus mediaA again (dedupe) and mediaRoot
+    const response = await GET(
+      new Request("http://localhost/api/export?ids=folder:folderA,media:mediaA,media:mediaRoot")
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("application/zip");
+    expect(response.headers.get("Content-Disposition")).toBe('attachment; filename="filebucket-selection.zip"');
+
+    const arrayBuffer = await response.arrayBuffer();
+    const zip = await JSZip.loadAsync(arrayBuffer);
+
+    // folderA subtree included, folderC and root note excluded
+    expect(zip.file("Alpha/Beta/Deep.md")).not.toBeNull();
+    expect(zip.file("Alpha/alpha.png")).not.toBeNull();
+    expect(zip.file("root.bin")).not.toBeNull();
+    expect(zip.file("RootNote.md")).toBeNull();
+    expect(zip.file("Gamma/gamma.bin")).toBeNull();
+
+    const manifestFile = zip.file("manifest.json");
+    expect(manifestFile).not.toBeNull();
+    const manifest = JSON.parse(await manifestFile!.async("string"));
+    expect(manifest.folders.map((f: any) => f.id)).toEqual(["folderA", "folderB"]);
+    expect(manifest.notes.map((n: any) => n.id)).toEqual(["noteAB"]);
+    expect(manifest.mediaAssets.map((m: any) => m.id)).toEqual(["mediaA", "mediaRoot"]);
+  });
+
+  it("should return 404 when a selected id does not exist", async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: mockUserId },
+      expires: "tomorrow",
+    } as any);
+
+    vi.mocked(prisma.folder.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.note.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.mediaAsset.findMany).mockResolvedValue([] as any);
+
+    const response = await GET(new Request("http://localhost/api/export?ids=folder:missing,media:mediaRoot"));
+    expect(response.status).toBe(404);
+  });
 });

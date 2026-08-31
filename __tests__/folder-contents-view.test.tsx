@@ -53,6 +53,10 @@ vi.mock("@/app/media/actions", () => ({
   deleteMediaAssetAction: vi.fn(),
   moveMediaAssetAction: vi.fn(),
 }));
+vi.mock("@/app/bulk/actions", () => ({
+  bulkMoveItemsAction: vi.fn(),
+  bulkTrashItemsAction: vi.fn(),
+}));
 vi.mock("@/app/tags/actions", () => ({
   deleteTagAction: vi.fn(),
   renameTagAction: vi.fn(),

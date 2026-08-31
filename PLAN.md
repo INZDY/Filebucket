@@ -385,14 +385,18 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Integrate the player inside the media preview pane in `active-workspace.tsx` for video and audio content.
 *   **Verification**: Open video and audio assets in Files Mode; verify they load in a beautiful custom player instead of standard browser controls.
 
-### Milestone 54: Bulk Selection & Action / Card Menus Unification
-*   **Status**: On Hold (Reverted).
-*   **Goal**: Implement bulk selection checkboxes and actions toolbar inside the Folder Contents View grid, and unify card actions for folders and notes.
+### Milestone 54: Bulk Selection & Bulk Actions
+*   **Status**: Completed & Verified (August 2026).
+*   **Goal**: Implement a selection-mode toggle and bulk actions bar in the Folder Contents View (Files Mode), enabling multi-item Move, Move to Trash, and Download ZIP.
 *   **Tasks**:
-    *   Add multi-select checklist capabilities to `FolderContentsView` items (shift-click or checkbox overlays on hover/selection mode).
-    *   Introduce a floating/docked "Bulk Actions" bar at the bottom of the main content pane when items are selected, supporting Move, Move to Trash, and Download ZIP.
-    *   Implement action overflow menus for folder cards and note cards inside the grid view, sharing the same underlying move/trash/rename forms.
-*   **Verification**: Select multiple file/folder cards in Files Mode; verify the selection bar appears and can move/delete all selected items at once.
+    *   Add a "Select"/"Cancel" toggle button to the Folder Contents View breadcrumb bar, visible only in Files Mode.
+    *   In selection mode, suppress card navigation, drag-and-drop, card overflow menus, right-click context menus, and the mobile long-press sheet; click/tap toggles membership and overlays a dimmed check indicator (visual overlay only, no event-capturing layer).
+    *   Selection covers folders and media assets (notes never render in Files Mode); support "Select all" for the current folder; no shift-click range selection.
+    *   Keep selection state local to `ActiveWorkspace`; auto-exit selection mode on opening an item, switching mode, or navigating to another folder; clear after a bulk action runs; persist across sidebar use within the same folder.
+    *   Add array-accepting bulk server actions (`bulkMove`, `bulkTrash`) validating each item through the namespace manager (best-effort move with collision report), single `revalidatePath` plus optimistic `vault-mutate` update, no navigation.
+    *   Extend `/api/export` to accept an explicit selection id set for bulk ZIP download, unioning selected subtrees/files and deduping.
+    *   Add a docked Bulk Actions bar (Move, Move to Trash, Download ZIP) to the Folder Contents View when items are selected.
+*   **Verification**: Enter selection mode in Files Mode; select multiple folder/media cards and verify they show the check indicator and do not open. Verify Move applies one destination with collision reporting, Trash cascades correctly, and ZIP downloads exactly the selection. Verify the selection bar clears after actions and on navigation.
 
 ### Milestone 55: E-Book Reader Integration (EPUB & TXT)
 *   **Status**: Completed & Verified (August 2026).
@@ -517,6 +521,16 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Change the aspect ratio setting to Portrait in settings, save, and verify that all cards in Files Mode switch to vertical proportions with uniform heights and center-containment.
     *   Change the aspect ratio setting to Square, save, and verify cards update to uniform 1:1 boxes.
     *   Write vitest unit/integration tests covering database setting storage and dynamic workspace class rendering.
+
+
+### Milestone 65: Unified Card Action Menus (Follow-up to Bulk Selection)
+*   **Status**: Planned.
+*   **Goal**: Split out the remaining half of the original Milestone 54: unify action overflow menus across folder, note, and media grid cards so every card offers Move, Rename, and Move to Trash from the grid.
+*   **Tasks**:
+    *   Add a top-right overflow menu to folder grid cards (currently menu-less) mirroring `MediaActionsMenu`.
+    *   Add a top-right overflow menu to note grid cards in the Folder Contents View.
+    *   Share the same underlying move/trash/rename forms across all card menus.
+*   **Verification**: Right-click and overflow menus on folder and note grid cards offer Move, Rename, and Move to Trash with behavior consistent with media cards.
 
 
 
