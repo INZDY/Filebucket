@@ -991,42 +991,14 @@ export function ActiveWorkspace({
                     const folderChildMedia = allMediaAssets.filter((m) => m.folderId === folder.id).length;
                     const totalItems = folderChildFolders + folderChildNotes + folderChildMedia;
 
-                    return (
-                      <Link
-                        key={folder.id}
-                        href={`/?folder=${folder.id}`}
-                        draggable={!selectionMode}
-                        onClick={(e) => {
-                          if (selectionMode) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            toggleSelection("folder", folder.id);
-                          }
-                        }}
-                        onDragStart={(e) => {
-                          if (selectionMode) return;
-                          e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "folder", id: folder.id }));
-                          e.dataTransfer.effectAllowed = "move";
-                        }}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setDragOverFolderId(folder.id);
-                        }}
-                        onDragLeave={() => {
-                          setDragOverFolderId(null);
-                        }}
-                        onDrop={(e) => {
-                          e.stopPropagation();
-                          handleDrop(folder.id, e);
-                        }}
-                        data-selected={selectedIds.has(folder.id)}
-                        className={cn(
-                          "group relative flex items-center justify-between h-14 px-4 rounded-xl border bg-[#14161d]/60 hover:bg-[#1a1d26] hover:border-amber-500/40 hover:shadow-[0_0_15px_rgba(245,158,11,0.05)] transition-all active:scale-95 duration-200",
-                          dragOverFolderId === folder.id ? "border-amber-500 scale-95" : "border-slate-800/80",
-                          selectionMode && selectedIds.has(folder.id) && "border-blue-500/70 bg-blue-500/10"
-                        )}
-                      >
+                    const folderCardClassName = cn(
+                      "group relative flex items-center justify-between h-14 px-4 rounded-xl border bg-[#14161d]/60 hover:bg-[#1a1d26] hover:border-amber-500/40 hover:shadow-[0_0_15px_rgba(245,158,11,0.05)] transition-all active:scale-95 duration-200",
+                      dragOverFolderId === folder.id ? "border-amber-500 scale-95" : "border-slate-800/80",
+                      selectionMode && selectedIds.has(folder.id) && "border-blue-500/70 bg-blue-500/10"
+                    );
+
+                    const folderCardBody = (
+                      <>
                         {selectionMode && (
                           <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-end rounded-xl p-2">
                             <div
@@ -1052,6 +1024,58 @@ export function ActiveWorkspace({
                             <p className="text-[10px] text-slate-500 font-medium">({totalItems})</p>
                           </div>
                         </div>
+                      </>
+                    );
+
+                    if (selectionMode) {
+                      return (
+                        <div
+                          key={folder.id}
+                          role="button"
+                          tabIndex={0}
+                          aria-pressed={selectedIds.has(folder.id)}
+                          onClick={() => toggleSelection("folder", folder.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              toggleSelection("folder", folder.id);
+                            }
+                          }}
+                          data-bulk-item="folder"
+                          data-selected={selectedIds.has(folder.id)}
+                          className={folderCardClassName}
+                        >
+                          {folderCardBody}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <Link
+                        key={folder.id}
+                        href={`/?folder=${folder.id}`}
+                        draggable={true}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "folder", id: folder.id }));
+                          e.dataTransfer.effectAllowed = "move";
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDragOverFolderId(folder.id);
+                        }}
+                        onDragLeave={() => {
+                          setDragOverFolderId(null);
+                        }}
+                        onDrop={(e) => {
+                          e.stopPropagation();
+                          handleDrop(folder.id, e);
+                        }}
+                        data-bulk-item="folder"
+                        data-selected={selectedIds.has(folder.id)}
+                        className={folderCardClassName}
+                      >
+                        {folderCardBody}
                       </Link>
                     );
                   })}
@@ -1187,24 +1211,98 @@ export function ActiveWorkspace({
 
                     const mediaUrl = getMediaAssetUrl(media.r2Key);
 
+                    const mediaCardBody = (
+                      <>
+                        {/* Thumbnail / Media Frame */}
+                        <div className={cn("relative w-full rounded-lg overflow-hidden bg-[#0d0f14] border border-slate-800/60 mb-2 flex items-center justify-center", aspectClass)}>
+                          {thumbnailUrl ? (
+                            <img
+                              src={thumbnailUrl}
+                              alt={media.filename}
+                              className={cn(
+                                "w-full h-full rounded-lg transition-transform group-hover:scale-105 duration-300",
+                                isBookLayout ? "object-contain bg-[#060709]" : "object-cover"
+                              )}
+                            />
+                          ) : isImg && mediaUrl ? (
+                            <img
+                              src={mediaUrl}
+                              alt={media.filename}
+                              className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105 duration-300"
+                            />
+                          ) : isVideo && mediaUrl ? (
+                            <video
+                              src={mediaUrl}
+                              preload="metadata"
+                              className="w-full h-full object-cover rounded-lg"
+                            />
+                          ) : isText ? (
+                            <div className="w-full h-full flex flex-col justify-between p-3 bg-[#171a22] rounded-lg border border-slate-800/80 shadow-inner select-none">
+                              <div className="space-y-1.5 opacity-40">
+                                <div className="h-1 bg-slate-500 rounded w-5/6"></div>
+                                <div className="h-1 bg-slate-500 rounded w-full"></div>
+                                <div className="h-1 bg-slate-500 rounded w-3/4"></div>
+                                <div className="h-1 bg-slate-500 rounded w-4/5"></div>
+                                {(fileCardAspect === "PORTRAIT" || fileCardAspect === "SQUARE") && (
+                                  <>
+                                    <div className="h-1 bg-slate-500 rounded w-2/3"></div>
+                                    <div className="h-1 bg-slate-500 rounded w-5/6"></div>
+                                  </>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 text-cyan-400/70">
+                                <FileText className="h-3.5 w-3.5" />
+                                <span className="text-[9px] font-mono uppercase tracking-wider font-semibold">TXT</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-all duration-200", colorClass)}>
+                              <Icon className="h-5 w-5" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="min-w-0 px-1 pb-1">
+                          <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-slate-100 transition-colors" title={media.filename}>
+                            {media.filename}
+                          </p>
+                          <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider font-medium">
+                            {isImg ? "Image" : isVideo ? "Video" : isAudio ? "Audio" : isPdf ? "PDF" : isEpub ? "EPUB" : isManga ? "Manga" : isText ? "Text" : "File"}
+                          </p>
+                        </div>
+                      </>
+                    );
+
+                    const mediaCardClassName = cn(
+                      "group relative flex flex-col justify-between p-2 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80",
+                      borderHoverClass,
+                      selectionMode && selectedIds.has(media.id) && "border-blue-500/70 bg-blue-500/10"
+                    );
+
                     return (
                       <div
                         key={media.id}
-                        className={cn(
-                          "group relative flex flex-col justify-between p-2 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80",
-                          borderHoverClass,
-                          selectionMode && selectedIds.has(media.id) && "border-blue-500/70 bg-blue-500/10"
-                        )}
-                        draggable={!selectionMode}
+                        role={selectionMode ? "button" : undefined}
+                        tabIndex={selectionMode ? 0 : undefined}
+                        aria-pressed={selectionMode ? selectedIds.has(media.id) : undefined}
                         onClick={() => {
                           if (selectionMode) toggleSelection("media", media.id);
                         }}
+                        onKeyDown={(e) => {
+                          if (selectionMode && (e.key === "Enter" || e.key === " ")) {
+                            e.preventDefault();
+                            toggleSelection("media", media.id);
+                          }
+                        }}
+                        draggable={!selectionMode}
                         onDragStart={(e) => {
                           if (selectionMode) return;
                           e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "media", id: media.id }));
                           e.dataTransfer.effectAllowed = "move";
                         }}
+                        data-bulk-item="media"
                         data-selected={selectedIds.has(media.id)}
+                        className={mediaCardClassName}
                       >
                         {/* Selection check indicator */}
                         {selectionMode && (
@@ -1229,76 +1327,17 @@ export function ActiveWorkspace({
                           </div>
                         )}
 
-                        <Link
-                          href={media.folderId ? `/?folder=${media.folderId}&media=${media.id}` : `/?media=${media.id}`}
-                          draggable={!selectionMode}
-                          onClick={(e) => {
-                            if (selectionMode) {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              toggleSelection("media", media.id);
-                            }
-                          }}
-                          className="block w-full transition-all active:scale-95 duration-200"
-                        >
-                          {/* Thumbnail / Media Frame */}
-                          <div className={cn("relative w-full rounded-lg overflow-hidden bg-[#0d0f14] border border-slate-800/60 mb-2 flex items-center justify-center", aspectClass)}>
-                            {thumbnailUrl ? (
-                              <img
-                                src={thumbnailUrl}
-                                alt={media.filename}
-                                className={cn(
-                                  "w-full h-full rounded-lg transition-transform group-hover:scale-105 duration-300",
-                                  isBookLayout ? "object-contain bg-[#060709]" : "object-cover"
-                                )}
-                              />
-                            ) : isImg && mediaUrl ? (
-                              <img
-                                src={mediaUrl}
-                                alt={media.filename}
-                                className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105 duration-300"
-                              />
-                            ) : isVideo && mediaUrl ? (
-                              <video
-                                src={mediaUrl}
-                                preload="metadata"
-                                className="w-full h-full object-cover rounded-lg"
-                              />
-                            ) : isText ? (
-                              <div className="w-full h-full flex flex-col justify-between p-3 bg-[#171a22] rounded-lg border border-slate-800/80 shadow-inner select-none">
-                                <div className="space-y-1.5 opacity-40">
-                                  <div className="h-1 bg-slate-500 rounded w-5/6"></div>
-                                  <div className="h-1 bg-slate-500 rounded w-full"></div>
-                                  <div className="h-1 bg-slate-500 rounded w-3/4"></div>
-                                  <div className="h-1 bg-slate-500 rounded w-4/5"></div>
-                                  {(fileCardAspect === "PORTRAIT" || fileCardAspect === "SQUARE") && (
-                                    <>
-                                      <div className="h-1 bg-slate-500 rounded w-2/3"></div>
-                                      <div className="h-1 bg-slate-500 rounded w-5/6"></div>
-                                    </>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-1.5 text-cyan-400/70">
-                                  <FileText className="h-3.5 w-3.5" />
-                                  <span className="text-[9px] font-mono uppercase tracking-wider font-semibold">TXT</span>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-all duration-200", colorClass)}>
-                                <Icon className="h-5 w-5" />
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="min-w-0 px-1 pb-1">
-                            <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-slate-100 transition-colors" title={media.filename}>
-                              {media.filename}
-                            </p>
-                            <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider font-medium">
-                              {isImg ? "Image" : isVideo ? "Video" : isAudio ? "Audio" : isPdf ? "PDF" : isEpub ? "EPUB" : isManga ? "Manga" : isText ? "Text" : "File"}
-                            </p>
-                          </div>
-                        </Link>
+                        {selectionMode ? (
+                          <div className="block w-full">{mediaCardBody}</div>
+                        ) : (
+                          <Link
+                            href={media.folderId ? `/?folder=${media.folderId}&media=${media.id}` : `/?media=${media.id}`}
+                            draggable={true}
+                            className="block w-full transition-all active:scale-95 duration-200"
+                          >
+                            {mediaCardBody}
+                          </Link>
+                        )}
                       </div>
                     );
                   })}

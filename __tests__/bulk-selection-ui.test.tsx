@@ -177,10 +177,18 @@ describe("Bulk Selection UI in ActiveWorkspace", () => {
       selectButton.click();
     });
 
-    const subfolderLink = container.querySelector("a[href='/?folder=folder-b']") as HTMLElement;
-    expect(subfolderLink).not.toBeNull();
+    const subfolderCard = Array.from(container.querySelectorAll('[data-bulk-item="folder"]')).find(
+      (el) => el.textContent?.includes("Sub-project")
+    ) as HTMLElement;
+    expect(subfolderCard).not.toBeNull();
+
+    // Regression: in selection mode the card must NOT be a link, so the global
+    // shallow-routing click interceptor can never navigate on it.
+    expect(subfolderCard.tagName).toBe("DIV");
+    expect(subfolderCard.querySelector("a")).toBeNull();
+
     await act(async () => {
-      subfolderLink.click();
+      subfolderCard.click();
     });
 
     expect(mockPush).not.toHaveBeenCalledWith("/?folder=folder-b");
@@ -198,12 +206,15 @@ describe("Bulk Selection UI in ActiveWorkspace", () => {
       selectButton.click();
     });
 
-    const mediaLink = Array.from(container.querySelectorAll("a")).find(
+    const mediaCard = Array.from(container.querySelectorAll('[data-bulk-item="media"]')).find(
       (el) => el.textContent?.includes("audio.mp3")
     ) as HTMLElement;
-    expect(mediaLink).not.toBeNull();
+    expect(mediaCard).not.toBeNull();
+    expect(mediaCard.tagName).toBe("DIV");
+    expect(mediaCard.querySelector("a")).toBeNull();
+
     await act(async () => {
-      mediaLink.click();
+      mediaCard.click();
     });
 
     expect(container.textContent).toContain("1 selected");
@@ -245,9 +256,11 @@ describe("Bulk Selection UI in ActiveWorkspace", () => {
       selectButton.click();
     });
 
-    const subfolderLink = container.querySelector("a[href='/?folder=folder-b']") as HTMLElement;
+    const subfolderCard = Array.from(container.querySelectorAll('[data-bulk-item="folder"]')).find(
+      (el) => el.textContent?.includes("Sub-project")
+    ) as HTMLElement;
     await act(async () => {
-      subfolderLink.click();
+      subfolderCard.click();
     });
 
     const downloadAnchor = Array.from(container.querySelectorAll("a")).find(
@@ -270,9 +283,11 @@ describe("Bulk Selection UI in ActiveWorkspace", () => {
       selectButton.click();
     });
 
-    const subfolderLink = container.querySelector("a[href='/?folder=folder-b']") as HTMLElement;
+    const subfolderCard = Array.from(container.querySelectorAll('[data-bulk-item="folder"]')).find(
+      (el) => el.textContent?.includes("Sub-project")
+    ) as HTMLElement;
     await act(async () => {
-      subfolderLink.click();
+      subfolderCard.click();
     });
 
     const moveButton = Array.from(container.querySelectorAll("button")).find(
@@ -306,11 +321,11 @@ describe("Bulk Selection UI in ActiveWorkspace", () => {
       selectButton.click();
     });
 
-    const mediaLink = Array.from(container.querySelectorAll("a")).find(
+    const mediaCard = Array.from(container.querySelectorAll('[data-bulk-item="media"]')).find(
       (el) => el.textContent?.includes("audio.mp3")
     ) as HTMLElement;
     await act(async () => {
-      mediaLink.click();
+      mediaCard.click();
     });
 
     const trashButton = Array.from(container.querySelectorAll("button")).find(
