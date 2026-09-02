@@ -1064,31 +1064,32 @@ export function ActiveWorkspace({
                     }
 
                     return (
-                      <Link
-                        key={folder.id}
-                        href={`/?folder=${folder.id}`}
-                        draggable={true}
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "folder", id: folder.id }));
-                          e.dataTransfer.effectAllowed = "move";
-                        }}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setDragOverFolderId(folder.id);
-                        }}
-                        onDragLeave={() => {
-                          setDragOverFolderId(null);
-                        }}
-                        onDrop={(e) => {
-                          e.stopPropagation();
-                          handleDrop(folder.id, e);
-                        }}
-                        data-bulk-item="folder"
-                        data-selected={selectedIds.has(folder.id)}
-                        className={folderCardClassName}
-                      >
-                        {folderCardBody}
+                      <div key={folder.id} className="relative">
+                        <Link
+                          href={`/?folder=${folder.id}`}
+                          draggable={true}
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "folder", id: folder.id }));
+                            e.dataTransfer.effectAllowed = "move";
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDragOverFolderId(folder.id);
+                          }}
+                          onDragLeave={() => {
+                            setDragOverFolderId(null);
+                          }}
+                          onDrop={(e) => {
+                            e.stopPropagation();
+                            handleDrop(folder.id, e);
+                          }}
+                          data-bulk-item="folder"
+                          data-selected={selectedIds.has(folder.id)}
+                          className={folderCardClassName}
+                        >
+                          {folderCardBody}
+                        </Link>
                         <div className="absolute top-2 right-2 z-20">
                           <CardActionsMenu
                             currentFolderId={folder.parentId}
@@ -1125,7 +1126,7 @@ export function ActiveWorkspace({
                             }}
                           />
                         </div>
-                      </Link>
+                      </div>
                     );
                   })}
                 </div>
@@ -1156,16 +1157,38 @@ export function ActiveWorkspace({
                     const snippet = getNoteSnippet(note.body, snippetLimit);
                     
                     return (
-                      <Link
-                        key={note.id}
-                        href={note.folderId ? `/?folder=${note.folderId}&note=${note.id}` : `/?note=${note.id}`}
-                        draggable={true}
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "note", id: note.id }));
-                          e.dataTransfer.effectAllowed = "move";
-                        }}
-                        className="group relative flex flex-col justify-between p-3 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-purple-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.05)] transition-all active:scale-95 duration-200"
-                      >
+                      <div key={note.id} className="relative">
+                        <Link
+                          href={note.folderId ? `/?folder=${note.folderId}&note=${note.id}` : `/?note=${note.id}`}
+                          draggable={true}
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "note", id: note.id }));
+                            e.dataTransfer.effectAllowed = "move";
+                          }}
+                          className="group flex flex-col justify-between p-3 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-purple-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.05)] transition-all active:scale-95 duration-200"
+                        >
+                          {/* Note stylized preview thumbnail */}
+                          <div className={cn("relative w-full rounded-lg overflow-hidden border border-purple-500/10 mb-2 bg-[#131018] select-none text-left", aspectClass)}>
+                            <div className="w-full h-full flex flex-col p-3">
+                              <p className={cn("text-[10px] text-purple-300/80 leading-relaxed font-normal overflow-hidden break-words", lineClampClass)}>
+                                {snippet || "Empty note"}
+                              </p>
+                              <div className="flex items-center gap-1.5 text-purple-450/70 mt-auto pt-1 border-t border-purple-500/10">
+                                <FileText className="h-3.5 w-3.5 text-purple-400" />
+                                <span className="text-[9px] font-mono uppercase tracking-wider font-semibold">MD</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="min-w-0 px-1 pb-1">
+                            <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-slate-100 transition-colors" title={note.title}>
+                              {note.title}
+                            </p>
+                            <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider font-medium">
+                              Note
+                            </p>
+                          </div>
+                        </Link>
                         <div className="absolute top-2 right-2 z-20">
                           <CardActionsMenu
                             currentFolderId={note.folderId}
@@ -1202,28 +1225,7 @@ export function ActiveWorkspace({
                             }}
                           />
                         </div>
-                        {/* Note stylized preview thumbnail */}
-                        <div className={cn("relative w-full rounded-lg overflow-hidden border border-purple-500/10 mb-2 bg-[#131018] select-none text-left", aspectClass)}>
-                          <div className="w-full h-full flex flex-col p-3">
-                            <p className={cn("text-[10px] text-purple-300/80 leading-relaxed font-normal overflow-hidden break-words", lineClampClass)}>
-                              {snippet || "Empty note"}
-                            </p>
-                            <div className="flex items-center gap-1.5 text-purple-450/70 mt-auto pt-1 border-t border-purple-500/10">
-                              <FileText className="h-3.5 w-3.5 text-purple-400" />
-                              <span className="text-[9px] font-mono uppercase tracking-wider font-semibold">MD</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="min-w-0 px-1 pb-1">
-                          <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-slate-100 transition-colors" title={note.title}>
-                            {note.title}
-                          </p>
-                          <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider font-medium">
-                            Note
-                          </p>
-                        </div>
-                      </Link>
+                      </div>
                     );
                   })}
 

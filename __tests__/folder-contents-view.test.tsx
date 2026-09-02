@@ -472,8 +472,12 @@ describe("FolderContentsView in ActiveWorkspace", () => {
       (el) => el.textContent?.includes("Sub-project")
     ) as HTMLElement;
 
-    const menuButton = subfolderCard.querySelector("[aria-label*='Actions for Sub-project']") as HTMLElement;
+    const menuButton = container.querySelector("[aria-label*='Actions for Sub-project']") as HTMLElement;
     expect(menuButton).not.toBeNull();
+
+    // The menu must be a sibling of the card link (not nested inside it) so
+    // clicking it doesn't trigger navigation to the folder.
+    expect(subfolderCard.contains(menuButton)).toBe(false);
 
     await act(async () => {
       menuButton.click();
@@ -538,8 +542,12 @@ describe("FolderContentsView in ActiveWorkspace", () => {
       (el) => el.textContent?.includes("Project Spec")
     ) as HTMLElement;
 
-    const menuButton = noteCard.querySelector("[aria-label*='Actions for Project Spec']") as HTMLElement;
+    const menuButton = container.querySelector("[aria-label*='Actions for Project Spec']") as HTMLElement;
     expect(menuButton).not.toBeNull();
+
+    // The menu must be a sibling of the card link (not nested inside it) so
+    // clicking it doesn't trigger navigation to the note.
+    expect(noteCard.contains(menuButton)).toBe(false);
 
     await act(async () => {
       menuButton.click();

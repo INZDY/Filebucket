@@ -59,10 +59,12 @@ describe("CardActionsMenu", () => {
     return root;
   }
 
-  it("renders a 3-dot trigger button", () => {
+  it("renders a compact 3-dot trigger button", () => {
     render();
-    const trigger = container.querySelector("button[aria-label='Actions for Pic.png']");
+    const trigger = container.querySelector("button[aria-label='Actions for Pic.png']") as HTMLElement;
     expect(trigger).not.toBeNull();
+    expect(trigger.className).toContain("h-7");
+    expect(trigger.className).toContain("w-7");
   });
 
   it("opens the menu with Rename, Move, and Move to trash", () => {

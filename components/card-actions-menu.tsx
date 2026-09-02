@@ -94,7 +94,7 @@ export function CardActionsMenu({
     <div className="relative">
       <Button
         aria-label={`Actions for ${label}`}
-        className="h-9 w-9 border-slate-700 bg-[#1f242c] text-slate-300 hover:bg-slate-800 hover:text-slate-50"
+        className="h-7 w-7 border-slate-700 bg-[#1f242c] text-slate-300 hover:bg-slate-800 hover:text-slate-50"
         onClick={(event) => {
           event.stopPropagation();
           const rect = event.currentTarget.getBoundingClientRect();
@@ -104,7 +104,7 @@ export function CardActionsMenu({
         type="button"
         variant="outline"
       >
-        <MoreHorizontal className="h-4 w-4" />
+        <MoreHorizontal className="h-3.5 w-3.5" />
       </Button>
 
       {menu ? (
