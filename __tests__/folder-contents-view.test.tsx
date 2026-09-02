@@ -40,6 +40,8 @@ vi.mock("@/app/folders/actions", () => ({
   deleteFolderAction: vi.fn(),
   emptyTrashAction: vi.fn(),
   moveFolderAction: vi.fn(),
+  renameFolderAction: vi.fn(),
+  trashFolderAction: vi.fn(),
 }));
 vi.mock("@/app/notes/actions", () => ({
   createNoteAction: vi.fn(),
@@ -47,11 +49,15 @@ vi.mock("@/app/notes/actions", () => ({
   restoreNoteAction: vi.fn(),
   deleteNoteAction: vi.fn(),
   moveNoteAction: vi.fn(),
+  renameNoteAction: vi.fn(),
+  trashNoteAction: vi.fn(),
 }));
 vi.mock("@/app/media/actions", () => ({
   restoreMediaAssetAction: vi.fn(),
   deleteMediaAssetAction: vi.fn(),
   moveMediaAssetAction: vi.fn(),
+  renameMediaAssetAction: vi.fn(),
+  trashMediaAssetAction: vi.fn(),
 }));
 vi.mock("@/app/bulk/actions", () => ({
   bulkMoveItemsAction: vi.fn(),
@@ -432,6 +438,138 @@ describe("FolderContentsView in ActiveWorkspace", () => {
     const outerCard = innerLink?.parentElement;
     expect(outerCard).not.toBeNull();
     expect(outerCard?.className).not.toContain("active:scale-95");
+
+    root.unmount();
+  });
+
+  it("should offer Move, Rename, and Move to trash from the folder grid card overflow menu", async () => {
+    const { renameFolderAction } = await import("@/app/folders/actions");
+
+    const selectedFolder = allFolders.find(f => f.id === "user-folder-1") || null;
+
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <ActiveWorkspace
+          selectedNote={null}
+          selectedMedia={null}
+          selectedFolder={selectedFolder}
+          folderTrail={[selectedFolder!]}
+          folderDestinations={[]}
+          imageMediaAssets={[]}
+          tags={[]}
+          textPreviewContent=""
+          hasVaultContent={true}
+          browserTitle="Personal Work"
+          allMediaAssets={allMediaAssets}
+          allFolders={allFolders}
+          allNotes={allNotes as Parameters<typeof ActiveWorkspace>[0]["allNotes"]}
+        />
+      );
+    });
+
+    const subfolderCard = Array.from(container.querySelectorAll("a")).find(
+      (el) => el.textContent?.includes("Sub-project")
+    ) as HTMLElement;
+
+    const menuButton = subfolderCard.querySelector("[aria-label*='Actions for Sub-project']") as HTMLElement;
+    expect(menuButton).not.toBeNull();
+
+    await act(async () => {
+      menuButton.click();
+    });
+
+    const menuText = container.textContent || "";
+    expect(menuText).toContain("Rename");
+    expect(menuText).toContain("Move");
+    expect(menuText).toContain("Move to trash");
+
+    const renameButton = Array.from(container.querySelectorAll("button")).find(
+      (el) => el.textContent?.includes("Rename")
+    ) as HTMLElement;
+    await act(async () => {
+      renameButton.click();
+    });
+
+    const input = container.querySelector("input[name='name']") as HTMLInputElement;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+    setter?.call(input, "Renamed Sub-project");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+
+    const saveButton = Array.from(container.querySelectorAll("button")).find(
+      (el) => el.textContent?.trim() === "Save"
+    ) as HTMLElement;
+    await act(async () => {
+      saveButton.click();
+    });
+
+    expect(renameFolderAction).toHaveBeenCalled();
+
+    root.unmount();
+  });
+
+  it("should offer Move, Rename, and Move to trash from the note grid card overflow menu", async () => {
+    const { renameNoteAction } = await import("@/app/notes/actions");
+
+    const selectedFolder = allFolders.find(f => f.id === "user-folder-1") || null;
+
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <ActiveWorkspace
+          selectedNote={null}
+          selectedMedia={null}
+          selectedFolder={selectedFolder}
+          folderTrail={[selectedFolder!]}
+          folderDestinations={[]}
+          imageMediaAssets={[]}
+          tags={[]}
+          textPreviewContent=""
+          hasVaultContent={true}
+          browserTitle="Personal Work"
+          allMediaAssets={allMediaAssets}
+          allFolders={allFolders}
+          allNotes={allNotes as Parameters<typeof ActiveWorkspace>[0]["allNotes"]}
+        />
+      );
+    });
+
+    const noteCard = Array.from(container.querySelectorAll("a")).find(
+      (el) => el.textContent?.includes("Project Spec")
+    ) as HTMLElement;
+
+    const menuButton = noteCard.querySelector("[aria-label*='Actions for Project Spec']") as HTMLElement;
+    expect(menuButton).not.toBeNull();
+
+    await act(async () => {
+      menuButton.click();
+    });
+
+    const menuText = container.textContent || "";
+    expect(menuText).toContain("Rename");
+    expect(menuText).toContain("Move");
+    expect(menuText).toContain("Move to trash");
+
+    const renameButton = Array.from(container.querySelectorAll("button")).find(
+      (el) => el.textContent?.includes("Rename")
+    ) as HTMLElement;
+    await act(async () => {
+      renameButton.click();
+    });
+
+    const input = container.querySelector("input[name='name']") as HTMLInputElement;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+    setter?.call(input, "Renamed Project Spec");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+
+    const saveButton = Array.from(container.querySelectorAll("button")).find(
+      (el) => el.textContent?.trim() === "Save"
+    ) as HTMLElement;
+    await act(async () => {
+      saveButton.click();
+    });
+
+    expect(renameNoteAction).toHaveBeenCalled();
 
     root.unmount();
   });

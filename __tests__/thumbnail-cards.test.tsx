@@ -104,7 +104,7 @@ describe("Folder Contents View Thumbnails & Card File Operations (TDD)", () => {
     expect(img).not.toBeNull();
 
     // Verify 3-dots actions menu button exists on card
-    const actionsBtn = container.querySelector("[aria-label*='Media actions']");
+    const actionsBtn = container.querySelector("[aria-label*='Actions for']");
     expect(actionsBtn).toBeDefined();
     expect(actionsBtn).not.toBeNull();
 

@@ -21,12 +21,25 @@ import {
   Download,
 } from "lucide-react";
 import { NoteActionsMenu } from "@/app/notes/note-actions-menu";
-import { moveFolderAction } from "@/app/folders/actions";
-import { moveNoteAction } from "@/app/notes/actions";
-import { moveMediaAssetAction } from "@/app/media/actions";
+import {
+  moveFolderAction,
+  renameFolderAction,
+  trashFolderAction,
+} from "@/app/folders/actions";
+import {
+  moveNoteAction,
+  renameNoteAction,
+  trashNoteAction,
+} from "@/app/notes/actions";
+import {
+  moveMediaAssetAction,
+  renameMediaAssetAction,
+  trashMediaAssetAction,
+} from "@/app/media/actions";
 import { bulkMoveItemsAction, bulkTrashItemsAction } from "@/app/bulk/actions";
 import { NoteEditor } from "@/app/notes/note-editor";
 import { MediaActionsMenu } from "@/app/media/media-actions-menu";
+import { CardActionsMenu } from "@/components/card-actions-menu";
 import { compareAlphanumeric } from "@/lib/sorting";
 import { getMediaAssetUrl, cn, formatBytes } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -1076,6 +1089,42 @@ export function ActiveWorkspace({
                         className={folderCardClassName}
                       >
                         {folderCardBody}
+                        <div className="absolute top-2 right-2 z-20">
+                          <CardActionsMenu
+                            currentFolderId={folder.parentId}
+                            currentName={folder.name}
+                            destinations={folderDestinations}
+                            excludeIds={[folder.id]}
+                            id={folder.id}
+                            label={folder.name}
+                            onMove={async (parentId) => {
+                              const formData = new FormData();
+                              formData.append("folderId", folder.id);
+                              formData.append("parentId", parentId ?? "");
+                              window.dispatchEvent(new CustomEvent("vault-mutate", {
+                                detail: { type: "move-folder", folderId: folder.id, parentId }
+                              }));
+                              await moveFolderAction(formData);
+                            }}
+                            onRename={async (name) => {
+                              const formData = new FormData();
+                              formData.append("folderId", folder.id);
+                              formData.append("name", name);
+                              window.dispatchEvent(new CustomEvent("vault-mutate", {
+                                detail: { type: "rename-folder", folderId: folder.id, name }
+                              }));
+                              await renameFolderAction(formData);
+                            }}
+                            onTrash={async () => {
+                              const formData = new FormData();
+                              formData.append("folderId", folder.id);
+                              window.dispatchEvent(new CustomEvent("vault-mutate", {
+                                detail: { type: "trash-folder", folderId: folder.id }
+                              }));
+                              await trashFolderAction(formData);
+                            }}
+                          />
+                        </div>
                       </Link>
                     );
                   })}
@@ -1115,8 +1164,44 @@ export function ActiveWorkspace({
                           e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "note", id: note.id }));
                           e.dataTransfer.effectAllowed = "move";
                         }}
-                        className="group flex flex-col justify-between p-3 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-purple-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.05)] transition-all active:scale-95 duration-200"
+                        className="group relative flex flex-col justify-between p-3 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-purple-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.05)] transition-all active:scale-95 duration-200"
                       >
+                        <div className="absolute top-2 right-2 z-20">
+                          <CardActionsMenu
+                            currentFolderId={note.folderId}
+                            currentName={note.title}
+                            destinations={folderDestinations}
+                            id={note.id}
+                            label={note.title}
+                            onMove={async (folderId) => {
+                              const formData = new FormData();
+                              formData.append("noteId", note.id);
+                              formData.append("folderId", folderId ?? "");
+                              window.dispatchEvent(new CustomEvent("vault-mutate", {
+                                detail: { type: "move-note", noteId: note.id, parentId: folderId }
+                              }));
+                              await moveNoteAction(formData);
+                            }}
+                            onRename={async (name) => {
+                              const formData = new FormData();
+                              formData.append("noteId", note.id);
+                              formData.append("name", name);
+                              window.dispatchEvent(new CustomEvent("vault-mutate", {
+                                detail: { type: "rename-note", noteId: note.id, name }
+                              }));
+                              await renameNoteAction(formData);
+                            }}
+                            onTrash={async () => {
+                              const formData = new FormData();
+                              formData.append("noteId", note.id);
+                              formData.append("folderId", note.folderId ?? "");
+                              window.dispatchEvent(new CustomEvent("vault-mutate", {
+                                detail: { type: "trash-note", noteId: note.id }
+                              }));
+                              await trashNoteAction(formData);
+                            }}
+                          />
+                        </div>
                         {/* Note stylized preview thumbnail */}
                         <div className={cn("relative w-full rounded-lg overflow-hidden border border-purple-500/10 mb-2 bg-[#131018] select-none text-left", aspectClass)}>
                           <div className="w-full h-full flex flex-col p-3">
@@ -1323,7 +1408,40 @@ export function ActiveWorkspace({
                         {/* Top-Right 3-dots actions menu for move/rename/delete without previewing */}
                         {!selectionMode && (
                           <div className="absolute top-3 right-3 z-20 opacity-80 group-hover:opacity-100 transition-opacity">
-                            <MediaActionsMenu mediaAsset={media} destinations={folderDestinations} />
+                            <CardActionsMenu
+                              currentFolderId={media.folderId}
+                              currentName={media.filename}
+                              destinations={folderDestinations}
+                              id={media.id}
+                              label={media.filename}
+                              onMove={async (folderId) => {
+                                const formData = new FormData();
+                                formData.append("mediaAssetId", media.id);
+                                formData.append("folderId", folderId ?? "");
+                                window.dispatchEvent(new CustomEvent("vault-mutate", {
+                                  detail: { type: "move-media", mediaAssetId: media.id, parentId: folderId }
+                                }));
+                                await moveMediaAssetAction(formData);
+                              }}
+                              onRename={async (name) => {
+                                const formData = new FormData();
+                                formData.append("mediaAssetId", media.id);
+                                formData.append("name", name);
+                                window.dispatchEvent(new CustomEvent("vault-mutate", {
+                                  detail: { type: "rename-media", mediaAssetId: media.id, name }
+                                }));
+                                await renameMediaAssetAction(formData);
+                              }}
+                              onTrash={async () => {
+                                const formData = new FormData();
+                                formData.append("mediaAssetId", media.id);
+                                formData.append("folderId", media.folderId ?? "");
+                                window.dispatchEvent(new CustomEvent("vault-mutate", {
+                                  detail: { type: "trash-media", mediaAssetId: media.id }
+                                }));
+                                await trashMediaAssetAction(formData);
+                              }}
+                            />
                           </div>
                         )}
 
