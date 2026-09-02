@@ -524,7 +524,7 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
 
 
 ### Milestone 65: Unified Card Action Menus (Follow-up to Bulk Selection)
-*   **Status**: Planned.
+*   **Status**: Completed.
 *   **Goal**: Split out the remaining half of the original Milestone 54: unify action overflow menus across folder, note, and media grid cards so every card offers Move, Rename, and Move to Trash from the grid.
 *   **Tasks**:
     *   Add a top-right overflow menu to folder grid cards (currently menu-less) mirroring `MediaActionsMenu`.
