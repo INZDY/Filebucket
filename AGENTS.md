@@ -96,7 +96,7 @@ Single-context: `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs/agents
 
 - Read `CONTEXT.md` before naming things. Use its glossary vocabulary and avoid the synonyms it lists.
 - Check `docs/adr/` for decisions touching your area before changing it.
-- The Markdown editor is **Tiptap** (`components/filebucket-editor.tsx`). The README still says Milkdown/Crepe; that is stale.
+- The Markdown editor is **Tiptap** (`components/filebucket-editor.tsx`).
 - Reserved system folders are `Notes/`, `Quick Notes/`, and `Chat Channels/`. They cannot be renamed, moved, or deleted, and move operations enforce mode boundaries.
 
 ### Conventions

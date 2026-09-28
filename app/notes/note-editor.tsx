@@ -58,7 +58,7 @@ function formatDate(value: Date | string | number | undefined | null) {
 
 export function NoteEditor({ imageMediaAssets, note, updatedAt, allTags, assignedTags }: NoteEditorProps) {
   return (
-    <MilkdownNoteEditor
+    <NoteEditorSurface
       imageMediaAssets={imageMediaAssets}
       note={note}
       updatedAt={updatedAt}
@@ -68,7 +68,7 @@ export function NoteEditor({ imageMediaAssets, note, updatedAt, allTags, assigne
   );
 }
 
-function MilkdownNoteEditor({ imageMediaAssets, note, updatedAt, allTags, assignedTags }: NoteEditorProps) {
+function NoteEditorSurface({ imageMediaAssets, note, updatedAt, allTags, assignedTags }: NoteEditorProps) {
   const { settings } = useSettings();
   const handleLinkClick = useCallback((href: string, event: React.MouseEvent) => {
     const matchingAsset = imageMediaAssets.find(
