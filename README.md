@@ -1,6 +1,6 @@
 # Filebucket
 
-A self-hosted private file vault with three note-taking modes. Metadata lives in PostgreSQL; blobs live in your own S3-compatible bucket (Cloudflare R2 or AWS S3). Buckets stay private — media is served through session-authorized, short-lived presigned URLs.
+A self-hosted private file vault with three note-taking modes. Metadata lives in PostgreSQL; blobs live in your own Cloudflare R2 bucket. Buckets stay private — media is served through session-authorized, short-lived presigned URLs.
 
 The vault reserves three system folders, one per note mode:
 
@@ -56,7 +56,7 @@ Everything outside them is general file storage.
 
 - **Framework**: Next.js 15 (App Router, Server Actions), React 19
 - **Database**: PostgreSQL via Prisma 7
-- **Storage**: Cloudflare R2 / AWS S3 with presigned URLs
+- **Storage**: Cloudflare R2 with presigned URLs (other S3 providers are not supported yet)
 - **Auth**: Auth.js (credentials plus optional Google and GitHub OAuth)
 - **Editor**: Tiptap
 - **Media**: Video.js, epub.js, pdf.js, JSZip
@@ -78,7 +78,7 @@ Required:
 | `AUTH_URL` | Public URL of the app, e.g. `http://localhost:3000` |
 | `FILEBUCKET_ADMIN_EMAIL` | Email for the seeded admin account |
 | `FILEBUCKET_ADMIN_PASSWORD` | Password for the seeded admin account |
-| `R2_ACCOUNT_ID` | Cloudflare account ID (or S3 endpoint details) |
+| `R2_ACCOUNT_ID` | Cloudflare account ID |
 | `R2_ACCESS_KEY_ID` | Bucket access key |
 | `R2_SECRET_ACCESS_KEY` | Bucket secret key |
 | `R2_BUCKET_NAME` | Bucket name for vault blobs |
