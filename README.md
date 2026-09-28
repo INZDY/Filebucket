@@ -1,98 +1,91 @@
-# 🗃️ Filebucket
+# Filebucket
 
-<p align="center">
-  <strong>A private, self-hosted note and file vault designed for a quiet, distraction-free markdown experience.</strong>
-</p>
+A self-hosted private file vault with three note-taking modes. Metadata lives in PostgreSQL; blobs live in your own S3-compatible bucket (Cloudflare R2 or AWS S3). Buckets stay private — media is served through session-authorized, short-lived presigned URLs.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Next.js-15.5-black?style=flat-square&logo=next.js" alt="Next.js">
-  <img src="https://img.shields.io/badge/Prisma-7.8-indigo?style=flat-square&logo=prisma" alt="Prisma">
-  <img src="https://img.shields.io/badge/Tailwind_CSS-3.4-38bdf8?style=flat-square&logo=tailwind-css" alt="Tailwind">
-  <img src="https://img.shields.io/badge/Vitest-4.1-green?style=flat-square&logo=vitest" alt="Vitest">
-</p>
+The vault reserves three system folders, one per note mode:
 
-Filebucket is an Obsidian-inspired personal web vault combining markdown editing, folder structures, and direct media integration in one secure interface. It features a polished glassmorphism UI, tactile micro-animations, and client-side archive reader utilities.
+- `Notes/` — long-form Markdown notes (Obsidian mode)
+- `Quick Notes/` — quick note cards and checklists (Google Keep mode)
+- `Chat Channels/` — chronological message streams (Discord mode)
 
----
+Everything outside them is general file storage.
 
-## 🌟 Core Philosophy
+## Features
 
-1. **Self-Hosted Privacy**: All vault files stay private on your database and S3/R2 storage with zero public read access.
-2. **Quiet & Clean**: Translucent glassmorphism, clean typography (Outfit & Inter), and interactive click scaling keep visual noise to a minimum.
-3. **Browser-Heavy Processing**: Heavy operations like markdown parsing and ZIP archive decompression are handled client-side to keep server resource usage minimal.
+### Files
 
----
+- Unified vault browser with nested folders, natural alphanumeric sorting, and drag-and-drop moves
+- Folder contents view with live image and video thumbnails
+- Cover extraction at upload time for manga (ZIP/CBZ), EPUB, and PDF files
+- Configurable card aspect ratio: landscape, portrait, or square
+- Bulk selection with bulk move, move to trash, and ZIP download
+- Soft-delete trash with restore and cascading permanent delete
 
-## 🛠️ Feature Walkthrough
+### Obsidian Notes
 
-### 📁 Unified Vault Browser
-*   **Mixed Tree Explorer**: View folders, notes, and media in a unified sidebar tree with resizable desktop panels and sliding mobile drawers.
-*   **Natural Sorting**: Natural alphanumeric sorting (`page_2.png` before `page_10.png`) case-insensitively.
-*   **Drag-and-Drop Move**: Move folders, notes, and attachments dynamically with drop highlights.
+- Rendered Markdown editing surface (Tiptap) with headings, lists, interactive task checkboxes, tables, and code blocks
+- Tags, global search, and a heading-based note outline
+- Note export as `.md` and export of whole folders or chat channels
+- Autosave with a configurable delay
 
-### ✍️ WYSIWYG Markdown Editor
-*   **Milkdown/Crepe Editor**: Single-rendered editing surface supporting headings, task checklists, tables, blockquotes, and code blocks.
-*   **Metadata Tag Selector**: Assign notes tags with inline autocomplete.
-*   **Idle Autosave**: Automatically saves note revisions 1.5 seconds after editing pauses.
+### Quick Notes
 
-### 📖 PWA Standalone Mode & Tachiyomi-style Reader
-*   **Installable PWA**: Responsive hydration registering a custom service worker (`sw.js`) with static asset caching and network-first API fallbacks.
-*   **Manga Reader Overlay**: Fullscreen reader supporting LTR/RTL horizontal paging and continuous vertical Webtoon layouts.
-*   **Client-Side Archive Extraction**: Browser-local ZIP/CBZ extraction, natural alphanumeric page sorting, and system metadata filtering.
+- Keep-style card grid with pinning and card colors
+- Mixed text and checklist editing, with checklist items keeping their original order
+- Markdown rendering inside cards, height-clamped with a bottom fade
 
-### 🔒 Hardened Media Security & Delivery
-*   **Private Bucket Protocol**: R2/S3 public access remains disabled.
-*   **Presigned Redirects**: Frontend requests route via `/api/media?key=...`, authorizing sessions before redirecting to short-lived presigned URLs.
-*   **Range Request Support**: Natively supports video and audio seeking over signed links.
+### Chat Channels
 
-### ♻️ Soft Trash Cascade & Permanent Delete
-*   **Trash Unification**: Soft-deleted items gather in a Trash explorer for read-only preview and folder-restore cascades.
-*   **Permanent Purging**: Irreversibly deletes database records and file storage blobs.
+- Chronological streams with timestamps and sender headers
+- Inline image attachments and single-row file attachment cards
+- Message deletion and per-channel export to a Markdown transcript
 
-### 📦 Portable ZIP Export
-*   **Metadata Manifest**: Exports active folders/notes with a `manifest.json` catalog.
-*   **Path Rewriting**: Automatically rewrites media embeds to relative relative paths for offline markdown client compatibility.
+### Readers
 
----
+- Manga Reader: paged LTR/RTL layouts, continuous webtoon scrolling, and in-browser ZIP/CBZ decompression
+- Book Reader: EPUB and plain-text files with reading themes, typography settings, and a table of contents
+- Reading progress and reader settings sync across devices via the database
 
-## 💻 Tech Stack
+### Platform
 
-*   **Framework**: Next.js 15 (App Router, Server Actions)
-*   **Database**: PostgreSQL via Prisma ORM
-*   **Object Store**: Cloudflare R2 / AWS S3 client
-*   **Authentication**: Auth.js / NextAuth (Credentials & OAuth Providers)
-*   **Styling**: Tailwind CSS & lucide-react
-*   **Testing**: Vitest & JSDOM
+- Installable PWA with standalone mode and offline caching
+- Storage quota display against a configurable limit
+- Media range requests, so video and audio seeking works over signed links
 
----
+## Tech Stack
 
-## 🚀 Quick Start Guide
+- **Framework**: Next.js 15 (App Router, Server Actions), React 19
+- **Database**: PostgreSQL via Prisma 7
+- **Storage**: Cloudflare R2 / AWS S3 with presigned URLs
+- **Auth**: Auth.js (credentials plus optional Google and GitHub OAuth)
+- **Editor**: Tiptap
+- **Media**: Video.js, epub.js, pdf.js, JSZip
+- **Styling**: Tailwind CSS 3
+- **Testing**: Vitest and JSDOM
 
-### 1. Configure Environment
-Create a `.env` file in the project root:
+## Quick Start
 
-```bash
-DATABASE_URL="postgresql://..."
+### 1. Configure environment
 
-AUTH_SECRET="your-32-char-random-secret"
-AUTH_URL="http://localhost:3000"
+Copy `.env.example` to `.env` and fill in the values.
 
-FILEBUCKET_ADMIN_EMAIL="admin@filebucket.local"
-FILEBUCKET_ADMIN_PASSWORD="secure-password"
+Required:
 
-# Optional OAuth Configuration
-AUTH_GOOGLE_ID="google-client-id"
-AUTH_GOOGLE_SECRET="google-client-secret"
+| Variable | Description |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `AUTH_SECRET` | Long random string used by Auth.js |
+| `AUTH_URL` | Public URL of the app, e.g. `http://localhost:3000` |
+| `FILEBUCKET_ADMIN_EMAIL` | Email for the seeded admin account |
+| `FILEBUCKET_ADMIN_PASSWORD` | Password for the seeded admin account |
+| `R2_ACCOUNT_ID` | Cloudflare account ID (or S3 endpoint details) |
+| `R2_ACCESS_KEY_ID` | Bucket access key |
+| `R2_SECRET_ACCESS_KEY` | Bucket secret key |
+| `R2_BUCKET_NAME` | Bucket name for vault blobs |
 
-# Cloudflare R2 / S3 Blob Storage
-R2_ACCOUNT_ID="your-r2-account-id"
-R2_ACCESS_KEY_ID="your-access-key-id"
-R2_SECRET_ACCESS_KEY="your-secret-access-key"
-R2_BUCKET_NAME="filebucket-vaults"
-```
+Optional: `R2_PUBLIC_BASE_URL` for a public CDN domain, and `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` or `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` for OAuth sign-in.
 
-### 2. Install & Initialise
-Install dependencies, generate the Prisma client, and seed the default admin account:
+### 2. Install and initialize
 
 ```bash
 npm install
@@ -101,24 +94,28 @@ npm run prisma:migrate
 npm run prisma:seed
 ```
 
-### 3. Setup CORS Rules
-To allow client-side ZIP/CBZ decompression in the browser, configure CORS on your R2/S3 bucket to allow your application's origin domain. See [docs/storage-configuration.md](docs/storage-configuration.md).
+### 3. Configure bucket CORS
 
-### 4. Run the App
-Launch the local development server:
+Client-side ZIP/CBZ decompression requires CORS rules on the bucket. See [docs/storage-configuration.md](docs/storage-configuration.md).
+
+### 4. Run
 
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) and sign in.
 
----
+Open [http://localhost:3000](http://localhost:3000) and sign in with the seeded admin account.
 
-## 🧪 Available Commands
+## Commands
 
-*   `npm run dev`: Starts local Next.js development server.
-*   `npm run build`: Compiles production build.
-*   `npm run start`: Serves a compiled production build.
-*   `npm run lint`: Runs ESLint checks.
-*   `npm run test`: Runs the Vitest test suite.
-*   `npm run test:watch`: Runs Vitest in interactive watch mode.
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the Next.js development server |
+| `npm run build` | Generate the Prisma client and build for production |
+| `npm run start` | Serve a production build |
+| `npm run test` | Run the Vitest suite |
+| `npm run test:watch` | Run Vitest in watch mode |
+| `npm run lint` | Run ESLint |
+| `npm run prisma:generate` | Generate the Prisma client |
+| `npm run prisma:migrate` | Apply database migrations |
+| `npm run prisma:seed` | Seed the admin account |
