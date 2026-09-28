@@ -67,6 +67,44 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Commit messages should be structured, imperative, and cover exactly the scope of changes (e.g. `feat: add ...` or `fix: resolve ...`).
 - Avoid batching unrelated changes into a single commit; split modifications into logical atomic changes.
 
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live as GitHub issues, managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Five canonical triage roles map to repo labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+## Project facts
+
+### Commands
+
+- `npm run dev` — start the Next.js dev server.
+- `npm run build` — `prisma generate && next build`.
+- `npm run test` — Vitest suite, single run.
+- `npm run test:watch` — Vitest watch mode.
+- `npm run lint` — ESLint.
+- `npm run prisma:generate` / `prisma:migrate` / `prisma:seed` — schema and seed workflow.
+
+### Domain knowledge
+
+- Read `CONTEXT.md` before naming things. Use its glossary vocabulary and avoid the synonyms it lists.
+- Check `docs/adr/` for decisions touching your area before changing it.
+- The Markdown editor is **Tiptap** (`components/filebucket-editor.tsx`). The README still says Milkdown/Crepe; that is stale.
+- Reserved system folders are `Notes/`, `Quick Notes/`, and `Chat Channels/`. They cannot be renamed, moved, or deleted, and move operations enforce mode boundaries.
+
+### Conventions
+
+- **Scope every query by `userId`.** Users are isolated; one user must never read another's vault.
+- Client state sync uses the `vault-mutate` custom event alongside `router.refresh()`.
+- Match the existing feature-slice layout under `app/` (e.g. `app/notes`, `app/media`, `app/vault`).
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
