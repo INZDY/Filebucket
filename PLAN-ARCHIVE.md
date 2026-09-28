@@ -1,6 +1,6 @@
 # Filebucket Redesign Plan — Archive
 
-> **Frozen history.** Milestones 17–64, all completed. This file is a record of what shipped, not a backlog.
+> **Frozen history.** Milestones 17–65, all completed. This file is a record of what shipped, not a backlog.
 > Active and planned work lives in `PLAN.md` and the issue tracker. Newest completed milestone last.
 
 This plan outlines the roadmap to transform Filebucket from a single-mode Obsidian-inspired vault into a personal file vault first, and a multi-style note application second (Obsidian, Google Keep, and Discord modes).
@@ -524,5 +524,14 @@ This plan outlines the roadmap to transform Filebucket from a single-mode Obsidi
     *   Change the aspect ratio setting to Portrait in settings, save, and verify that all cards in Files Mode switch to vertical proportions with uniform heights and center-containment.
     *   Change the aspect ratio setting to Square, save, and verify cards update to uniform 1:1 boxes.
     *   Write vitest unit/integration tests covering database setting storage and dynamic workspace class rendering.
+
+### Milestone 65: Unified Card Action Menus (Follow-up to Bulk Selection)
+*   **Status**: Completed.
+*   **Goal**: Split out the remaining half of the original Milestone 54: unify action overflow menus across folder, note, and media grid cards so every card offers Move, Rename, and Move to Trash from the grid.
+*   **Tasks**:
+    *   Add a top-right overflow menu to folder grid cards (currently menu-less) mirroring `MediaActionsMenu`.
+    *   Add a top-right overflow menu to note grid cards in the Folder Contents View.
+    *   Share the same underlying move/trash/rename forms across all card menus.
+*   **Verification**: Right-click and overflow menus on folder and note grid cards offer Move, Rename, and Move to Trash with behavior consistent with media cards.
 
 
