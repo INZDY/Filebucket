@@ -13,9 +13,6 @@ interface ActiveWorkspaceProps {
   folderDestinations: { id: string; name: string }[];
   imageMediaAssets: { id: string; filename: string; location: string; url: string; folderId: string | null }[];
   tags: TagEntry[];
-  textPreviewContent: string;
-  hasVaultContent: boolean;
-  browserTitle: string;
   allMediaAssets: MediaGridEntry[];
   allFolders?: FolderEntry[];
   allNotes?: NoteEntry[];
