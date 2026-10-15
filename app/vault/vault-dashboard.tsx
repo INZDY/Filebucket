@@ -669,7 +669,6 @@ export function VaultDashboard({
       : searchQuery
         ? "Search results"
         : selectedFolder?.name ?? "Vault";
-  const hasVaultContent = folders.length > 0 || notes.length > 0 || mediaAssets.length > 0;
 
   const currentPathParams = new URLSearchParams();
   if (selectedFolderId) currentPathParams.set("folder", selectedFolderId);
@@ -951,9 +950,6 @@ export function VaultDashboard({
                       folderDestinations={folderDestinations}
                       imageMediaAssets={imageMediaAssets}
                       tags={tags.map((t) => ({ id: t.id, name: t.name, slug: t.slug }))}
-                      textPreviewContent={textPreviewContent}
-                      hasVaultContent={hasVaultContent}
-                      browserTitle={browserTitle}
                       allMediaAssets={mediaAssets}
                       allFolders={folders}
                       allNotes={notes}
