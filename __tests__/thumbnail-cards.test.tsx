@@ -52,7 +52,7 @@ vi.mock("@/app/tags/actions", () => ({
   renameTagAction: vi.fn(),
 }));
 
-import { ActiveWorkspace } from "@/app/vault/active-workspace";
+import { FolderContentsView } from "@/app/vault/folder-contents-view";
 import { SettingsProvider } from "@/components/settings-context";
 
 describe("Folder Contents View Thumbnails & Card File Operations (TDD)", () => {
@@ -80,17 +80,10 @@ describe("Folder Contents View Thumbnails & Card File Operations (TDD)", () => {
 
     await act(async () => {
       root.render(
-        <ActiveWorkspace
-          selectedNote={null}
-          selectedMedia={null}
+        <FolderContentsView
           selectedFolder={sampleFolder}
           folderTrail={[sampleFolder]}
           folderDestinations={[]}
-          imageMediaAssets={[]}
-          tags={[]}
-          textPreviewContent=""
-          hasVaultContent={true}
-          browserTitle="Photos"
           allMediaAssets={sampleMedia}
           allFolders={[sampleFolder]}
           allNotes={[]}
@@ -139,17 +132,10 @@ describe("Folder Contents View Thumbnails & Card File Operations (TDD)", () => {
     // Rendering should not throw/crash even when contentType is undefined
     await act(async () => {
       root.render(
-        <ActiveWorkspace
-          selectedNote={null}
-          selectedMedia={null}
+        <FolderContentsView
           selectedFolder={sampleFolder}
           folderTrail={[sampleFolder]}
           folderDestinations={[]}
-          imageMediaAssets={[]}
-          tags={[]}
-          textPreviewContent=""
-          hasVaultContent={true}
-          browserTitle="Files"
           allMediaAssets={sampleMedia}
           allFolders={[sampleFolder]}
           allNotes={[]}
@@ -201,17 +187,10 @@ describe("Folder Contents View Thumbnails & Card File Operations (TDD)", () => {
 
     await act(async () => {
       root.render(
-        <ActiveWorkspace
-          selectedNote={null}
-          selectedMedia={null}
+        <FolderContentsView
           selectedFolder={sampleFolder}
           folderTrail={[sampleFolder]}
           folderDestinations={[]}
-          imageMediaAssets={[]}
-          tags={[]}
-          textPreviewContent=""
-          hasVaultContent={true}
-          browserTitle="Library"
           allMediaAssets={sampleMedia}
           allFolders={[sampleFolder]}
           allNotes={[]}
@@ -266,17 +245,10 @@ describe("Folder Contents View Thumbnails & Card File Operations (TDD)", () => {
 
     await act(async () => {
       root.render(
-        <ActiveWorkspace
-          selectedNote={null}
-          selectedMedia={null}
+        <FolderContentsView
           selectedFolder={sampleFolder}
           folderTrail={[sampleFolder]}
           folderDestinations={[]}
-          imageMediaAssets={[]}
-          tags={[]}
-          textPreviewContent=""
-          hasVaultContent={true}
-          browserTitle="Library"
           allMediaAssets={[]}
           allFolders={[sampleFolder]}
           allNotes={sampleNotes}
@@ -341,17 +313,10 @@ describe("Folder Contents View Thumbnails & Card File Operations (TDD)", () => {
     await act(async () => {
       root.render(
         <SettingsProvider initialSettings={mockSettings}>
-          <ActiveWorkspace
-            selectedNote={null}
-            selectedMedia={null}
+          <FolderContentsView
             selectedFolder={sampleFolder}
             folderTrail={[sampleFolder]}
             folderDestinations={[]}
-            imageMediaAssets={[]}
-            tags={[]}
-            textPreviewContent=""
-            hasVaultContent={true}
-            browserTitle="Library"
             allMediaAssets={sampleMedia}
             allFolders={[sampleFolder]}
             allNotes={sampleNotes}

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 import { FilebucketPlayer } from "@/components/filebucket-player";
-import { ActiveWorkspace } from "@/app/vault/active-workspace";
+import { MediaPreview } from "@/app/vault/media-preview";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
@@ -121,8 +121,8 @@ describe("FilebucketPlayer Component (Milestone 53)", () => {
     document.body.removeChild(container);
   });
 
-  describe("ActiveWorkspace Integration", () => {
-    it("should render FilebucketPlayer in ActiveWorkspace for video preview", async () => {
+  describe("MediaPreview Integration", () => {
+    it("should render FilebucketPlayer in MediaPreview for video preview", async () => {
       const container = document.createElement("div");
       document.body.appendChild(container);
       const root = createRoot(container);
@@ -138,20 +138,11 @@ describe("FilebucketPlayer Component (Milestone 53)", () => {
 
       await act(async () => {
         root.render(
-          <ActiveWorkspace
-            selectedNote={null}
+          <MediaPreview
             selectedMedia={videoMedia}
-            selectedFolder={null}
             folderTrail={[]}
             folderDestinations={[]}
-            imageMediaAssets={[]}
-            tags={[]}
-            textPreviewContent=""
-            hasVaultContent={true}
-            browserTitle="Vault"
             allMediaAssets={[videoMedia]}
-            allFolders={[]}
-            allNotes={[]}
           />
         );
       });
@@ -166,7 +157,7 @@ describe("FilebucketPlayer Component (Milestone 53)", () => {
       document.body.removeChild(container);
     });
 
-    it("should render FilebucketPlayer in ActiveWorkspace for audio preview", async () => {
+    it("should render FilebucketPlayer in MediaPreview for audio preview", async () => {
       const container = document.createElement("div");
       document.body.appendChild(container);
       const root = createRoot(container);
@@ -182,20 +173,11 @@ describe("FilebucketPlayer Component (Milestone 53)", () => {
 
       await act(async () => {
         root.render(
-          <ActiveWorkspace
-            selectedNote={null}
+          <MediaPreview
             selectedMedia={audioMedia}
-            selectedFolder={null}
             folderTrail={[]}
             folderDestinations={[]}
-            imageMediaAssets={[]}
-            tags={[]}
-            textPreviewContent=""
-            hasVaultContent={true}
-            browserTitle="Vault"
             allMediaAssets={[audioMedia]}
-            allFolders={[]}
-            allNotes={[]}
           />
         );
       });

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { act } from "react";
-import { ActiveWorkspace } from "@/app/vault/active-workspace";
+import { FolderContentsView } from "@/app/vault/folder-contents-view";
 
 // Mock next/navigation
 const mockPush = vi.fn();
@@ -94,7 +94,7 @@ Object.defineProperty(window, "localStorage", {
   writable: true,
 });
 
-describe("FolderContentsView in ActiveWorkspace", () => {
+describe("FolderContentsView", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
@@ -136,20 +136,13 @@ describe("FolderContentsView in ActiveWorkspace", () => {
     const root = createRoot(container);
     await act(async () => {
       root.render(
-        <ActiveWorkspace
-          selectedNote={null}
-          selectedMedia={null}
+        <FolderContentsView
           selectedFolder={selectedFolder}
           folderTrail={[selectedFolder!]}
           folderDestinations={[]}
-          imageMediaAssets={[]}
-          tags={[]}
-          textPreviewContent=""
-          hasVaultContent={true}
-          browserTitle="Personal Work"
           allMediaAssets={allMediaAssets}
           allFolders={allFolders}
-          allNotes={allNotes as Parameters<typeof ActiveWorkspace>[0]["allNotes"]}
+          allNotes={allNotes as Parameters<typeof FolderContentsView>[0]["allNotes"]}
         />
       );
     });
@@ -175,20 +168,13 @@ describe("FolderContentsView in ActiveWorkspace", () => {
     const root = createRoot(container);
     await act(async () => {
       root.render(
-        <ActiveWorkspace
-          selectedNote={null}
-          selectedMedia={null}
+        <FolderContentsView
           selectedFolder={selectedFolder}
           folderTrail={[selectedFolder!]}
           folderDestinations={[]}
-          imageMediaAssets={[]}
-          tags={[]}
-          textPreviewContent=""
-          hasVaultContent={true}
-          browserTitle="Personal Work"
           allMediaAssets={allMediaAssets}
           allFolders={allFolders}
-          allNotes={allNotes as Parameters<typeof ActiveWorkspace>[0]["allNotes"]}
+          allNotes={allNotes as Parameters<typeof FolderContentsView>[0]["allNotes"]}
         />
       );
     });
@@ -215,20 +201,13 @@ describe("FolderContentsView in ActiveWorkspace", () => {
     const root = createRoot(container);
     await act(async () => {
       root.render(
-        <ActiveWorkspace
-          selectedNote={null}
-          selectedMedia={null}
+        <FolderContentsView
           selectedFolder={selectedFolder}
           folderTrail={[selectedFolder!]}
           folderDestinations={[]}
-          imageMediaAssets={[]}
-          tags={[]}
-          textPreviewContent=""
-          hasVaultContent={true}
-          browserTitle="Personal Work"
           allMediaAssets={allMediaAssets}
           allFolders={allFolders}
-          allNotes={allNotes as Parameters<typeof ActiveWorkspace>[0]["allNotes"]}
+          allNotes={allNotes as Parameters<typeof FolderContentsView>[0]["allNotes"]}
         />
       );
     });
@@ -254,20 +233,13 @@ describe("FolderContentsView in ActiveWorkspace", () => {
     const root = createRoot(container);
     await act(async () => {
       root.render(
-        <ActiveWorkspace
-          selectedNote={null}
-          selectedMedia={null}
+        <FolderContentsView
           selectedFolder={selectedFolder}
           folderTrail={[selectedFolder!]}
           folderDestinations={[]}
-          imageMediaAssets={[]}
-          tags={[]}
-          textPreviewContent=""
-          hasVaultContent={true}
-          browserTitle="Personal Work"
           allMediaAssets={allMediaAssets}
           allFolders={allFolders}
-          allNotes={allNotes as Parameters<typeof ActiveWorkspace>[0]["allNotes"]}
+          allNotes={allNotes as Parameters<typeof FolderContentsView>[0]["allNotes"]}
         />
       );
     });
@@ -359,20 +331,13 @@ describe("FolderContentsView in ActiveWorkspace", () => {
     const root = createRoot(container);
     await act(async () => {
       root.render(
-        <ActiveWorkspace
-          selectedNote={null}
-          selectedMedia={null}
+        <FolderContentsView
           selectedFolder={selectedFolder}
           folderTrail={[allFolders[0], selectedFolder!]}
           folderDestinations={[]}
-          imageMediaAssets={[]}
-          tags={[]}
-          textPreviewContent=""
-          hasVaultContent={true}
-          browserTitle="Sub-project"
           allMediaAssets={allMediaAssets}
           allFolders={allFolders}
-          allNotes={allNotes as Parameters<typeof ActiveWorkspace>[0]["allNotes"]}
+          allNotes={allNotes as Parameters<typeof FolderContentsView>[0]["allNotes"]}
         />
       );
     });
@@ -403,20 +368,13 @@ describe("FolderContentsView in ActiveWorkspace", () => {
     const root = createRoot(container);
     await act(async () => {
       root.render(
-        <ActiveWorkspace
-          selectedNote={null}
-          selectedMedia={null}
+        <FolderContentsView
           selectedFolder={selectedFolder}
           folderTrail={[selectedFolder!]}
           folderDestinations={[]}
-          imageMediaAssets={[]}
-          tags={[]}
-          textPreviewContent=""
-          hasVaultContent={true}
-          browserTitle="Personal Work"
           allMediaAssets={allMediaAssets}
           allFolders={allFolders}
-          allNotes={allNotes as Parameters<typeof ActiveWorkspace>[0]["allNotes"]}
+          allNotes={allNotes as Parameters<typeof FolderContentsView>[0]["allNotes"]}
         />
       );
     });
@@ -450,20 +408,13 @@ describe("FolderContentsView in ActiveWorkspace", () => {
     const root = createRoot(container);
     await act(async () => {
       root.render(
-        <ActiveWorkspace
-          selectedNote={null}
-          selectedMedia={null}
+        <FolderContentsView
           selectedFolder={selectedFolder}
           folderTrail={[selectedFolder!]}
           folderDestinations={[]}
-          imageMediaAssets={[]}
-          tags={[]}
-          textPreviewContent=""
-          hasVaultContent={true}
-          browserTitle="Personal Work"
           allMediaAssets={allMediaAssets}
           allFolders={allFolders}
-          allNotes={allNotes as Parameters<typeof ActiveWorkspace>[0]["allNotes"]}
+          allNotes={allNotes as Parameters<typeof FolderContentsView>[0]["allNotes"]}
         />
       );
     });
@@ -520,20 +471,13 @@ describe("FolderContentsView in ActiveWorkspace", () => {
     const root = createRoot(container);
     await act(async () => {
       root.render(
-        <ActiveWorkspace
-          selectedNote={null}
-          selectedMedia={null}
+        <FolderContentsView
           selectedFolder={selectedFolder}
           folderTrail={[selectedFolder!]}
           folderDestinations={[]}
-          imageMediaAssets={[]}
-          tags={[]}
-          textPreviewContent=""
-          hasVaultContent={true}
-          browserTitle="Personal Work"
           allMediaAssets={allMediaAssets}
           allFolders={allFolders}
-          allNotes={allNotes as Parameters<typeof ActiveWorkspace>[0]["allNotes"]}
+          allNotes={allNotes as Parameters<typeof FolderContentsView>[0]["allNotes"]}
         />
       );
     });

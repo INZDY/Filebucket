@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { act } from "react";
-import { ActiveWorkspace } from "@/app/vault/active-workspace";
+import { FolderContentsView } from "@/app/vault/folder-contents-view";
 
 const mockPush = vi.fn();
 const mockRefresh = vi.fn();
@@ -107,26 +107,19 @@ function renderWorkspace(root: ReturnType<typeof createRoot>, selectedFolderId: 
 
   return act(async () => {
     root.render(
-      <ActiveWorkspace
-        selectedNote={null}
-        selectedMedia={null}
+      <FolderContentsView
         selectedFolder={selectedFolder}
         folderTrail={selectedFolder ? [selectedFolder] : []}
         folderDestinations={[]}
-        imageMediaAssets={[]}
-        tags={[]}
-        textPreviewContent=""
-        hasVaultContent={true}
-        browserTitle={selectedFolder?.name ?? "Vault"}
         allMediaAssets={allMediaAssets}
         allFolders={allFolders}
-        allNotes={allNotes as Parameters<typeof ActiveWorkspace>[0]["allNotes"]}
+        allNotes={allNotes as Parameters<typeof FolderContentsView>[0]["allNotes"]}
       />
     );
   });
 }
 
-describe("Bulk Selection UI in ActiveWorkspace", () => {
+describe("Bulk Selection UI in FolderContentsView", () => {
   let container: HTMLDivElement;
   let root: ReturnType<typeof createRoot>;
 
