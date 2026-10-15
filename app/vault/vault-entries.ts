@@ -43,6 +43,16 @@ export type MediaEntry = {
   } | null;
 };
 
+/** Media asset as it arrives in the workspace lists (carries folderId, not folder). */
+export type MediaGridEntry = {
+  id: string;
+  filename: string;
+  contentType: string;
+  r2Key: string;
+  thumbnailKey?: string | null;
+  folderId: string | null;
+};
+
 /**
  * Move/rename/trash behaviour for a vault item, built by the caller so card
  * modules stay presentation-only and never import a server action module.

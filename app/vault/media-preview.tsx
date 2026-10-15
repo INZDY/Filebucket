@@ -21,20 +21,13 @@ import { Button } from "@/components/ui/button";
 import { compareAlphanumeric } from "@/lib/sorting";
 import { getMediaAssetUrl, formatBytes } from "@/lib/utils";
 import { getMediaPreviewKind } from "./media-kind";
-import type { FolderEntry, MediaEntry } from "./vault-entries";
+import type { FolderEntry, MediaEntry, MediaGridEntry } from "./vault-entries";
 
 interface MediaPreviewProps {
   selectedMedia: MediaEntry;
   folderTrail: FolderEntry[];
   folderDestinations: { id: string; name: string }[];
-  allMediaAssets: {
-    id: string;
-    filename: string;
-    contentType: string;
-    r2Key: string;
-    thumbnailKey?: string | null;
-    folderId: string | null;
-  }[];
+  allMediaAssets: MediaGridEntry[];
 }
 
 export function MediaPreview({
