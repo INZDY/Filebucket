@@ -40,6 +40,7 @@ import { getMediaAssetUrl, cn } from "@/lib/utils";
 import { getMediaPreviewKind } from "./media-kind";
 import { FolderCard } from "./folder-card";
 import { MediaPreview } from "./media-preview";
+import { NoteCard } from "./note-card";
 import { NotePreview } from "./note-preview";
 import type { FolderEntry, MediaEntry, NoteEntry, TagEntry } from "./vault-entries";
 import { Button } from "@/components/ui/button";
@@ -602,91 +603,50 @@ export function ActiveWorkspace({
                 )}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                   {/* Notes */}
-                  {childNotes.map((note) => {
-                    const isPortrait = fileCardAspect === "PORTRAIT";
-                    const aspectClass = 
-                      fileCardAspect === "PORTRAIT" 
-                        ? "aspect-[3/4]" 
-                        : fileCardAspect === "SQUARE" 
-                        ? "aspect-square" 
-                        : "aspect-video";
-                    
-                    const snippetLimit = isPortrait ? 150 : 80;
-                    const lineClampClass = isPortrait ? "line-clamp-6" : "line-clamp-4";
-                    const snippet = getNoteSnippet(note.body, snippetLimit);
-                    
-                    return (
-                      <div key={note.id} className="relative">
-                        <Link
-                          href={note.folderId ? `/?folder=${note.folderId}&note=${note.id}` : `/?note=${note.id}`}
-                          draggable={true}
-                          onDragStart={(e) => {
-                            e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "note", id: note.id }));
-                            e.dataTransfer.effectAllowed = "move";
-                          }}
-                          className="group flex flex-col justify-between p-3 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-purple-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.05)] transition-all active:scale-95 duration-200"
-                        >
-                          {/* Note stylized preview thumbnail */}
-                          <div className={cn("relative w-full rounded-lg overflow-hidden border border-purple-500/10 mb-2 bg-[#131018] select-none text-left", aspectClass)}>
-                            <div className="w-full h-full flex flex-col p-3">
-                              <p className={cn("text-[10px] text-purple-300/80 leading-relaxed font-normal overflow-hidden break-words", lineClampClass)}>
-                                {snippet || "Empty note"}
-                              </p>
-                              <div className="flex items-center gap-1.5 text-purple-450/70 mt-auto pt-1 border-t border-purple-500/10">
-                                <FileText className="h-3.5 w-3.5 text-purple-400" />
-                                <span className="text-[9px] font-mono uppercase tracking-wider font-semibold">MD</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="min-w-0 px-1 pb-1">
-                            <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-slate-100 transition-colors" title={note.title}>
-                              {note.title}
-                            </p>
-                            <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider font-medium">
-                              Note
-                            </p>
-                          </div>
-                        </Link>
-                        <div className="absolute top-2 right-2 z-20">
-                          <CardActionsMenu
-                            currentFolderId={note.folderId}
-                            currentName={note.title}
-                            destinations={folderDestinations}
-                            id={note.id}
-                            label={note.title}
-                            onMove={async (folderId) => {
-                              const formData = new FormData();
-                              formData.append("noteId", note.id);
-                              formData.append("folderId", folderId ?? "");
-                              window.dispatchEvent(new CustomEvent("vault-mutate", {
-                                detail: { type: "move-note", noteId: note.id, parentId: folderId }
-                              }));
-                              await moveNoteAction(formData);
-                            }}
-                            onRename={async (name) => {
-                              const formData = new FormData();
-                              formData.append("noteId", note.id);
-                              formData.append("name", name);
-                              window.dispatchEvent(new CustomEvent("vault-mutate", {
-                                detail: { type: "rename-note", noteId: note.id, name }
-                              }));
-                              await renameNoteAction(formData);
-                            }}
-                            onTrash={async () => {
-                              const formData = new FormData();
-                              formData.append("noteId", note.id);
-                              formData.append("folderId", note.folderId ?? "");
-                              window.dispatchEvent(new CustomEvent("vault-mutate", {
-                                detail: { type: "trash-note", noteId: note.id }
-                              }));
-                              await trashNoteAction(formData);
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {childNotes.map((note) => (
+                    <NoteCard
+                      key={note.id}
+                      actions={{
+                        onMove: async (folderId) => {
+                          const formData = new FormData();
+                          formData.append("noteId", note.id);
+                          formData.append("folderId", folderId ?? "");
+                          window.dispatchEvent(new CustomEvent("vault-mutate", {
+                            detail: { type: "move-note", noteId: note.id, parentId: folderId }
+                          }));
+                          await moveNoteAction(formData);
+                        },
+                        onRename: async (name) => {
+                          const formData = new FormData();
+                          formData.append("noteId", note.id);
+                          formData.append("name", name);
+                          window.dispatchEvent(new CustomEvent("vault-mutate", {
+                            detail: { type: "rename-note", noteId: note.id, name }
+                          }));
+                          await renameNoteAction(formData);
+                        },
+                        onTrash: async () => {
+                          const formData = new FormData();
+                          formData.append("noteId", note.id);
+                          formData.append("folderId", note.folderId ?? "");
+                          window.dispatchEvent(new CustomEvent("vault-mutate", {
+                            detail: { type: "trash-note", noteId: note.id }
+                          }));
+                          await trashNoteAction(formData);
+                        },
+                      }}
+                      aspect={fileCardAspect}
+                      destinations={folderDestinations}
+                      drag={{
+                        draggable: true,
+                        onDragStart: (e) => {
+                          e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "note", id: note.id }));
+                          e.dataTransfer.effectAllowed = "move";
+                        },
+                      }}
+                      note={note}
+                    />
+                  ))}
 
                   {/* Media Files */}
                   {childMedia.map((media) => {
