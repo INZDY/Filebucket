@@ -41,57 +41,15 @@ import { NoteEditor } from "@/app/notes/note-editor";
 import { MediaActionsMenu } from "@/app/media/media-actions-menu";
 import { CardActionsMenu } from "@/components/card-actions-menu";
 import { compareAlphanumeric } from "@/lib/sorting";
+import { getNoteFilename } from "@/lib/namespace/manager";
 import { getMediaAssetUrl, cn, formatBytes } from "@/lib/utils";
+import { getMediaPreviewKind } from "./media-kind";
+import type { FolderEntry, MediaEntry, NoteEntry, TagEntry } from "./vault-entries";
 import { Button } from "@/components/ui/button";
 import { MangaReader, type ReaderPage } from "@/components/manga-reader";
 import { BookReader } from "@/components/book-reader";
 import { FilebucketPlayer } from "@/components/filebucket-player";
 import { useSettings } from "@/components/settings-context";
-
-type FolderEntry = {
-  id: string;
-  name: string;
-  parentId: string | null;
-  type?: string;
-};
-
-type NoteEntry = {
-  id: string;
-  title: string;
-  body: string;
-  updatedAt: Date | string;
-  folderId: string | null;
-  tags: {
-    tag: {
-      id: string;
-      name: string;
-      slug: string;
-    };
-  }[];
-  folder?: {
-    id: string;
-    name: string;
-  } | null;
-};
-
-type MediaEntry = {
-  id: string;
-  filename: string;
-  contentType: string;
-  sizeBytes: number;
-  r2Key: string;
-  thumbnailKey?: string | null;
-  folder?: {
-    id: string;
-    name: string;
-  } | null;
-};
-
-type TagEntry = {
-  id: string;
-  name: string;
-  slug: string;
-};
 
 interface ActiveWorkspaceProps {
   selectedNote: NoteEntry | null;
@@ -114,30 +72,6 @@ interface ActiveWorkspaceProps {
   }[];
   allFolders?: FolderEntry[];
   allNotes?: NoteEntry[];
-}
-
-function getMediaPreviewKind(contentType: string | null | undefined, filename = "") {
-  // Check extension first for books and archives
-  if (contentType === "application/epub+zip" || filename.toLowerCase().endsWith(".epub")) {
-    return "epub";
-  }
-  if (
-    contentType === "application/zip" ||
-    contentType === "application/x-zip-compressed" ||
-    filename.toLowerCase().endsWith(".zip") ||
-    filename.toLowerCase().endsWith(".cbz")
-  ) {
-    return "archive";
-  }
-
-  if (!contentType) return "unsupported";
-  if (contentType.startsWith("image/")) return "image";
-  if (contentType.startsWith("audio/")) return "audio";
-  if (contentType.startsWith("video/")) return "video";
-  if (contentType === "application/pdf") return "pdf";
-  if (contentType.startsWith("text/") || contentType === "application/json") return "text";
-
-  return "unsupported";
 }
 
 function getNoteSnippet(body: string, limit = 80): string {
@@ -211,11 +145,6 @@ export function ActiveWorkspace({
     if (draggedId === targetId) return true;
     const targetFolder = allFolders.find((f) => f.id === targetId);
     return targetFolder ? isDescendant(draggedId, targetFolder.parentId) : false;
-  }
-
-  function getNoteFilename(title: string): string {
-    const trimmedTitle = title.trim() || "Untitled note";
-    return trimmedTitle.toLowerCase().endsWith(".md") ? trimmedTitle : `${trimmedTitle}.md`;
   }
 
   async function handleDrop(targetFolderId: string | null, event: React.DragEvent) {
