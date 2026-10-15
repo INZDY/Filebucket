@@ -38,6 +38,7 @@ import { compareAlphanumeric } from "@/lib/sorting";
 import { getNoteFilename } from "@/lib/namespace/manager";
 import { getMediaAssetUrl, cn } from "@/lib/utils";
 import { getMediaPreviewKind } from "./media-kind";
+import { FolderCard } from "./folder-card";
 import { MediaPreview } from "./media-preview";
 import { NotePreview } from "./note-preview";
 import type { FolderEntry, MediaEntry, NoteEntry, TagEntry } from "./vault-entries";
@@ -527,129 +528,64 @@ export function ActiveWorkspace({
                     const folderChildMedia = allMediaAssets.filter((m) => m.folderId === folder.id).length;
                     const totalItems = folderChildFolders + folderChildNotes + folderChildMedia;
 
-                    const folderCardClassName = cn(
-                      "group relative flex items-center justify-between h-14 px-4 rounded-xl border bg-[#14161d]/60 hover:bg-[#1a1d26] hover:border-amber-500/40 hover:shadow-[0_0_15px_rgba(245,158,11,0.05)] transition-all active:scale-95 duration-200",
-                      dragOverFolderId === folder.id ? "border-amber-500 scale-95" : "border-slate-800/80",
-                      selectionMode && selectedIds.has(folder.id) && "border-blue-500/70 bg-blue-500/10"
-                    );
-
-                    const folderCardBody = (
-                      <>
-                        {selectionMode && (
-                          <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-end rounded-xl p-2">
-                            <div
-                              className={cn(
-                                "flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors",
-                                selectedIds.has(folder.id)
-                                  ? "border-blue-300 bg-blue-600 text-white"
-                                  : "border-slate-300 bg-slate-900/70 text-transparent"
-                              )}
-                            >
-                              <Check className="h-3.5 w-3.5" />
-                            </div>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 group-hover:bg-amber-500/20 transition-all duration-200">
-                            <Folder className="h-4 w-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-xs font-semibold text-slate-200 group-hover:text-slate-100 transition-colors">
-                              {folder.name}
-                            </p>
-                            <p className="text-[10px] text-slate-500 font-medium">({totalItems})</p>
-                          </div>
-                        </div>
-                      </>
-                    );
-
-                    if (selectionMode) {
-                      return (
-                        <div
-                          key={folder.id}
-                          role="button"
-                          tabIndex={0}
-                          aria-pressed={selectedIds.has(folder.id)}
-                          onClick={() => toggleSelection("folder", folder.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              toggleSelection("folder", folder.id);
-                            }
-                          }}
-                          data-bulk-item="folder"
-                          data-selected={selectedIds.has(folder.id)}
-                          className={folderCardClassName}
-                        >
-                          {folderCardBody}
-                        </div>
-                      );
-                    }
-
                     return (
-                      <div key={folder.id} className="relative">
-                        <Link
-                          href={`/?folder=${folder.id}`}
-                          draggable={true}
-                          onDragStart={(e) => {
+                      <FolderCard
+                        key={folder.id}
+                        actions={{
+                          onMove: async (parentId) => {
+                            const formData = new FormData();
+                            formData.append("folderId", folder.id);
+                            formData.append("parentId", parentId ?? "");
+                            window.dispatchEvent(new CustomEvent("vault-mutate", {
+                              detail: { type: "move-folder", folderId: folder.id, parentId }
+                            }));
+                            await moveFolderAction(formData);
+                          },
+                          onRename: async (name) => {
+                            const formData = new FormData();
+                            formData.append("folderId", folder.id);
+                            formData.append("name", name);
+                            window.dispatchEvent(new CustomEvent("vault-mutate", {
+                              detail: { type: "rename-folder", folderId: folder.id, name }
+                            }));
+                            await renameFolderAction(formData);
+                          },
+                          onTrash: async () => {
+                            const formData = new FormData();
+                            formData.append("folderId", folder.id);
+                            window.dispatchEvent(new CustomEvent("vault-mutate", {
+                              detail: { type: "trash-folder", folderId: folder.id }
+                            }));
+                            await trashFolderAction(formData);
+                          },
+                        }}
+                        destinations={folderDestinations}
+                        drag={{
+                          draggable: true,
+                          onDragStart: (e) => {
                             e.dataTransfer.setData("application/filebucket", JSON.stringify({ type: "folder", id: folder.id }));
                             e.dataTransfer.effectAllowed = "move";
-                          }}
-                          onDragOver={(e) => {
+                          },
+                          onDragOver: (e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             setDragOverFolderId(folder.id);
-                          }}
-                          onDragLeave={() => {
+                          },
+                          onDragLeave: () => {
                             setDragOverFolderId(null);
-                          }}
-                          onDrop={(e) => {
+                          },
+                          onDrop: (e) => {
                             e.stopPropagation();
                             handleDrop(folder.id, e);
-                          }}
-                          data-bulk-item="folder"
-                          data-selected={selectedIds.has(folder.id)}
-                          className={folderCardClassName}
-                        >
-                          {folderCardBody}
-                        </Link>
-                        <div className="absolute top-2 right-2 z-20">
-                          <CardActionsMenu
-                            currentFolderId={folder.parentId}
-                            currentName={folder.name}
-                            destinations={folderDestinations}
-                            excludeIds={[folder.id]}
-                            id={folder.id}
-                            label={folder.name}
-                            onMove={async (parentId) => {
-                              const formData = new FormData();
-                              formData.append("folderId", folder.id);
-                              formData.append("parentId", parentId ?? "");
-                              window.dispatchEvent(new CustomEvent("vault-mutate", {
-                                detail: { type: "move-folder", folderId: folder.id, parentId }
-                              }));
-                              await moveFolderAction(formData);
-                            }}
-                            onRename={async (name) => {
-                              const formData = new FormData();
-                              formData.append("folderId", folder.id);
-                              formData.append("name", name);
-                              window.dispatchEvent(new CustomEvent("vault-mutate", {
-                                detail: { type: "rename-folder", folderId: folder.id, name }
-                              }));
-                              await renameFolderAction(formData);
-                            }}
-                            onTrash={async () => {
-                              const formData = new FormData();
-                              formData.append("folderId", folder.id);
-                              window.dispatchEvent(new CustomEvent("vault-mutate", {
-                                detail: { type: "trash-folder", folderId: folder.id }
-                              }));
-                              await trashFolderAction(formData);
-                            }}
-                          />
-                        </div>
-                      </div>
+                          },
+                        }}
+                        folder={folder}
+                        isDragOver={dragOverFolderId === folder.id}
+                        itemCount={totalItems}
+                        onToggleSelect={() => toggleSelection("folder", folder.id)}
+                        selected={selectedIds.has(folder.id)}
+                        selectionMode={selectionMode}
+                      />
                     );
                   })}
                 </div>
