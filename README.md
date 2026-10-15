@@ -106,6 +106,8 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) and sign in with the seeded admin account.
 
+To rotate the admin password, change `FILEBUCKET_ADMIN_PASSWORD` in `.env` and run `npm run prisma:seed` again. The seed upserts the admin user, so the stored password only changes when you re-run it.
+
 ## Commands
 
 | Command | Description |
