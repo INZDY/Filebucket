@@ -396,6 +396,7 @@ export function MediaPreview({
               ? 0
               : siblingMedia.findIndex((m) => m.id === selectedMedia.id)
           }
+          mediaId={archivePages.length > 0 ? selectedMedia.id : undefined}
         />
       )}
 
