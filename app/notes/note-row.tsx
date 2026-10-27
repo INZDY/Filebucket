@@ -6,6 +6,7 @@ import { FileText, MoreHorizontal, Move, Pencil, Trash2 } from "lucide-react";
 
 import { renameNoteAction, moveNoteAction, trashNoteAction } from "@/app/notes/actions";
 import { Button } from "@/components/ui/button";
+import { toastSuccess } from "@/components/ui/toast";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -91,6 +92,7 @@ export function NoteRow({
             }));
             setMenu(null);
             await renameNoteAction(formData);
+            toastSuccess("Renamed");
           }}
           className="flex flex-1 items-center gap-2 px-2"
           onClick={(e) => e.stopPropagation()}
@@ -159,6 +161,7 @@ export function NoteRow({
                 }));
                 setMenu(null);
                 await moveNoteAction(formData);
+                toastSuccess("Moved");
               }}
               className="space-y-2 p-2"
             >
@@ -217,6 +220,7 @@ export function NoteRow({
                   }));
                   setMenu(null);
                   await trashNoteAction(formData);
+                  toastSuccess("Moved to trash");
                 }}
               >
                 <input type="hidden" name="noteId" value={note.id} />

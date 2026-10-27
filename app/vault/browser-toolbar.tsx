@@ -7,6 +7,7 @@ import { createFolderAction } from "@/app/folders/actions";
 import { MediaUploadControl } from "@/app/media/media-upload-control";
 import { createNoteAction, importMarkdownNotesAction } from "@/app/notes/actions";
 import { Button } from "@/components/ui/button";
+import { toastSuccess } from "@/components/ui/toast";
 import { Input } from "@/components/ui/input";
 
 type BrowserToolbarProps = {
@@ -49,7 +50,12 @@ export function BrowserToolbar({
 
         {/* New Note Action */}
         {activeMode === "NOTES" && (
-          <form action={createNoteAction}>
+          <form
+            action={async (formData) => {
+              await createNoteAction(formData);
+              toastSuccess("Note created");
+            }}
+          >
             <input type="hidden" name="folderId" value={folderId ?? ""} />
             <Button
               aria-label="Create note"
@@ -131,6 +137,7 @@ export function BrowserToolbar({
               })
             );
             await createFolderAction(formData);
+            toastSuccess("Folder created");
           }}
           className="flex items-center gap-1.5 rounded-md border border-slate-800 bg-[#111318] p-1.5"
         >

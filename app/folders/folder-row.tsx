@@ -10,6 +10,7 @@ import {
   trashFolderAction,
 } from "@/app/folders/actions";
 import { Button } from "@/components/ui/button";
+import { toastSuccess } from "@/components/ui/toast";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -127,6 +128,7 @@ export function FolderRow({
             }));
             setMenu(null);
             await renameFolderAction(formData);
+            toastSuccess("Renamed");
           }}
           className="flex flex-1 items-center gap-2 px-2"
           onClick={(event) => event.stopPropagation()}
@@ -221,6 +223,7 @@ export function FolderRow({
                 }));
                 setMenu(null);
                 await moveFolderAction(formData);
+                toastSuccess("Moved");
               }}
               className="space-y-2 p-2"
             >
@@ -304,6 +307,7 @@ export function FolderRow({
                   }));
                   setMenu(null);
                   await trashFolderAction(formData);
+                  toastSuccess("Moved to trash");
                 }}
               >
                 <input type="hidden" name="folderId" value={folder.id} />

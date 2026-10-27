@@ -13,6 +13,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
+import { toastSuccess } from "@/components/ui/toast";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { 
@@ -131,6 +132,7 @@ export function KeepWorkspace({ notes, keepRootId, allTags }: KeepWorkspaceProps
     setNewNotePinned(false);
 
     await createKeepNoteAction(data);
+    toastSuccess("Note created");
   }, [newTitle, newBody, newNoteColor, newNotePinned, keepRootId]);
 
   // Click outside creation bar listener
@@ -177,6 +179,7 @@ export function KeepWorkspace({ notes, keepRootId, allTags }: KeepWorkspaceProps
       detail: { type: "trash-note", noteId }
     }));
     await trashKeepNoteAction(noteId);
+    toastSuccess("Moved to trash");
   }
 
   return (

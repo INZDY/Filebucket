@@ -10,6 +10,7 @@ import { MediaRow } from "@/app/media/media-row";
 import { moveMediaAssetAction } from "@/app/media/actions";
 import { cn } from "@/lib/utils";
 import { compareAlphanumeric } from "@/lib/sorting";
+import { toastError, toastSuccess } from "@/components/ui/toast";
 
 type BrowserTreeProps = {
   folders: {
@@ -179,7 +180,7 @@ export function BrowserTree({
       // Validation
       if (data.id === targetFolderId) return;
       if (data.type === "folder" && isDescendant(data.id, targetFolderId)) {
-        alert("Cannot move a folder inside itself or its sub-folders.");
+        toastError("Cannot move a folder inside itself or its sub-folders.");
         return;
       }
 
@@ -191,7 +192,7 @@ export function BrowserTree({
         if (draggedFolder) {
           const currentMode = getItemMode(draggedFolder.parentId);
           if (currentMode !== targetMode) {
-            alert("Folders cannot be moved across mode boundaries.");
+            toastError("Folders cannot be moved across mode boundaries.");
             return;
           }
         }
@@ -199,11 +200,11 @@ export function BrowserTree({
         const draggedNote = notes.find((n) => n.id === data.id);
         const currentMode = draggedNote ? getItemMode(draggedNote.folderId) : "FILES";
         if (targetMode !== "NOTES" && targetMode !== "KEEP") {
-          alert("Notes must reside within the Notes or Quick Notes directories.");
+          toastError("Notes must reside within the Notes or Quick Notes directories.");
           return;
         }
         if (currentMode !== "FILES" && currentMode !== targetMode) {
-          alert("Notes cannot be moved across Obsidian and Keep mode boundaries.");
+          toastError("Notes cannot be moved across Obsidian and Keep mode boundaries.");
           return;
         }
       } else if (data.type === "media") {
@@ -215,7 +216,7 @@ export function BrowserTree({
           targetMode === "KEEP" ||
           targetMode === "CHAT"
         ) {
-          alert("Chat attachments and Keep media files are locked within their respective roots.");
+          toastError("Chat attachments and Keep media files are locked within their respective roots.");
           return;
         }
       }
@@ -225,14 +226,17 @@ export function BrowserTree({
         formData.append("folderId", data.id);
         formData.append("parentId", targetFolderId ?? "");
         await moveFolderAction(formData);
+        toastSuccess("Moved");
       } else if (data.type === "note") {
         formData.append("noteId", data.id);
         formData.append("folderId", targetFolderId ?? "");
         await moveNoteAction(formData);
+        toastSuccess("Moved");
       } else if (data.type === "media") {
         formData.append("mediaAssetId", data.id);
         formData.append("folderId", targetFolderId ?? "");
         await moveMediaAssetAction(formData);
+        toastSuccess("Moved");
       }
     } catch (err) {
       console.error("Drop operation failed", err);

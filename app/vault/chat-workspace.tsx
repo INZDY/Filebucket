@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { getPresignedUploadUrlAction } from "@/app/media/actions";
 import { createChatAttachmentAction } from "@/app/media/actions";
 import { MangaReader, type ReaderPage } from "@/components/manga-reader";
+import { toastError } from "@/components/ui/toast";
 import { getMediaAssetUrl, formatBytes, cn } from "@/lib/utils";
 
 interface MediaAsset {
@@ -211,7 +212,7 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
       }
     } catch (err) {
       console.error("Failed to send message", err);
-      alert("Failed to send message or upload attachments.");
+      toastError("Failed to send message or upload attachments.");
     } finally {
       setIsSending(false);
     }
@@ -316,7 +317,7 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
       setIsReaderOpen(true);
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : "Failed to load archive in Manga Reader.");
+      toastError(err instanceof Error ? err.message : "Failed to load archive in Manga Reader.");
     } finally {
       setIsArchiveLoading(false);
     }

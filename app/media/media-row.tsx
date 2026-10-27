@@ -6,6 +6,7 @@ import { ImagePlus, MoreHorizontal, Move, Pencil, Trash2 } from "lucide-react";
 
 import { renameMediaAssetAction, moveMediaAssetAction, trashMediaAssetAction } from "@/app/media/actions";
 import { Button } from "@/components/ui/button";
+import { toastSuccess } from "@/components/ui/toast";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -91,6 +92,7 @@ export function MediaRow({
             }));
             setMenu(null);
             await renameMediaAssetAction(formData);
+            toastSuccess("Renamed");
           }}
           className="flex flex-1 items-center gap-2 px-2"
           onClick={(e) => e.stopPropagation()}
@@ -159,6 +161,7 @@ export function MediaRow({
                 }));
                 setMenu(null);
                 await moveMediaAssetAction(formData);
+                toastSuccess("Moved");
               }}
               className="space-y-2 p-2"
             >
@@ -217,6 +220,7 @@ export function MediaRow({
                   }));
                   setMenu(null);
                   await trashMediaAssetAction(formData);
+                  toastSuccess("Moved to trash");
                 }}
               >
                 <input type="hidden" name="mediaAssetId" value={mediaAsset.id} />

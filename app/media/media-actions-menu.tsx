@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { moveMediaAssetAction, trashMediaAssetAction } from "@/app/media/actions";
 import { Button } from "@/components/ui/button";
+import { toastSuccess } from "@/components/ui/toast";
 
 type MediaActionsMenuProps = {
   mediaAsset: {
@@ -107,6 +108,7 @@ export function MediaActionsMenu({ destinations, mediaAsset }: MediaActionsMenuP
                 }));
                 setMenu(null);
                 await moveMediaAssetAction(formData);
+                toastSuccess("Moved");
               }}
               className="space-y-2 p-2"
             >
@@ -156,6 +158,7 @@ export function MediaActionsMenu({ destinations, mediaAsset }: MediaActionsMenuP
                   }));
                   setMenu(null);
                   await trashMediaAssetAction(formData);
+                  toastSuccess("Moved to trash");
                 }}
               >
                 <input type="hidden" name="mediaAssetId" value={mediaAsset.id} />
