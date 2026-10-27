@@ -34,7 +34,7 @@ export function SearchInput({
     <div className="relative">
       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
       <Input
-        className="border-slate-850 bg-[#14141a]/60 pl-9 text-slate-100 placeholder:text-slate-550 focus-visible:ring-purple-500/50 glass-input"
+        className="border-slate-850 bg-[#14141a]/60 pl-9 text-slate-100 placeholder:text-slate-550 focus-visible:ring-blue-500/50 glass-input"
         value={query}
         onChange={(e) => handleSearch(e.target.value)}
         placeholder="Search titles and folders"

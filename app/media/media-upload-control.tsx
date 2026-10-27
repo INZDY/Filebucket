@@ -276,7 +276,7 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
                 <div
                   className={cn(
                     "h-full rounded-full transition-all duration-300",
-                    activeCount > 0 ? "bg-purple-500" : failedCount > 0 ? "bg-amber-500" : "bg-teal-500"
+                    activeCount > 0 ? "bg-blue-500" : failedCount > 0 ? "bg-amber-500" : "bg-teal-500"
                   )}
                   style={{
                     width: `${overallProgress}%`,

@@ -69,7 +69,7 @@ export function MediaRow({
     <div
       className={cn(
         "group relative flex h-9 items-center rounded-md text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50",
-        isActive && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
+        isActive && "bg-blue-600/15 text-blue-200 hover:bg-blue-600/20",
       )}
       draggable
       onDragStart={handleDragStart}

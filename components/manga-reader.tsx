@@ -519,7 +519,7 @@ export function MangaReader({
             className={cn(
               "h-7 px-2.5 text-xs gap-1 font-medium transition-all active:scale-95",
               layoutMode === "paged-ltr"
-                ? "bg-purple-600/90 text-white shadow-md shadow-purple-600/10"
+                ? "bg-blue-600/90 text-white shadow-md shadow-blue-600/10"
                 : "text-slate-400 hover:text-slate-200"
             )}
             onClick={() => setLayoutMode("paged-ltr")}
@@ -533,7 +533,7 @@ export function MangaReader({
             className={cn(
               "h-7 px-2.5 text-xs gap-1 font-medium transition-all active:scale-95",
               layoutMode === "paged-rtl"
-                ? "bg-purple-600/90 text-white shadow-md shadow-purple-600/10"
+                ? "bg-blue-600/90 text-white shadow-md shadow-blue-600/10"
                 : "text-slate-400 hover:text-slate-200"
             )}
             onClick={() => setLayoutMode("paged-rtl")}
@@ -547,7 +547,7 @@ export function MangaReader({
             className={cn(
               "h-7 px-2.5 text-xs gap-1 font-medium transition-all active:scale-95",
               layoutMode === "webtoon"
-                ? "bg-purple-600/90 text-white shadow-md shadow-purple-600/10"
+                ? "bg-blue-600/90 text-white shadow-md shadow-blue-600/10"
                 : "text-slate-400 hover:text-slate-200"
             )}
             onClick={() => setLayoutMode("webtoon")}
@@ -592,7 +592,7 @@ export function MangaReader({
           <>
             {/* Desktop select */}
             <select
-              className="hidden sm:inline-block h-8 rounded-md border border-slate-800/60 bg-slate-900/80 px-2 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-purple-600"
+              className="hidden sm:inline-block h-8 rounded-md border border-slate-800/60 bg-slate-900/80 px-2 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-600"
               value={fitMode}
               onChange={(e) => {
                 setFitMode(e.target.value as "height" | "width" | "original");
@@ -664,7 +664,7 @@ export function MangaReader({
           <div className="relative h-full w-full flex items-center justify-center overflow-auto p-4 select-none">
             {isLoading ? (
               <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 backdrop-blur-xs">
-                <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
               </div>
             ) : null}
 
@@ -703,7 +703,7 @@ export function MangaReader({
           <span>Page</span>
           <input
             aria-label="Jump to page"
-            className="w-10 rounded border border-slate-800 bg-slate-900 px-1 py-0.5 text-center text-[10px] sm:text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-purple-600"
+            className="w-10 rounded border border-slate-800 bg-slate-900 px-1 py-0.5 text-center text-[10px] sm:text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-600"
             inputMode="numeric"
             onBlur={() => setPageInput(String(pageIndex + 1))}
             onChange={(e) => setPageInput(e.target.value)}
@@ -778,7 +778,7 @@ function WebtoonPage({ page, index, resolveUrl }: WebtoonPageProps) {
       ) : (
         <div className="flex flex-col items-center justify-center text-slate-500 text-xs gap-2 py-20">
           {loading ? (
-            <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
+            <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
           ) : (
             <div className="h-5 w-5 rounded-full border border-dashed border-slate-700" />
           )}

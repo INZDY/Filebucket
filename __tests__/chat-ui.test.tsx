@@ -137,9 +137,9 @@ describe("ChatWorkspace UI Component", () => {
     const redIcon = container.querySelector(".text-red-400");
     expect(redIcon).not.toBeNull();
 
-    // Check EPUB uses purple icon color class
-    const purpleIcon = container.querySelector(".text-purple-400");
-    expect(purpleIcon).not.toBeNull();
+    // Check EPUB uses indigo icon color class
+    const indigoIcon = container.querySelector(".text-indigo-400");
+    expect(indigoIcon).not.toBeNull();
 
     await act(async () => {
       root.unmount();

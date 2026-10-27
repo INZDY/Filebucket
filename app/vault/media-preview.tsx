@@ -227,7 +227,7 @@ export function MediaPreview({
           <div className="flex items-center gap-2 shrink-0">
             {previewKind === "image" && (
               <Button
-                className="h-8 gap-1.5 px-3 bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs shadow-md shadow-purple-600/10 active:scale-95 transition-transform"
+                className="h-8 gap-1.5 px-3 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-md shadow-blue-600/10 active:scale-95 transition-transform"
                 onClick={() => setIsReaderOpen(true)}
                 type="button"
               >
@@ -307,7 +307,7 @@ export function MediaPreview({
                       </p>
                     )}
                     <Button
-                      className="h-8 gap-1.5 bg-purple-600 hover:bg-purple-500 text-white active:scale-95 transition-transform text-xs font-semibold"
+                      className="h-8 gap-1.5 bg-blue-600 hover:bg-blue-500 text-white active:scale-95 transition-transform text-xs font-semibold"
                       disabled={isPdfLoading}
                       onClick={handleOpenPdfReader}
                       size="sm"
@@ -379,7 +379,7 @@ export function MediaPreview({
             if (previewKind === "archive") {
               return (
                 <div className="w-full max-w-md rounded-md border border-slate-800 bg-[#191c22] p-6 text-center">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-purple-950/40 text-purple-400">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-blue-950/40 text-blue-400">
                     <BookOpen className="h-5 w-5" />
                   </div>
                   <p className="mt-4 text-sm font-medium text-slate-100">{selectedMedia.filename}</p>
@@ -392,7 +392,7 @@ export function MediaPreview({
                     </p>
                   )}
                   <Button
-                    className="w-full h-10 bg-purple-600 hover:bg-purple-500 text-white active:scale-95 transition-transform text-xs font-semibold gap-1.5"
+                    className="w-full h-10 bg-blue-600 hover:bg-blue-500 text-white active:scale-95 transition-transform text-xs font-semibold gap-1.5"
                     onClick={handleOpenArchiveReader}
                     disabled={isArchiveLoading}
                     type="button"

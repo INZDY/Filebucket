@@ -96,8 +96,8 @@ export function FolderRow({
     <div
       className={cn(
         "group relative flex h-10 items-center rounded-md text-sm text-slate-200 transition-colors hover:bg-slate-800/80 hover:text-slate-50",
-        isActive && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
-        isDragOver && "bg-purple-950/20 border border-dashed border-purple-500",
+        isActive && "bg-blue-600/15 text-blue-200 hover:bg-blue-600/20",
+        isDragOver && "bg-blue-950/20 border border-dashed border-blue-500",
       )}
       draggable={!(folder.type === "NOTES_ROOT" || folder.type === "KEEP_ROOT" || folder.type === "CHAT_ROOT")}
       onDragStart={handleDragStart}

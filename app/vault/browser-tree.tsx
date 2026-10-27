@@ -345,7 +345,7 @@ export function BrowserTree({
     <div
       className={cn(
         "flex flex-col gap-0.5 mt-1 min-h-[150px] rounded-md transition-all",
-        isDragOverRoot && "bg-purple-950/20 border border-dashed border-purple-500",
+        isDragOverRoot && "bg-blue-950/20 border border-dashed border-blue-500",
       )}
       onDragLeave={handleDragLeave}
       onDragOver={(e) => handleDragOver(rootFolderId, e)}

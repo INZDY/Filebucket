@@ -246,7 +246,7 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
             href={part}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-purple-400 hover:underline break-all"
+            className="text-indigo-400 hover:underline break-all"
           >
             {part}
           </a>
@@ -349,7 +349,7 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
       {/* 1. Header panel */}
       <div className="flex h-12 items-center justify-between border-b border-slate-800/60 bg-[#14161f]/80 px-4">
         <div className="flex items-center gap-2 min-w-0">
-          <MessageSquare className="h-5 w-5 text-purple-400 shrink-0" />
+          <MessageSquare className="h-5 w-5 text-indigo-400 shrink-0" />
           <span className="font-semibold text-slate-100 truncate">
             {isAtRoot ? "Chat Channels" : activeChannel!.name}
           </span>
@@ -365,7 +365,7 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
       <div className="flex-1 min-h-0 overflow-y-auto py-4 space-y-4">
         {isAtRoot ? (
           <div className="flex h-full flex-col items-center justify-center text-center p-6">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-600/10 border border-purple-500/20 text-purple-400 mb-4 shadow-[0_0_20px_rgba(139,92,246,0.1)]">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 mb-4 shadow-[0_0_20px_rgba(99,102,241,0.1)]">
               <MessageSquare className="h-8 w-8" />
             </div>
             <h3 className="text-base font-semibold text-slate-100">Welcome to Chat Channels</h3>
@@ -375,7 +375,7 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
           </div>
         ) : isLoading ? (
           <div className="flex h-full items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
+            <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
           </div>
         ) : messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center p-6">
@@ -386,10 +386,10 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
           messages.map((msg) => (
             <div 
               key={msg.id} 
-              className="group flex items-start gap-3 px-4 py-2.5 hover:bg-slate-800/15 transition-all duration-150 relative border-l-2 border-transparent hover:border-purple-500/35"
+              className="group flex items-start gap-3 px-4 py-2.5 hover:bg-slate-800/15 transition-all duration-150 relative border-l-2 border-transparent hover:border-indigo-500/35"
             >
               {/* User Avatar Initial */}
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-600/10 text-purple-400 text-sm font-semibold border border-purple-500/15">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600/10 text-indigo-400 text-sm font-semibold border border-indigo-500/15">
                 {msg.user?.name?.slice(0, 2).toUpperCase() || msg.user?.email?.slice(0, 2).toUpperCase() || "??"}
               </div>
 
@@ -440,7 +440,7 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
                         iconColorClass = "text-red-400";
                       } else if (isEpub || isManga) {
                         AttachmentIcon = BookOpen;
-                        iconColorClass = "text-purple-400";
+                        iconColorClass = "text-indigo-400";
                       } else if (isText) {
                         AttachmentIcon = FileText;
                         iconColorClass = "text-cyan-400";
@@ -479,7 +479,7 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="h-8 w-8 text-purple-400 hover:bg-purple-950/20 hover:text-purple-300"
+                                className="h-8 w-8 text-indigo-400 hover:bg-indigo-950/20 hover:text-indigo-300"
                                 onClick={() => handleZipClick(asset)}
                                 title="Read in Manga Reader"
                               >
@@ -578,7 +578,7 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder={`Message ${activeChannel.name}`}
-              className="flex-1 min-h-[40px] max-h-36 py-2 px-3 border border-slate-800 rounded-md bg-[#171a20] text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500/50 resize-none overflow-y-auto"
+              className="flex-1 min-h-[40px] max-h-36 py-2 px-3 border border-slate-800 rounded-md bg-[#171a20] text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 resize-none overflow-y-auto"
               disabled={isSending}
               rows={1}
               onKeyDown={handleKeyDown}
@@ -588,7 +588,7 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
             <Button
               type="submit"
               size="icon"
-              className="h-10 w-10 bg-purple-600 hover:bg-purple-700 text-white shrink-0 shadow-lg shadow-purple-950/20 active:scale-95 duration-100 transition-transform"
+              className="h-10 w-10 bg-indigo-600 hover:bg-indigo-700 text-white shrink-0 shadow-lg shadow-indigo-950/20 active:scale-95 duration-100 transition-transform"
               disabled={isSending || (!content.trim() && pendingFiles.length === 0)}
               title="Send message"
             >
@@ -605,7 +605,7 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
       {/* 4. Fullscreen Manga Reader / Archive Loader overlays */}
       {isArchiveLoading && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/75 backdrop-blur-sm">
-          <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
           <p className="mt-3 text-sm text-slate-350">Extracting manga pages client-side...</p>
         </div>
       )}

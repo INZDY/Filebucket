@@ -64,6 +64,6 @@ export function GlobalLoader({ renderKey }: GlobalLoaderProps) {
   if (!loading) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 z-50 animate-pulse" />
+    <div className="fixed top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 via-blue-400 to-blue-500 z-50 animate-pulse" />
   );
 }
