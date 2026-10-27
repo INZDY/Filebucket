@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import "./globals.css";
 import { PwaRegistry } from "@/components/pwa-registry";
+import { Toaster } from "@/components/ui/toast";
 
 export const metadata: Metadata = {
   title: "Filebucket",
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <PwaRegistry />
+        <Toaster />
         {children}
       </body>
     </html>
