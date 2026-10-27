@@ -6,6 +6,7 @@ import { ImagePlus, MoreHorizontal, Move, Pencil, Trash2 } from "lucide-react";
 
 import { renameMediaAssetAction, moveMediaAssetAction, trashMediaAssetAction } from "@/app/media/actions";
 import { Button } from "@/components/ui/button";
+import { toastSuccess } from "@/components/ui/toast";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -69,7 +70,7 @@ export function MediaRow({
     <div
       className={cn(
         "group relative flex h-9 items-center rounded-md text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50",
-        isActive && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
+        isActive && "bg-blue-600/15 text-blue-200 hover:bg-blue-600/20",
       )}
       draggable
       onDragStart={handleDragStart}
@@ -91,6 +92,7 @@ export function MediaRow({
             }));
             setMenu(null);
             await renameMediaAssetAction(formData);
+            toastSuccess("Renamed");
           }}
           className="flex flex-1 items-center gap-2 px-2"
           onClick={(e) => e.stopPropagation()}
@@ -159,6 +161,7 @@ export function MediaRow({
                 }));
                 setMenu(null);
                 await moveMediaAssetAction(formData);
+                toastSuccess("Moved");
               }}
               className="space-y-2 p-2"
             >
@@ -217,6 +220,7 @@ export function MediaRow({
                   }));
                   setMenu(null);
                   await trashMediaAssetAction(formData);
+                  toastSuccess("Moved to trash");
                 }}
               >
                 <input type="hidden" name="mediaAssetId" value={mediaAsset.id} />

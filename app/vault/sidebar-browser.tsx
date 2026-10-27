@@ -396,7 +396,7 @@ export function SidebarBrowser({
                 className={cn(
                   "h-7 px-2.5 text-xs rounded-full",
                   searchFilter === filter
-                    ? "bg-purple-600 hover:bg-purple-700 text-white font-medium"
+                    ? "bg-blue-600 hover:bg-blue-700 text-white font-medium"
                     : "text-slate-400 border-slate-800 bg-transparent hover:bg-slate-800 hover:text-slate-200"
                 )}
                 onClick={() => setSearchFilter(filter)}
@@ -439,7 +439,7 @@ export function SidebarBrowser({
                     key={`note-result:${note.id}`}
                     className={cn(
                       "block rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50",
-                      selectedNote?.id === note.id && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
+                      selectedNote?.id === note.id && "bg-blue-600/15 text-blue-200 hover:bg-blue-600/20",
                     )}
                     href={getContentHref({
                       folderId: note.folder?.id ?? null,
@@ -465,7 +465,7 @@ export function SidebarBrowser({
                     key={`media-result:${mediaAsset.id}`}
                     className={cn(
                       "block rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50",
-                      selectedMedia?.id === mediaAsset.id && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
+                      selectedMedia?.id === mediaAsset.id && "bg-blue-600/15 text-blue-200 hover:bg-blue-600/20",
                     )}
                     href={getContentHref({
                       folderId: mediaAsset.folder?.id ?? null,
@@ -511,7 +511,7 @@ export function SidebarBrowser({
                       key={tag.id}
                       className={cn(
                         "flex h-9 items-center gap-2 rounded-md px-3 text-sm text-slate-300 transition-colors hover:bg-slate-800/70 hover:text-slate-50",
-                        isActive && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20"
+                        isActive && "bg-blue-600/15 text-blue-200 hover:bg-blue-600/20"
                       )}
                       href={`/?${tagParams.toString()}`}
                     >
@@ -616,7 +616,7 @@ export function SidebarBrowser({
                         href={`/?view=trash&folder=${folder.id}`}
                         className={cn(
                           "flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-300 hover:text-slate-50",
-                          isSelected && "text-purple-200"
+                          isSelected && "text-blue-200"
                         )}
                       >
                         <Folder className="h-4 w-4 shrink-0 text-slate-400" />
@@ -669,7 +669,7 @@ export function SidebarBrowser({
                         href={`/?view=trash&note=${note.id}`}
                         className={cn(
                           "flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-300 hover:text-slate-50",
-                          isSelected && "text-purple-200"
+                          isSelected && "text-blue-200"
                         )}
                       >
                         <FileText className="h-4 w-4 shrink-0 text-slate-400" />
@@ -722,7 +722,7 @@ export function SidebarBrowser({
                         href={`/?view=trash&media=${media.id}`}
                         className={cn(
                           "flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-300 hover:text-slate-50",
-                          isSelected && "text-purple-200"
+                          isSelected && "text-blue-200"
                         )}
                       >
                         <ImagePlus className="h-4 w-4 shrink-0 text-slate-400" />
@@ -776,7 +776,7 @@ export function SidebarBrowser({
           <span>Storage</span>
           <span>{usedBytes !== null ? `${formatBytes(usedBytes)} / ${formatBytes(TOTAL_QUOTA)}` : "Loading..."}</span>
         </div>
-        <Progress value={percentage} className="h-1.5 bg-slate-800 text-purple-600 mb-2" />
+        <Progress value={percentage} className="h-1.5 bg-slate-800 text-blue-600 mb-2" />
         
         {/* Settings button - mobile only */}
         <button

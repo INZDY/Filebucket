@@ -72,7 +72,7 @@ export function MediaCard({
     : isPdf
     ? "bg-red-500/10 text-red-400 border-red-500/25 group-hover:bg-red-500/20"
     : isEpub || isManga
-    ? "bg-purple-500/10 text-purple-400 border-purple-500/20 group-hover:bg-purple-500/20"
+    ? "bg-blue-500/10 text-blue-400 border-blue-500/20 group-hover:bg-blue-500/20"
     : isText
     ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 group-hover:bg-cyan-500/20"
     : "bg-slate-500/10 text-slate-400 border-slate-500/20 group-hover:bg-slate-500/20";
@@ -86,7 +86,7 @@ export function MediaCard({
     : isPdf
     ? "hover:border-red-500/40 hover:shadow-[0_0_15px_rgba(239,68,68,0.05)]"
     : isEpub || isManga
-    ? "hover:border-purple-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.05)]"
+    ? "hover:border-blue-500/40 hover:shadow-[0_0_15px_rgba(59,130,246,0.05)]"
     : isText
     ? "hover:border-cyan-500/40 hover:shadow-[0_0_15px_rgba(6,182,212,0.05)]"
     : "hover:border-slate-500/40";

@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 
 import { getPresignedUploadUrlAction, createMediaAssetAction } from "@/app/media/actions";
 import { Button } from "@/components/ui/button";
+import { toastError, toastSuccess } from "@/components/ui/toast";
 import { cn, formatBytes } from "@/lib/utils";
 
 type UploadState = {
@@ -146,9 +147,11 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
       }
 
       updateUploadStatus(upload.id, { status: "success", progress: 100 });
+      return true;
     } catch (err: unknown) {
       console.error("Upload error:", err);
       updateUploadStatus(upload.id, { status: "error", error: err instanceof Error ? err.message : "Upload failed" });
+      return false;
     }
   }
 
@@ -183,10 +186,25 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
     }
 
     // Run upload sequence
+    let succeeded = 0;
+    let failed = 0;
     for (const upload of newUploads) {
       if (upload.status === "waiting") {
-        await performUpload(upload);
+        if (await performUpload(upload)) {
+          succeeded += 1;
+        } else {
+          failed += 1;
+        }
+      } else {
+        failed += 1;
       }
+    }
+
+    if (succeeded > 0) {
+      toastSuccess(`${succeeded} file${succeeded === 1 ? "" : "s"} uploaded`);
+    }
+    if (failed > 0) {
+      toastError(`${failed} file${failed === 1 ? "" : "s"} could not be uploaded`);
     }
   }
 
@@ -276,7 +294,7 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
                 <div
                   className={cn(
                     "h-full rounded-full transition-all duration-300",
-                    activeCount > 0 ? "bg-purple-500" : failedCount > 0 ? "bg-amber-500" : "bg-teal-500"
+                    activeCount > 0 ? "bg-blue-500" : failedCount > 0 ? "bg-amber-500" : "bg-teal-500"
                   )}
                   style={{
                     width: `${overallProgress}%`,

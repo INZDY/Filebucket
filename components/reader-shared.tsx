@@ -138,6 +138,9 @@ type ReaderFooterProps = {
   percentage?: number;
   className?: string;
   isVisible?: boolean;
+  /** When provided, the progress bar becomes a draggable scrubber. */
+  onSeek?: (percentage: number) => void;
+  children?: React.ReactNode; // custom footer content, e.g. a page jump input
 };
 
 export function ReaderFooter({
@@ -145,7 +148,11 @@ export function ReaderFooter({
   percentage = 0,
   className,
   isVisible = true,
+  onSeek,
+  children,
 }: ReaderFooterProps) {
+  const clampedPercentage = Math.min(Math.max(percentage, 0), 100);
+
   return (
     <div
       className={cn(
@@ -155,18 +162,31 @@ export function ReaderFooter({
       )}
     >
       <div className="flex-1 flex items-center justify-between gap-4">
-        {/* Progress Bar */}
-        <div className="flex-1 max-w-[200px] h-1 bg-slate-800 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-blue-500 transition-all duration-300"
-            style={{ width: `${Math.min(Math.max(percentage, 0), 100)}%` }}
+        {onSeek ? (
+          <input
+            aria-label="Seek progress"
+            className="flex-1 max-w-[200px] h-1 cursor-pointer accent-blue-500"
+            max={100}
+            min={0}
+            onChange={(e) => onSeek(Number(e.target.value))}
+            step={0.1}
+            type="range"
+            value={clampedPercentage}
           />
-        </div>
+        ) : (
+          <div className="flex-1 max-w-[200px] h-1 bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-blue-500 transition-all duration-300"
+              style={{ width: `${clampedPercentage}%` }}
+            />
+          </div>
+        )}
         {progressText && (
           <span className="text-[10px] sm:text-xs font-medium text-slate-400">
             {progressText}
           </span>
         )}
+        {children}
       </div>
     </div>
   );

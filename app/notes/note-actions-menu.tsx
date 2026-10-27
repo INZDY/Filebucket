@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { moveNoteAction, trashNoteAction } from "@/app/notes/actions";
 import { Button } from "@/components/ui/button";
+import { toastSuccess } from "@/components/ui/toast";
 
 type NoteActionsMenuProps = {
   note: {
@@ -107,6 +108,7 @@ export function NoteActionsMenu({ destinations, note }: NoteActionsMenuProps) {
                 }));
                 setMenu(null);
                 await moveNoteAction(formData);
+                toastSuccess("Moved");
               }}
               className="space-y-2 p-2"
             >
@@ -166,6 +168,7 @@ export function NoteActionsMenu({ destinations, note }: NoteActionsMenuProps) {
                   }));
                   setMenu(null);
                   await trashNoteAction(formData);
+                  toastSuccess("Moved to trash");
                 }}
               >
                 <input type="hidden" name="noteId" value={note.id} />

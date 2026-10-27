@@ -45,6 +45,9 @@ export function MediaPreview({
   const [archivePages, setArchivePages] = useState<ReaderPage[]>([]);
   const [isArchiveLoading, setIsArchiveLoading] = useState(false);
   const [archiveError, setArchiveError] = useState("");
+  const [pdfPages, setPdfPages] = useState<ReaderPage[]>([]);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState("");
 
   const previewUrl = getMediaAssetUrl(selectedMedia.r2Key);
   const previewKind = getMediaPreviewKind(selectedMedia.contentType, selectedMedia.filename);
@@ -160,6 +163,42 @@ export function MediaPreview({
     }
   };
 
+  const handleOpenPdfReader = async () => {
+    if (!previewUrl) return;
+
+    setIsPdfLoading(true);
+    setPdfError("");
+
+    try {
+      const { parsePdfDocument } = await import("@/lib/pdf");
+      const parsedPages = await parsePdfDocument(previewUrl);
+      if (parsedPages.length === 0) {
+        throw new Error("This PDF has no pages.");
+      }
+      setPdfPages(parsedPages);
+      setIsReaderOpen(true);
+    } catch (err) {
+      console.error(err);
+      setPdfError(err instanceof Error ? err.message : "Failed to open PDF.");
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+
+  const isAssetReader = archivePages.length > 0 || pdfPages.length > 0;
+  const readerPages: ReaderPage[] =
+    archivePages.length > 0
+      ? archivePages
+      : pdfPages.length > 0
+        ? pdfPages
+        : siblingMedia.map((m) => ({
+            name: m.filename,
+            url: getMediaAssetUrl(m.r2Key) || "",
+          }));
+  const readerTitle = isAssetReader
+    ? selectedMedia.filename
+    : selectedMedia.folder?.name || "Vault";
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="border-b border-slate-800 bg-[#191c22] px-5 py-2.5">
@@ -188,7 +227,7 @@ export function MediaPreview({
           <div className="flex items-center gap-2 shrink-0">
             {previewKind === "image" && (
               <Button
-                className="h-8 gap-1.5 px-3 bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs shadow-md shadow-purple-600/10 active:scale-95 transition-transform"
+                className="h-8 gap-1.5 px-3 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-md shadow-blue-600/10 active:scale-95 transition-transform"
                 onClick={() => setIsReaderOpen(true)}
                 type="button"
               >
@@ -260,10 +299,38 @@ export function MediaPreview({
 
             if (previewKind === "pdf" && previewUrl) {
               return (
-                <iframe
-                  src={previewUrl}
-                  className="w-full h-full min-h-[calc(100vh-240px)] border-0 rounded-md bg-white shadow-md z-0"
-                />
+                <div className="flex h-full w-full flex-col gap-2">
+                  <div className="flex items-center justify-end gap-3">
+                    {pdfError && (
+                      <p className="text-xs text-rose-400 bg-rose-950/20 border border-rose-900/30 px-3 py-1.5 rounded-md">
+                        {pdfError}
+                      </p>
+                    )}
+                    <Button
+                      className="h-8 gap-1.5 bg-blue-600 hover:bg-blue-500 text-white active:scale-95 transition-transform text-xs font-semibold"
+                      disabled={isPdfLoading}
+                      onClick={handleOpenPdfReader}
+                      size="sm"
+                      type="button"
+                    >
+                      {isPdfLoading ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Loading PDF...
+                        </>
+                      ) : (
+                        <>
+                          <BookOpen className="h-3.5 w-3.5" />
+                          Open in Reader
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <iframe
+                    src={previewUrl}
+                    className="w-full flex-1 min-h-[calc(100vh-280px)] border-0 rounded-md bg-white shadow-md z-0"
+                  />
+                </div>
               );
             }
 
@@ -312,7 +379,7 @@ export function MediaPreview({
             if (previewKind === "archive") {
               return (
                 <div className="w-full max-w-md rounded-md border border-slate-800 bg-[#191c22] p-6 text-center">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-purple-950/40 text-purple-400">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-blue-950/40 text-blue-400">
                     <BookOpen className="h-5 w-5" />
                   </div>
                   <p className="mt-4 text-sm font-medium text-slate-100">{selectedMedia.filename}</p>
@@ -325,7 +392,7 @@ export function MediaPreview({
                     </p>
                   )}
                   <Button
-                    className="w-full h-10 bg-purple-600 hover:bg-purple-500 text-white active:scale-95 transition-transform text-xs font-semibold gap-1.5"
+                    className="w-full h-10 bg-blue-600 hover:bg-blue-500 text-white active:scale-95 transition-transform text-xs font-semibold gap-1.5"
                     onClick={handleOpenArchiveReader}
                     disabled={isArchiveLoading}
                     type="button"
@@ -381,21 +448,14 @@ export function MediaPreview({
           onClose={() => {
             setIsReaderOpen(false);
             setArchivePages([]);
+            setPdfPages([]);
           }}
-          title={archivePages.length > 0 ? selectedMedia.filename : selectedMedia.folder?.name || "Vault"}
-          pages={
-            archivePages.length > 0
-              ? archivePages
-              : siblingMedia.map((m) => ({
-                  name: m.filename,
-                  url: getMediaAssetUrl(m.r2Key) || "",
-                }))
-          }
+          title={readerTitle}
+          pages={readerPages}
           initialPageIndex={
-            archivePages.length > 0
-              ? 0
-              : siblingMedia.findIndex((m) => m.id === selectedMedia.id)
+            isAssetReader ? 0 : siblingMedia.findIndex((m) => m.id === selectedMedia.id)
           }
+          mediaId={isAssetReader ? selectedMedia.id : undefined}
         />
       )}
 

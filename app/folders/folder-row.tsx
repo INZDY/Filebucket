@@ -10,6 +10,7 @@ import {
   trashFolderAction,
 } from "@/app/folders/actions";
 import { Button } from "@/components/ui/button";
+import { toastSuccess } from "@/components/ui/toast";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -96,8 +97,8 @@ export function FolderRow({
     <div
       className={cn(
         "group relative flex h-10 items-center rounded-md text-sm text-slate-200 transition-colors hover:bg-slate-800/80 hover:text-slate-50",
-        isActive && "bg-purple-600/15 text-purple-200 hover:bg-purple-600/20",
-        isDragOver && "bg-purple-950/20 border border-dashed border-purple-500",
+        isActive && "bg-blue-600/15 text-blue-200 hover:bg-blue-600/20",
+        isDragOver && "bg-blue-950/20 border border-dashed border-blue-500",
       )}
       draggable={!(folder.type === "NOTES_ROOT" || folder.type === "KEEP_ROOT" || folder.type === "CHAT_ROOT")}
       onDragStart={handleDragStart}
@@ -127,6 +128,7 @@ export function FolderRow({
             }));
             setMenu(null);
             await renameFolderAction(formData);
+            toastSuccess("Renamed");
           }}
           className="flex flex-1 items-center gap-2 px-2"
           onClick={(event) => event.stopPropagation()}
@@ -221,6 +223,7 @@ export function FolderRow({
                 }));
                 setMenu(null);
                 await moveFolderAction(formData);
+                toastSuccess("Moved");
               }}
               className="space-y-2 p-2"
             >
@@ -304,6 +307,7 @@ export function FolderRow({
                   }));
                   setMenu(null);
                   await trashFolderAction(formData);
+                  toastSuccess("Moved to trash");
                 }}
               >
                 <input type="hidden" name="folderId" value={folder.id} />

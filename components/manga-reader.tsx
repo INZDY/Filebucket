@@ -36,6 +36,8 @@ export type MangaReaderProps = {
   pages: ReaderPage[];
   initialPageIndex?: number;
   onPageChange?: (index: number) => void;
+  /** When set, reading progress is saved to and restored from the media progress API. */
+  mediaId?: string;
 };
 
 export function MangaReader({
@@ -45,12 +47,22 @@ export function MangaReader({
   pages,
   initialPageIndex = 0,
   onPageChange,
+  mediaId,
 }: MangaReaderProps) {
   const [pageIndex, setPageIndex] = useState(initialPageIndex);
   const [layoutMode, setLayoutMode] = useState<"webtoon" | "paged-ltr" | "paged-rtl">("paged-ltr");
   const [zoom, setZoom] = useState(100);
   const [fitMode, setFitMode] = useState<"width" | "height" | "original">("height");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [pageInput, setPageInput] = useState(String(initialPageIndex + 1));
+
+  // Reading progress persistence
+  const [progressLoaded, setProgressLoaded] = useState(false);
+  const lastSavedRef = useRef<{ position: string; percentage: number } | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const webtoonScrollRef = useRef<HTMLDivElement>(null);
+  const webtoonRestoredRef = useRef(false);
+  const webtoonFrameRef = useRef<number | null>(null);
 
   // Cache of resolved page URLs
   const [resolvedUrls, setResolvedUrls] = useState<Record<number, string>>({});
@@ -80,6 +92,7 @@ export function MangaReader({
       objectUrlsRef.current = [];
       resolvedUrlsRef.current = {};
       setResolvedUrls({});
+      webtoonRestoredRef.current = false;
       prevPagesLengthRef.current = pages.length;
       prevFirstPageNameRef.current = pages[0]?.name;
     }
@@ -92,10 +105,155 @@ export function MangaReader({
     setPageIndex(initialPageIndex);
   }, [initialPageIndex]);
 
+  // Keep the page jump input in sync with the active page
+  useEffect(() => {
+    setPageInput(String(pageIndex + 1));
+  }, [pageIndex]);
+
   // Notify page changes
   useEffect(() => {
     onPageChange?.(pageIndex);
   }, [pageIndex, onPageChange]);
+
+  const progressPercentage = pages.length > 1 ? (pageIndex / (pages.length - 1)) * 100 : 0;
+
+  // Fetch saved reading progress
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (!mediaId) {
+      setProgressLoaded(true);
+      return;
+    }
+
+    let active = true;
+    setProgressLoaded(false);
+    lastSavedRef.current = null;
+    webtoonRestoredRef.current = false;
+
+    const fetchProgress = async () => {
+      try {
+        const res = await fetch(`/api/media/progress?mediaAssetId=${mediaId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (active && data) {
+            if (data.settings?.mangaLayoutMode) {
+              setLayoutMode(data.settings.mangaLayoutMode);
+            }
+            if (data.position !== undefined && data.position !== null) {
+              const savedIndex = Math.floor(Number(data.position));
+              if (Number.isFinite(savedIndex) && savedIndex >= 0) {
+                setPageIndex(savedIndex);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load manga progress:", err);
+      } finally {
+        if (active) setProgressLoaded(true);
+      }
+    };
+
+    fetchProgress();
+    return () => {
+      active = false;
+    };
+  }, [isOpen, mediaId]);
+
+  // Save reading progress to the server
+  const saveProgress = useCallback(
+    async (index: number) => {
+      if (!mediaId) return;
+      const pct = parseFloat(
+        (pages.length > 1 ? (index / (pages.length - 1)) * 100 : 0).toFixed(1)
+      );
+      const position = String(index);
+      if (
+        lastSavedRef.current &&
+        lastSavedRef.current.position === position &&
+        lastSavedRef.current.percentage === pct
+      ) {
+        return;
+      }
+      lastSavedRef.current = { position, percentage: pct };
+      try {
+        await fetch("/api/media/progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mediaAssetId: mediaId,
+            position,
+            percentage: pct,
+            settings: { mangaLayoutMode: layoutMode },
+          }),
+        });
+      } catch (err) {
+        console.error("Failed to save manga progress:", err);
+      }
+    },
+    [mediaId, pages.length, layoutMode]
+  );
+
+  // Debounced save
+  useEffect(() => {
+    if (!isOpen || !mediaId || !progressLoaded || pages.length === 0) return;
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      saveProgress(pageIndex);
+    }, 1500);
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, [isOpen, mediaId, progressLoaded, pageIndex, pages.length, saveProgress]);
+
+  // Guard against saved or initial indexes beyond the page list
+  useEffect(() => {
+    if (pages.length === 0) return;
+    if (pageIndex > pages.length - 1) {
+      setPageIndex(pages.length - 1);
+    }
+  }, [pages.length, pageIndex]);
+
+  // Restore the webtoon scroll position to the saved page
+  useEffect(() => {
+    if (!isOpen || !progressLoaded || layoutMode !== "webtoon" || webtoonRestoredRef.current) {
+      return;
+    }
+    const container = webtoonScrollRef.current;
+    if (!container) return;
+    const target = container.querySelector<HTMLElement>(`[data-manga-page="${pageIndex}"]`);
+    if (!target) return;
+    target.scrollIntoView({ block: "start" });
+    webtoonRestoredRef.current = true;
+  }, [isOpen, progressLoaded, layoutMode, pageIndex]);
+
+  // Track the page currently in view while scrolling webtoon mode
+  const handleWebtoonScroll = useCallback(() => {
+    if (webtoonFrameRef.current !== null) return;
+    webtoonFrameRef.current = requestAnimationFrame(() => {
+      webtoonFrameRef.current = null;
+      const container = webtoonScrollRef.current;
+      if (!container) return;
+      const probe = container.getBoundingClientRect().top + container.clientHeight * 0.35;
+      const pageElements = Array.from(
+        container.querySelectorAll<HTMLElement>("[data-manga-page]")
+      );
+      for (const el of pageElements) {
+        if (el.getBoundingClientRect().bottom >= probe) {
+          const index = Number(el.dataset.mangaPage);
+          if (Number.isFinite(index) && index !== pageIndex) setPageIndex(index);
+          break;
+        }
+      }
+    });
+  }, [pageIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (webtoonFrameRef.current !== null) cancelAnimationFrame(webtoonFrameRef.current);
+    };
+  }, []);
 
   // Handle URL resolve
   const resolvePageUrl = useCallback(async (idx: number): Promise<string> => {
@@ -182,10 +340,40 @@ export function MangaReader({
     }
   }, [pageIndex]);
 
+  const jumpToPage = useCallback(
+    (index: number) => {
+      if (pages.length === 0) return;
+      const clamped = Math.max(0, Math.min(pages.length - 1, index));
+      setPageIndex(clamped);
+      webtoonRestoredRef.current = true;
+      if (layoutMode === "webtoon") {
+        requestAnimationFrame(() => {
+          webtoonScrollRef.current
+            ?.querySelector<HTMLElement>(`[data-manga-page="${clamped}"]`)
+            ?.scrollIntoView({ block: "start" });
+        });
+      }
+    },
+    [pages.length, layoutMode]
+  );
+
+  const commitPageInput = () => {
+    const parsed = parseInt(pageInput, 10);
+    if (Number.isFinite(parsed)) {
+      jumpToPage(parsed - 1);
+    } else {
+      setPageInput(String(pageIndex + 1));
+    }
+  };
+
+  const handleSeek = (pct: number) => {
+    jumpToPage(Math.round((pct / 100) * (pages.length - 1)));
+  };
+
   // Swipe gesture hook
   const swipeProps = useReaderSwipe({
-    onSwipeLeft: handleNext,
-    onSwipeRight: handlePrev,
+    onSwipeLeft: layoutMode === "webtoon" ? () => {} : handleNext,
+    onSwipeRight: layoutMode === "webtoon" ? () => {} : handlePrev,
     isRtl: layoutMode === "paged-rtl",
   });
 
@@ -193,6 +381,11 @@ export function MangaReader({
   const handleViewportClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     if (target.closest("button") || target.closest("select")) {
+      return;
+    }
+
+    if (layoutMode === "webtoon") {
+      toggleUiVisibility();
       return;
     }
 
@@ -223,7 +416,37 @@ export function MangaReader({
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (layoutMode === "webtoon") return;
+      const target = e.target instanceof HTMLElement ? e.target : null;
+      if (
+        target &&
+        (target.closest("input") ||
+          target.closest("textarea") ||
+          target.closest("select") ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      // Let a focused button handle Space itself
+      if (e.key === " " && target?.closest("button")) return;
+
+      if (layoutMode === "webtoon") {
+        const container = webtoonScrollRef.current;
+        if (!container) return;
+        if (e.key === "PageDown" || (e.key === " " && !e.shiftKey)) {
+          e.preventDefault();
+          container.scrollBy({ top: container.clientHeight * 0.9, behavior: "smooth" });
+        } else if (e.key === "PageUp" || (e.key === " " && e.shiftKey)) {
+          e.preventDefault();
+          container.scrollBy({ top: -container.clientHeight * 0.9, behavior: "smooth" });
+        } else if (e.key === "Home") {
+          e.preventDefault();
+          container.scrollTo({ top: 0, behavior: "smooth" });
+        } else if (e.key === "End") {
+          e.preventDefault();
+          container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+        }
+        return;
+      }
 
       if (e.key === "ArrowRight") {
         if (layoutMode === "paged-ltr") handleNext();
@@ -231,12 +454,25 @@ export function MangaReader({
       } else if (e.key === "ArrowLeft") {
         if (layoutMode === "paged-ltr") handlePrev();
         else handleNext();
+      } else if (e.key === " " || e.key === "PageDown") {
+        e.preventDefault();
+        if (e.shiftKey) handlePrev();
+        else handleNext();
+      } else if (e.key === "PageUp") {
+        e.preventDefault();
+        handlePrev();
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        jumpToPage(0);
+      } else if (e.key === "End") {
+        e.preventDefault();
+        jumpToPage(pages.length - 1);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, layoutMode, handleNext, handlePrev]);
+  }, [isOpen, layoutMode, handleNext, handlePrev, jumpToPage, pages.length]);
 
   // Fullscreen helper
   const toggleFullscreen = () => {
@@ -249,12 +485,20 @@ export function MangaReader({
 
   // Close handler to clean up object URLs
   const handleClose = () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    if (mediaId && progressLoaded) {
+      void saveProgress(pageIndex);
+    }
     objectUrlsRef.current.forEach((url) => {
       try {
         URL.revokeObjectURL(url);
       } catch (e) {}
     });
     objectUrlsRef.current = [];
+    saveTimeoutRef.current = null;
     onClose();
   };
 
@@ -275,7 +519,7 @@ export function MangaReader({
             className={cn(
               "h-7 px-2.5 text-xs gap-1 font-medium transition-all active:scale-95",
               layoutMode === "paged-ltr"
-                ? "bg-purple-600/90 text-white shadow-md shadow-purple-600/10"
+                ? "bg-blue-600/90 text-white shadow-md shadow-blue-600/10"
                 : "text-slate-400 hover:text-slate-200"
             )}
             onClick={() => setLayoutMode("paged-ltr")}
@@ -289,7 +533,7 @@ export function MangaReader({
             className={cn(
               "h-7 px-2.5 text-xs gap-1 font-medium transition-all active:scale-95",
               layoutMode === "paged-rtl"
-                ? "bg-purple-600/90 text-white shadow-md shadow-purple-600/10"
+                ? "bg-blue-600/90 text-white shadow-md shadow-blue-600/10"
                 : "text-slate-400 hover:text-slate-200"
             )}
             onClick={() => setLayoutMode("paged-rtl")}
@@ -303,7 +547,7 @@ export function MangaReader({
             className={cn(
               "h-7 px-2.5 text-xs gap-1 font-medium transition-all active:scale-95",
               layoutMode === "webtoon"
-                ? "bg-purple-600/90 text-white shadow-md shadow-purple-600/10"
+                ? "bg-blue-600/90 text-white shadow-md shadow-blue-600/10"
                 : "text-slate-400 hover:text-slate-200"
             )}
             onClick={() => setLayoutMode("webtoon")}
@@ -348,7 +592,7 @@ export function MangaReader({
           <>
             {/* Desktop select */}
             <select
-              className="hidden sm:inline-block h-8 rounded-md border border-slate-800/60 bg-slate-900/80 px-2 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-purple-600"
+              className="hidden sm:inline-block h-8 rounded-md border border-slate-800/60 bg-slate-900/80 px-2 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-600"
               value={fitMode}
               onChange={(e) => {
                 setFitMode(e.target.value as "height" | "width" | "original");
@@ -401,7 +645,11 @@ export function MangaReader({
       >
         {layoutMode === "webtoon" ? (
           /* Webtoon Mode: Continuous Scroll list of lazy loaded images */
-          <div className="h-full w-full overflow-y-auto flex flex-col items-center gap-6 py-6 px-4 scrollbar-thin">
+          <div
+            ref={webtoonScrollRef}
+            className="h-full w-full overflow-y-auto flex flex-col items-center gap-6 py-6 px-4 scrollbar-thin"
+            onScroll={handleWebtoonScroll}
+          >
             {pages.map((page, idx) => (
               <WebtoonPage
                 key={`webtoon-${idx}`}
@@ -416,7 +664,7 @@ export function MangaReader({
           <div className="relative h-full w-full flex items-center justify-center overflow-auto p-4 select-none">
             {isLoading ? (
               <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 backdrop-blur-xs">
-                <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
               </div>
             ) : null}
 
@@ -447,10 +695,31 @@ export function MangaReader({
 
       {/* Footer Toolbar */}
       <ReaderFooter
-        isVisible={isUiVisible && layoutMode !== "webtoon"}
-        progressText={`Page ${pageIndex + 1} of ${pages.length} · ${pages[pageIndex]?.name || ""}`}
-        percentage={(pageIndex / Math.max(pages.length - 1, 1)) * 100}
-      />
+        isVisible={isUiVisible}
+        percentage={progressPercentage}
+        onSeek={layoutMode !== "webtoon" ? handleSeek : undefined}
+      >
+        <label className="flex items-center gap-1 text-[10px] sm:text-xs font-medium text-slate-400">
+          <span>Page</span>
+          <input
+            aria-label="Jump to page"
+            className="w-10 rounded border border-slate-800 bg-slate-900 px-1 py-0.5 text-center text-[10px] sm:text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-600"
+            inputMode="numeric"
+            onBlur={() => setPageInput(String(pageIndex + 1))}
+            onChange={(e) => setPageInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                commitPageInput();
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
+            type="text"
+            value={pageInput}
+          />
+          <span>/ {pages.length}</span>
+        </label>
+      </ReaderFooter>
     </ReaderContainer>
   );
 }
@@ -495,6 +764,7 @@ function WebtoonPage({ page, index, resolveUrl }: WebtoonPageProps) {
   return (
     <div
       ref={setRef}
+      data-manga-page={index}
       className="w-full max-w-2xl flex flex-col items-center justify-center min-h-[420px] rounded-md border border-slate-900 bg-slate-950/20 p-2 shadow-inner"
     >
       {src ? (
@@ -508,7 +778,7 @@ function WebtoonPage({ page, index, resolveUrl }: WebtoonPageProps) {
       ) : (
         <div className="flex flex-col items-center justify-center text-slate-500 text-xs gap-2 py-20">
           {loading ? (
-            <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
+            <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
           ) : (
             <div className="h-5 w-5 rounded-full border border-dashed border-slate-700" />
           )}

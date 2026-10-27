@@ -101,4 +101,159 @@ describe("MangaReader Component Redo (TDD)", () => {
     });
     document.body.removeChild(container);
   });
+
+  async function mountReader(ui: React.ReactElement) {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(ui);
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    return { root, container };
+  }
+
+  function typeInto(input: HTMLInputElement, value: string) {
+    const setter = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      "value"
+    )!.set!;
+    setter.call(input, value);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  it("shows a page jump input and keeps the page filename out of the footer", async () => {
+    const { root, container } = await mountReader(
+      <MangaReader isOpen={true} onClose={vi.fn()} title="Chapter One" pages={mockPages} />
+    );
+
+    const jumpInput = document.body.querySelector(
+      "input[aria-label='Jump to page']"
+    ) as HTMLInputElement | null;
+    expect(jumpInput).not.toBeNull();
+    expect(jumpInput?.value).toBe("1");
+    expect(document.body.textContent).toContain("/ 3");
+    expect(document.body.textContent).not.toContain("page1.png");
+
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
+
+  it("jumps to a typed page number on Enter", async () => {
+    const { root, container } = await mountReader(
+      <MangaReader isOpen={true} onClose={vi.fn()} title="Chapter One" pages={mockPages} />
+    );
+
+    const jumpInput = document.body.querySelector(
+      "input[aria-label='Jump to page']"
+    ) as HTMLInputElement;
+
+    await act(async () => {
+      typeInto(jumpInput, "3");
+    });
+    await act(async () => {
+      jumpInput.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(document.body.querySelector("img")?.getAttribute("src")).toBe("blob:url3");
+
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
+
+  it("pages with Space, PageDown and the arrow keys but not while typing in the jump input", async () => {
+    const { root, container } = await mountReader(
+      <MangaReader isOpen={true} onClose={vi.fn()} title="Chapter One" pages={mockPages} />
+    );
+
+    const imgSrc = () => document.body.querySelector("img")?.getAttribute("src");
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
+    });
+    expect(imgSrc()).toBe("blob:url2");
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "PageDown", bubbles: true }));
+    });
+    expect(imgSrc()).toBe("blob:url3");
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+    });
+    expect(imgSrc()).toBe("blob:url2");
+
+    const jumpInput = document.body.querySelector(
+      "input[aria-label='Jump to page']"
+    ) as HTMLInputElement;
+    await act(async () => {
+      jumpInput.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
+    });
+    expect(imgSrc()).toBe("blob:url2");
+
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
+
+  it("restores saved progress and persists the page on close", async () => {
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+      if (!init?.method) {
+        return {
+          ok: true,
+          json: async () => ({
+            position: "1",
+            percentage: 50,
+            settings: { mangaLayoutMode: "paged-ltr" },
+          }),
+        } as Response;
+      }
+      return { ok: true, json: async () => ({}) } as Response;
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { root, container } = await mountReader(
+      <MangaReader
+        isOpen={true}
+        onClose={vi.fn()}
+        title="Chapter One"
+        pages={mockPages}
+        mediaId="asset-1"
+      />
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/media/progress?mediaAssetId=asset-1");
+    expect(document.body.querySelector("img")?.getAttribute("src")).toBe("blob:url2");
+
+    const closeBtn = document.body.querySelector("[data-testid='close-reader']");
+    await act(async () => {
+      closeBtn?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    const postCall = fetchMock.mock.calls.find((call) => call[1]?.method === "POST");
+    expect(postCall).toBeDefined();
+    const body = JSON.parse(String(postCall?.[1]?.body));
+    expect(body).toMatchObject({
+      mediaAssetId: "asset-1",
+      position: "1",
+      percentage: 50,
+      settings: { mangaLayoutMode: "paged-ltr" },
+    });
+
+    vi.unstubAllGlobals();
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
 });

@@ -22,6 +22,7 @@ import {
 } from "@/app/media/actions";
 import { bulkMoveItemsAction, bulkTrashItemsAction } from "@/app/bulk/actions";
 import { Button } from "@/components/ui/button";
+import { toastError, toastSuccess } from "@/components/ui/toast";
 import { useSettings } from "@/components/settings-context";
 import { getNoteFilename } from "@/lib/namespace/manager";
 import { compareAlphanumeric } from "@/lib/sorting";
@@ -120,7 +121,7 @@ export function FolderContentsView({
       // Validation
       if (data.id === targetFolderId) return;
       if (data.type === "folder" && isDescendant(data.id, targetFolderId)) {
-        alert("Cannot move a folder inside itself or its sub-folders.");
+        toastError("Cannot move a folder inside itself or its sub-folders.");
         return;
       }
 
@@ -135,13 +136,13 @@ export function FolderContentsView({
         const draggedFolder = allFolders.find((f) => f.id === data.id);
         if (draggedFolder) {
           if (draggedFolder.type && draggedFolder.type !== "GENERAL") {
-            alert("Reserved system folders cannot be moved.");
+            toastError("Reserved system folders cannot be moved.");
             return;
           }
           name = draggedFolder.name;
           currentMode = getItemMode(draggedFolder.parentId);
           if (currentMode !== targetMode) {
-            alert("Folders cannot be moved across mode boundaries.");
+            toastError("Folders cannot be moved across mode boundaries.");
             return;
           }
         }
@@ -151,11 +152,11 @@ export function FolderContentsView({
           name = draggedNote.title;
           currentMode = getItemMode(draggedNote.folderId);
           if (targetMode !== "NOTES" && targetMode !== "KEEP") {
-            alert("Notes must reside within the Notes or Quick Notes directories.");
+            toastError("Notes must reside within the Notes or Quick Notes directories.");
             return;
           }
           if (currentMode !== "FILES" && currentMode !== targetMode) {
-            alert("Notes cannot be moved across Obsidian and Keep mode boundaries.");
+            toastError("Notes cannot be moved across Obsidian and Keep mode boundaries.");
             return;
           }
         }
@@ -170,7 +171,7 @@ export function FolderContentsView({
             targetMode === "KEEP" ||
             targetMode === "CHAT"
           ) {
-            alert("Chat attachments and Keep media files are locked within their respective roots.");
+            toastError("Chat attachments and Keep media files are locked within their respective roots.");
             return;
           }
         }
@@ -200,7 +201,7 @@ export function FolderContentsView({
         }
 
         if (isCollision) {
-          alert("An item with the same name already exists in the target folder.");
+          toastError("An item with the same name already exists in the target folder.");
           return;
         }
       }
@@ -214,6 +215,7 @@ export function FolderContentsView({
           detail: { type: "move-folder", folderId: data.id, parentId: targetFolderId }
         }));
         await moveFolderAction(formData);
+        toastSuccess("Moved");
       } else if (data.type === "note") {
         formData.append("noteId", data.id);
         formData.append("folderId", targetFolderId ?? "");
@@ -221,6 +223,7 @@ export function FolderContentsView({
           detail: { type: "move-note", noteId: data.id, parentId: targetFolderId }
         }));
         await moveNoteAction(formData);
+        toastSuccess("Moved");
       } else if (data.type === "media") {
         formData.append("mediaAssetId", data.id);
         formData.append("folderId", targetFolderId ?? "");
@@ -228,6 +231,7 @@ export function FolderContentsView({
           detail: { type: "move-media", mediaAssetId: data.id, parentId: targetFolderId }
         }));
         await moveMediaAssetAction(formData);
+        toastSuccess("Moved");
       }
     } catch (err) {
       console.error("Drop operation failed", err);
@@ -310,6 +314,8 @@ export function FolderContentsView({
     if (result.failures.length > 0) {
       setBulkError(result.failures.map((f) => `${f.name || "Item"}: ${f.reason}`).join(" | "));
     } else {
+      const movedCount = selectedItems.length - result.failures.length;
+      toastSuccess(`${movedCount} item${movedCount === 1 ? "" : "s"} moved`);
       clearSelection();
     }
     router.refresh();
@@ -333,6 +339,8 @@ export function FolderContentsView({
     if (result.failures.length > 0) {
       setBulkError(result.failures.map((f) => `${f.name || "Item"}: ${f.reason}`).join(" | "));
     } else {
+      const trashedCount = selectedItems.length - result.failures.length;
+      toastSuccess(`${trashedCount} item${trashedCount === 1 ? "" : "s"} moved to trash`);
       clearSelection();
     }
     router.refresh();
@@ -482,6 +490,7 @@ export function FolderContentsView({
                               detail: { type: "move-folder", folderId: folder.id, parentId }
                             }));
                             await moveFolderAction(formData);
+                            toastSuccess("Moved");
                           },
                           onRename: async (name) => {
                             const formData = new FormData();
@@ -491,6 +500,7 @@ export function FolderContentsView({
                               detail: { type: "rename-folder", folderId: folder.id, name }
                             }));
                             await renameFolderAction(formData);
+                            toastSuccess("Renamed");
                           },
                           onTrash: async () => {
                             const formData = new FormData();
@@ -499,6 +509,7 @@ export function FolderContentsView({
                               detail: { type: "trash-folder", folderId: folder.id }
                             }));
                             await trashFolderAction(formData);
+                            toastSuccess("Moved to trash");
                           },
                         }}
                         destinations={folderDestinations}
@@ -556,6 +567,7 @@ export function FolderContentsView({
                             detail: { type: "move-note", noteId: note.id, parentId: folderId }
                           }));
                           await moveNoteAction(formData);
+                          toastSuccess("Moved");
                         },
                         onRename: async (name) => {
                           const formData = new FormData();
@@ -565,6 +577,7 @@ export function FolderContentsView({
                             detail: { type: "rename-note", noteId: note.id, name }
                           }));
                           await renameNoteAction(formData);
+                          toastSuccess("Renamed");
                         },
                         onTrash: async () => {
                           const formData = new FormData();
@@ -574,6 +587,7 @@ export function FolderContentsView({
                             detail: { type: "trash-note", noteId: note.id }
                           }));
                           await trashNoteAction(formData);
+                          toastSuccess("Moved to trash");
                         },
                       }}
                       aspect={fileCardAspect}
@@ -602,6 +616,7 @@ export function FolderContentsView({
                             detail: { type: "move-media", mediaAssetId: media.id, parentId: folderId }
                           }));
                           await moveMediaAssetAction(formData);
+                          toastSuccess("Moved");
                         },
                         onRename: async (name) => {
                           const formData = new FormData();
@@ -611,6 +626,7 @@ export function FolderContentsView({
                             detail: { type: "rename-media", mediaAssetId: media.id, name }
                           }));
                           await renameMediaAssetAction(formData);
+                          toastSuccess("Renamed");
                         },
                         onTrash: async () => {
                           const formData = new FormData();
@@ -620,6 +636,7 @@ export function FolderContentsView({
                             detail: { type: "trash-media", mediaAssetId: media.id }
                           }));
                           await trashMediaAssetAction(formData);
+                          toastSuccess("Moved to trash");
                         },
                       }}
                       aspect={fileCardAspect}

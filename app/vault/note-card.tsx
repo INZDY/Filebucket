@@ -38,19 +38,19 @@ export function NoteCard({ note, aspect, destinations, drag, actions }: NoteCard
   return (
     <div className="relative">
       <Link
-        className="group flex flex-col justify-between p-3 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-purple-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.05)] transition-all active:scale-95 duration-200"
+        className="group flex flex-col justify-between p-3 rounded-xl border border-slate-800 bg-[#14161d]/50 hover:bg-[#1a1d26]/80 hover:border-blue-500/40 hover:shadow-[0_0_15px_rgba(59,130,246,0.05)] transition-all active:scale-95 duration-200"
         draggable={drag.draggable}
         href={note.folderId ? `/?folder=${note.folderId}&note=${note.id}` : `/?note=${note.id}`}
         onDragStart={drag.onDragStart}
       >
         {/* Note stylized preview thumbnail */}
-        <div className={cn("relative w-full rounded-lg overflow-hidden border border-purple-500/10 mb-2 bg-[#131018] select-none text-left", aspectClass)}>
+        <div className={cn("relative w-full rounded-lg overflow-hidden border border-blue-500/10 mb-2 bg-[#131018] select-none text-left", aspectClass)}>
           <div className="w-full h-full flex flex-col p-3">
-            <p className={cn("text-[10px] text-purple-300/80 leading-relaxed font-normal overflow-hidden break-words", lineClampClass)}>
+            <p className={cn("text-[10px] text-blue-300/80 leading-relaxed font-normal overflow-hidden break-words", lineClampClass)}>
               {snippet || "Empty note"}
             </p>
-            <div className="flex items-center gap-1.5 text-purple-450/70 mt-auto pt-1 border-t border-purple-500/10">
-              <FileText className="h-3.5 w-3.5 text-purple-400" />
+            <div className="flex items-center gap-1.5 text-blue-400/70 mt-auto pt-1 border-t border-blue-500/10">
+              <FileText className="h-3.5 w-3.5 text-blue-400" />
               <span className="text-[9px] font-mono uppercase tracking-wider font-semibold">MD</span>
             </div>
           </div>
