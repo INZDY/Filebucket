@@ -1,7 +1,5 @@
-import type { ViewMode } from "@/lib/mode";
+import { getFolderMode, type ViewMode } from "@/lib/mode";
 import { getNoteFilename } from "@/lib/namespace/manager";
-
-export type { ViewMode };
 
 export type MoveItemType = "folder" | "note" | "media";
 
@@ -9,7 +7,7 @@ export type FolderLike = {
   id: string;
   name: string;
   parentId: string | null;
-  type?: string | null;
+  type?: string;
 };
 
 export type NoteLike = {
@@ -64,19 +62,6 @@ const MOVE_ERRORS = {
   mediaLocked: "Chat attachments and Keep media files are locked within their respective roots.",
   collision: "An item with the same name already exists in the target folder.",
 } as const;
-
-export function getFolderMode(folders: FolderLike[], folderId: string | null): ViewMode {
-  if (!folderId) return "FILES";
-  const folderMap = new Map(folders.map((folder) => [folder.id, folder]));
-  let current = folderMap.get(folderId);
-  while (current) {
-    if (current.type === "NOTES_ROOT") return "NOTES";
-    if (current.type === "KEEP_ROOT") return "KEEP";
-    if (current.type === "CHAT_ROOT") return "CHAT";
-    current = current.parentId ? folderMap.get(current.parentId) : undefined;
-  }
-  return "FILES";
-}
 
 export function isFolderDescendant(
   folders: FolderLike[],
@@ -160,6 +145,8 @@ export function decideVaultMove(
 ): MoveDecision {
   if (dragged.id === targetFolderId) return { outcome: "ignore" };
 
+  // The callers' lists are the source of truth: an id they don't hold is left to
+  // the move action, matching the drop handlers' stale-list behaviour.
   const { folders } = snapshot;
   const nameTaken = isNameTaken(dragged, targetFolderId, snapshot);
   const targetMode = getFolderMode(folders, targetFolderId);

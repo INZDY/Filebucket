@@ -17,6 +17,20 @@ interface MediaAsset {
   chatMessageId: string | null;
 }
 
+/** Traces a folder's type up to the root to find its mode. */
+export function getFolderMode(folders: Folder[], folderId: string | null): ViewMode {
+  if (!folderId) return "FILES";
+  const folderMap = new Map(folders.map((folder) => [folder.id, folder]));
+  let current = folderMap.get(folderId);
+  while (current) {
+    if (current.type === "NOTES_ROOT") return "NOTES";
+    if (current.type === "KEEP_ROOT") return "KEEP";
+    if (current.type === "CHAT_ROOT") return "CHAT";
+    current = current.parentId ? folderMap.get(current.parentId) : undefined;
+  }
+  return "FILES";
+}
+
 export function resolveViewMode(options: {
   selectedFolderId: string | null;
   selectedNoteId: string | null;
@@ -27,21 +41,6 @@ export function resolveViewMode(options: {
 }): ViewMode {
   const { selectedFolderId, selectedNoteId, selectedMediaId, folders, notes, mediaAssets } = options;
 
-  const folderMap = new Map(folders.map((f) => [f.id, f]));
-
-  // Helper to trace folder type up to the root
-  function getFolderMode(folderId: string | null): ViewMode {
-    if (!folderId) return "FILES";
-    let current = folderMap.get(folderId);
-    while (current) {
-      if (current.type === "NOTES_ROOT") return "NOTES";
-      if (current.type === "KEEP_ROOT") return "KEEP";
-      if (current.type === "CHAT_ROOT") return "CHAT";
-      current = current.parentId ? folderMap.get(current.parentId) : undefined;
-    }
-    return "FILES";
-  }
-
   // 1. Check selected media asset
   if (selectedMediaId) {
     const media = mediaAssets.find((m) => m.id === selectedMediaId);
@@ -49,7 +48,7 @@ export function resolveViewMode(options: {
       if (media.chatMessageId) {
         return "CHAT";
       }
-      return getFolderMode(media.folderId);
+      return getFolderMode(folders, media.folderId);
     }
   }
 
@@ -57,13 +56,13 @@ export function resolveViewMode(options: {
   if (selectedNoteId) {
     const note = notes.find((n) => n.id === selectedNoteId);
     if (note) {
-      return getFolderMode(note.folderId);
+      return getFolderMode(folders, note.folderId);
     }
   }
 
   // 3. Check selected folder
   if (selectedFolderId) {
-    return getFolderMode(selectedFolderId);
+    return getFolderMode(folders, selectedFolderId);
   }
 
   return "FILES";

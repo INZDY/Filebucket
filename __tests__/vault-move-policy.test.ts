@@ -2,11 +2,11 @@ import { describe, it, expect } from "vitest";
 import {
   decideVaultMove,
   evaluateMoveFacts,
-  getFolderMode,
   isFolderDescendant,
   type MoveSnapshot,
   type MoveFacts,
 } from "@/lib/vault-move-policy";
+import { getFolderMode } from "@/lib/mode";
 
 const folders = [
   { id: "notes-root", name: "Notes", parentId: null, type: "NOTES_ROOT" },
