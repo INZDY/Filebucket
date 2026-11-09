@@ -90,6 +90,7 @@ export function MediaPreview({
       if (
         document.activeElement?.tagName === "INPUT" ||
         document.activeElement?.tagName === "TEXTAREA" ||
+        document.activeElement?.tagName === "SELECT" ||
         document.activeElement?.getAttribute("contenteditable") === "true"
       ) {
         return;
