@@ -24,15 +24,14 @@ import { bulkMoveItemsAction, bulkTrashItemsAction } from "@/app/bulk/actions";
 import { Button } from "@/components/ui/button";
 import { toastError, toastSuccess } from "@/components/ui/toast";
 import { useSettings } from "@/components/settings-context";
-import { getNoteFilename } from "@/lib/namespace/manager";
+import { getFolderMode } from "@/lib/mode";
 import { compareAlphanumeric } from "@/lib/sorting";
 import { cn } from "@/lib/utils";
+import { decideVaultMove } from "@/lib/vault-move-policy";
 import { FolderCard } from "./folder-card";
 import { MediaCard } from "./media-card";
 import { NoteCard } from "./note-card";
 import type { FolderEntry, MediaGridEntry, NoteEntry } from "./vault-entries";
-
-type ViewMode = "FILES" | "NOTES" | "KEEP" | "CHAT";
 
 interface FolderContentsViewProps {
   selectedFolder: FolderEntry | null;
@@ -89,26 +88,6 @@ export function FolderContentsView({
     setBulkError("");
   }, [selectedFolder?.id]);
 
-  const folderMap = new Map(allFolders.map((f) => [f.id, f]));
-  function getItemMode(folderId: string | null): ViewMode {
-    if (!folderId) return "FILES";
-    let current = folderMap.get(folderId);
-    while (current) {
-      if (current.type === "NOTES_ROOT") return "NOTES";
-      if (current.type === "KEEP_ROOT") return "KEEP";
-      if (current.type === "CHAT_ROOT") return "CHAT";
-      current = current.parentId ? folderMap.get(current.parentId) : undefined;
-    }
-    return "FILES";
-  }
-
-  function isDescendant(draggedId: string, targetId: string | null): boolean {
-    if (!targetId) return false;
-    if (draggedId === targetId) return true;
-    const targetFolder = allFolders.find((f) => f.id === targetId);
-    return targetFolder ? isDescendant(draggedId, targetFolder.parentId) : false;
-  }
-
   async function handleDrop(targetFolderId: string | null, event: React.DragEvent) {
     event.preventDefault();
     setDragOverFolderId(null);
@@ -118,92 +97,15 @@ export function FolderContentsView({
       if (!rawData) return;
       const data = JSON.parse(rawData);
 
-      // Validation
-      if (data.id === targetFolderId) return;
-      if (data.type === "folder" && isDescendant(data.id, targetFolderId)) {
-        toastError("Cannot move a folder inside itself or its sub-folders.");
+      const decision = decideVaultMove(data, targetFolderId, {
+        folders: allFolders,
+        notes: allNotes,
+        media: allMediaAssets,
+      });
+      if (decision.outcome === "ignore") return;
+      if (decision.outcome === "reject") {
+        toastError(decision.reason);
         return;
-      }
-
-      // Boundary Validation
-      const targetMode = getItemMode(targetFolderId);
-
-      // Get item name and current mode
-      let name = "";
-      let currentMode: ViewMode = "FILES";
-
-      if (data.type === "folder") {
-        const draggedFolder = allFolders.find((f) => f.id === data.id);
-        if (draggedFolder) {
-          if (draggedFolder.type && draggedFolder.type !== "GENERAL") {
-            toastError("Reserved system folders cannot be moved.");
-            return;
-          }
-          name = draggedFolder.name;
-          currentMode = getItemMode(draggedFolder.parentId);
-          if (currentMode !== targetMode) {
-            toastError("Folders cannot be moved across mode boundaries.");
-            return;
-          }
-        }
-      } else if (data.type === "note") {
-        const draggedNote = allNotes.find((n) => n.id === data.id);
-        if (draggedNote) {
-          name = draggedNote.title;
-          currentMode = getItemMode(draggedNote.folderId);
-          if (targetMode !== "NOTES" && targetMode !== "KEEP") {
-            toastError("Notes must reside within the Notes or Quick Notes directories.");
-            return;
-          }
-          if (currentMode !== "FILES" && currentMode !== targetMode) {
-            toastError("Notes cannot be moved across Obsidian and Keep mode boundaries.");
-            return;
-          }
-        }
-      } else if (data.type === "media") {
-        const draggedMedia = allMediaAssets.find((m) => m.id === data.id);
-        if (draggedMedia) {
-          name = draggedMedia.filename;
-          currentMode = getItemMode(draggedMedia.folderId);
-          if (
-            currentMode === "KEEP" ||
-            currentMode === "CHAT" ||
-            targetMode === "KEEP" ||
-            targetMode === "CHAT"
-          ) {
-            toastError("Chat attachments and Keep media files are locked within their respective roots.");
-            return;
-          }
-        }
-      }
-
-      // Collision Check
-      if (name) {
-        let isCollision = false;
-        if (data.type === "folder") {
-          isCollision = allFolders.some(
-            (f) => f.parentId === targetFolderId && f.id !== data.id && f.name.toLowerCase() === name.toLowerCase()
-          );
-        } else {
-          const targetFilename = data.type === "note" ? getNoteFilename(name) : name;
-
-          const collidesWithNote = allNotes.some((n) => {
-            if (data.type === "note" && n.id === data.id) return false;
-            return n.folderId === targetFolderId && getNoteFilename(n.title).toLowerCase() === targetFilename.toLowerCase();
-          });
-
-          const collidesWithMedia = allMediaAssets.some((m) => {
-            if (data.type === "media" && m.id === data.id) return false;
-            return m.folderId === targetFolderId && m.filename.toLowerCase() === targetFilename.toLowerCase();
-          });
-
-          isCollision = collidesWithNote || collidesWithMedia;
-        }
-
-        if (isCollision) {
-          toastError("An item with the same name already exists in the target folder.");
-          return;
-        }
       }
 
       // Call actions
@@ -256,7 +158,7 @@ export function FolderContentsView({
   ).sort((a, b) => compareAlphanumeric(a.filename, b.filename));
 
   // Bulk Selection helpers (Files Mode: folders and media assets only)
-  const currentFolderMode = getItemMode(selectedFolder?.id ?? null);
+  const currentFolderMode = getFolderMode(allFolders, selectedFolder?.id ?? null);
   const childItems: { type: "folder" | "media"; id: string }[] = [
     ...childFolders.map((f) => ({ type: "folder" as const, id: f.id })),
     ...childMedia.map((m) => ({ type: "media" as const, id: m.id })),

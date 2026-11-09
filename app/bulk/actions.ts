@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { namespaceManager } from "@/lib/namespace";
+import { evaluateMoveFacts } from "@/lib/vault-move-policy";
 
 export type BulkItem = {
   type: "folder" | "media";
@@ -43,15 +44,7 @@ async function getFolderMode(userId: string, folderId: string | null): Promise<F
   return "FILES";
 }
 
-function reasonForError(error?: string): string {
-  if (error === "NameCollision") {
-    return "An item with the same name already exists in the target folder.";
-  }
-  if (error === "SelfNesting") {
-    return "Cannot move a folder inside itself or its sub-folders.";
-  }
-  return "This item cannot be moved to the target location.";
-}
+const GENERIC_MOVE_ERROR = "This item cannot be moved to the target location.";
 
 export async function bulkMoveItemsAction(
   items: BulkItem[],
@@ -100,26 +93,34 @@ export async function bulkMoveItemsAction(
         continue;
       }
       const currentMode = await getFolderMode(session.user.id, folder.parentId);
-      if (currentMode !== targetMode) {
-        failures.push({
-          type: "folder",
-          id: item.id,
-          name: folder.name,
-          reason: "Folders cannot be moved across mode boundaries.",
-        });
-        continue;
-      }
       const validation = await namespaceManager.validate(session.user.id, targetFolderId, {
         id: folder.id,
         type: "Folder",
         name: folder.name,
       });
+      const decision = evaluateMoveFacts({
+        type: "folder",
+        systemType: folder.type,
+        currentMode,
+        targetMode,
+        nestsInsideItself: validation.error === "SelfNesting",
+        nameTaken: validation.error === "NameCollision",
+      });
+      if (decision.outcome === "reject") {
+        failures.push({
+          type: "folder",
+          id: item.id,
+          name: folder.name,
+          reason: decision.reason,
+        });
+        continue;
+      }
       if (!validation.isValid) {
         failures.push({
           type: "folder",
           id: item.id,
           name: folder.name,
-          reason: reasonForError(validation.error),
+          reason: GENERIC_MOVE_ERROR,
         });
         continue;
       }
@@ -151,31 +152,32 @@ export async function bulkMoveItemsAction(
         continue;
       }
       const currentMode = await getFolderMode(session.user.id, media.folderId);
-      if (
-        currentMode === "KEEP" ||
-        currentMode === "CHAT" ||
-        targetMode === "KEEP" ||
-        targetMode === "CHAT"
-      ) {
-        failures.push({
-          type: "media",
-          id: item.id,
-          name: media.filename,
-          reason: "Chat attachments and Keep media files are locked within their respective roots.",
-        });
-        continue;
-      }
       const validation = await namespaceManager.validate(session.user.id, targetFolderId, {
         id: media.id,
         type: "MediaAsset",
         name: media.filename,
       });
+      const decision = evaluateMoveFacts({
+        type: "media",
+        currentMode,
+        targetMode,
+        nameTaken: validation.error === "NameCollision",
+      });
+      if (decision.outcome === "reject") {
+        failures.push({
+          type: "media",
+          id: item.id,
+          name: media.filename,
+          reason: decision.reason,
+        });
+        continue;
+      }
       if (!validation.isValid) {
         failures.push({
           type: "media",
           id: item.id,
           name: media.filename,
-          reason: reasonForError(validation.error),
+          reason: GENERIC_MOVE_ERROR,
         });
         continue;
       }
