@@ -136,7 +136,7 @@ describe("MediaPreview keyboard navigation", () => {
     await unmount();
   });
 
-  it.each(["input", "textarea", "contenteditable"])(
+  it.each(["input", "textarea", "select", "contenteditable"])(
     "does not navigate while focus sits in a %s",
     async (kind) => {
       const { navigated, unmount } = await mountPreview();
