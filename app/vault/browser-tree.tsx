@@ -10,6 +10,7 @@ import { MediaRow } from "@/app/media/media-row";
 import { moveMediaAssetAction } from "@/app/media/actions";
 import { cn } from "@/lib/utils";
 import { compareAlphanumeric } from "@/lib/sorting";
+import { decideVaultMove } from "@/lib/vault-move-policy";
 import { toastError, toastSuccess } from "@/components/ui/toast";
 
 type BrowserTreeProps = {
@@ -55,19 +56,6 @@ export function BrowserTree({
   const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(new Set());
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null); // 'root' or folder ID
   const [isMounted, setIsMounted] = useState(false);
-
-  const folderMap = new Map(folders.map((f) => [f.id, f]));
-  function getItemMode(folderId: string | null): "FILES" | "NOTES" | "KEEP" | "CHAT" {
-    if (!folderId) return "FILES";
-    let current = folderMap.get(folderId);
-    while (current) {
-      if (current.type === "NOTES_ROOT") return "NOTES";
-      if (current.type === "KEEP_ROOT") return "KEEP";
-      if (current.type === "CHAT_ROOT") return "CHAT";
-      current = current.parentId ? folderMap.get(current.parentId) : undefined;
-    }
-    return "FILES";
-  }
 
   // Grouping helpers
   const foldersByParent = new Map<string | null, typeof folders>();
@@ -160,14 +148,6 @@ export function BrowserTree({
     setDragOverFolderId(null);
   }
 
-  // Check if target is descendant of dragged folder
-  function isDescendant(draggedId: string, targetId: string | null): boolean {
-    if (!targetId) return false;
-    if (draggedId === targetId) return true;
-    const targetFolder = folders.find((f) => f.id === targetId);
-    return targetFolder ? isDescendant(draggedId, targetFolder.parentId) : false;
-  }
-
   async function handleDrop(targetFolderId: string | null, event: React.DragEvent) {
     event.preventDefault();
     setDragOverFolderId(null);
@@ -177,48 +157,15 @@ export function BrowserTree({
       if (!rawData) return;
       const data = JSON.parse(rawData);
 
-      // Validation
-      if (data.id === targetFolderId) return;
-      if (data.type === "folder" && isDescendant(data.id, targetFolderId)) {
-        toastError("Cannot move a folder inside itself or its sub-folders.");
+      const decision = decideVaultMove(data, targetFolderId, {
+        folders,
+        notes,
+        media: mediaAssets,
+      });
+      if (decision.outcome === "ignore") return;
+      if (decision.outcome === "reject") {
+        toastError(decision.reason);
         return;
-      }
-
-      // Boundary Validation
-      const targetMode = getItemMode(targetFolderId);
-
-      if (data.type === "folder") {
-        const draggedFolder = folders.find((f) => f.id === data.id);
-        if (draggedFolder) {
-          const currentMode = getItemMode(draggedFolder.parentId);
-          if (currentMode !== targetMode) {
-            toastError("Folders cannot be moved across mode boundaries.");
-            return;
-          }
-        }
-      } else if (data.type === "note") {
-        const draggedNote = notes.find((n) => n.id === data.id);
-        const currentMode = draggedNote ? getItemMode(draggedNote.folderId) : "FILES";
-        if (targetMode !== "NOTES" && targetMode !== "KEEP") {
-          toastError("Notes must reside within the Notes or Quick Notes directories.");
-          return;
-        }
-        if (currentMode !== "FILES" && currentMode !== targetMode) {
-          toastError("Notes cannot be moved across Obsidian and Keep mode boundaries.");
-          return;
-        }
-      } else if (data.type === "media") {
-        const draggedMedia = mediaAssets.find((m) => m.id === data.id);
-        const currentMode = draggedMedia ? getItemMode(draggedMedia.folderId) : "FILES";
-        if (
-          currentMode === "KEEP" ||
-          currentMode === "CHAT" ||
-          targetMode === "KEEP" ||
-          targetMode === "CHAT"
-        ) {
-          toastError("Chat attachments and Keep media files are locked within their respective roots.");
-          return;
-        }
       }
 
       const formData = new FormData();

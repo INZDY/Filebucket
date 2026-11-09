@@ -45,6 +45,7 @@ describe("Bulk Server Actions", () => {
       email: "user@filebucket.local",
       user: { id: mockUserId },
     });
+    vi.mocked(namespaceManager.validate).mockResolvedValue({ isValid: true });
   });
 
   describe("bulkMoveItemsAction", () => {
