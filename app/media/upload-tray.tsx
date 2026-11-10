@@ -28,7 +28,7 @@ export function UploadTray() {
   return (
     <div
       aria-label="Upload progress"
-      className="fixed bottom-16 right-3 z-50 w-[min(20rem,calc(100vw-1.5rem))] space-y-2 rounded-lg border border-slate-800 bg-[#111318] p-3 text-slate-100 shadow-2xl md:bottom-4 md:right-4"
+      className="fixed bottom-16 left-1/2 z-50 w-[min(20rem,calc(100vw-1.5rem))] -translate-x-1/2 space-y-2 rounded-lg border border-slate-800 bg-[#111318] p-3 text-slate-100 shadow-2xl md:bottom-4 md:left-auto md:right-4 md:translate-x-0"
       role="region"
     >
       <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-2 text-xs">
