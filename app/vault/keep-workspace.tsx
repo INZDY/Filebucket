@@ -451,13 +451,11 @@ function KeepCard({
         </div>
 
         {/* Note Body content */}
-        <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
+        <div className="keep-preview text-sm text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
               p: ({ children }) => <p className="mb-1.5 last:mb-0 text-sm leading-relaxed">{children}</p>,
-              ul: ({ children }) => <ul className="list-disc list-inside ml-2 mb-2 text-sm">{children}</ul>,
-              ol: ({ children }) => <ol className="list-decimal list-inside ml-2 mb-2 text-sm">{children}</ol>,
               li: ({ children }) => {
                 const hasCheckbox = React.Children.toArray(children).some(
                   (child) => React.isValidElement(child) && (child.props as { type?: unknown }).type === "checkbox"
@@ -484,9 +482,6 @@ function KeepCard({
                 delete (rest as { node?: unknown }).node;
                 return <input {...rest} />;
               },
-              h1: ({ children }) => <h1 className="text-base font-bold mb-1 mt-2">{children}</h1>,
-              h2: ({ children }) => <h2 className="text-sm font-bold mb-1 mt-1.5">{children}</h2>,
-              h3: ({ children }) => <h3 className="text-xs font-bold mb-0.5 mt-1">{children}</h3>,
             }}
           >
             {note.body}

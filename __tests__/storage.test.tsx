@@ -4,6 +4,7 @@ import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 import { GET } from "@/app/api/storage/usage/route";
 import { SidebarBrowser } from "@/app/vault/sidebar-browser";
+import { UploadProvider } from "@/components/upload-context";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -102,35 +103,37 @@ describe("Storage Usage Milestone 52", () => {
 
       await act(async () => {
         root.render(
-          <SidebarBrowser
-            userId="user-123"
-            isTrashView={false}
-            query=""
-            activeTagSlug=""
-            activeTag={null}
-            selectedFolder={null}
-            selectedNote={null}
-            selectedMedia={null}
-            selectedDeletedFolder={null}
-            selectedDeletedNote={null}
-            selectedDeletedMedia={null}
-            folders={[]}
-            deletedFolders={[]}
-            deletedNotes={[]}
-            deletedMediaAssets={[]}
-            tags={[]}
-            notes={[]}
-            mediaAssets={[]}
-            folderTrail={[]}
-            folderDestinations={[]}
-            matchingFolders={[]}
-            isFilteredView={false}
-            isVaultRootActive={true}
-            browserTitle="Vault Browser"
-            trashCount={0}
-            returnTo="/"
-            activeMode="FILES"
-          />
+          <UploadProvider>
+            <SidebarBrowser
+              userId="user-123"
+              isTrashView={false}
+              query=""
+              activeTagSlug=""
+              activeTag={null}
+              selectedFolder={null}
+              selectedNote={null}
+              selectedMedia={null}
+              selectedDeletedFolder={null}
+              selectedDeletedNote={null}
+              selectedDeletedMedia={null}
+              folders={[]}
+              deletedFolders={[]}
+              deletedNotes={[]}
+              deletedMediaAssets={[]}
+              tags={[]}
+              notes={[]}
+              mediaAssets={[]}
+              folderTrail={[]}
+              folderDestinations={[]}
+              matchingFolders={[]}
+              isFilteredView={false}
+              isVaultRootActive={true}
+              browserTitle="Vault Browser"
+              trashCount={0}
+              returnTo="/"
+              activeMode="FILES"
+            />
+          </UploadProvider>
         );
       });
 

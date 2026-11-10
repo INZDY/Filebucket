@@ -304,6 +304,49 @@
     margin: 1rem 0;
   }
 
+  /* Keep card preview: compact take on the editor's typographic scale */
+  .keep-preview h1 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0.75rem 0 0.25rem;
+  }
+
+  .keep-preview h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0.6rem 0 0.25rem;
+  }
+
+  .keep-preview h3 {
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.35;
+    margin: 0.5rem 0 0.15rem;
+  }
+
+  .keep-preview ul,
+  .keep-preview ol {
+    padding-left: 1rem;
+    margin-bottom: 0.5rem;
+    list-style-position: outside;
+  }
+
+  /* The card container preserves raw newlines; inside list items that would
+     push the text below its marker, so restore normal wrapping per item. */
+  .keep-preview li {
+    white-space: normal;
+  }
+
+  .keep-preview ul {
+    list-style: disc;
+  }
+
+  .keep-preview ol {
+    list-style: decimal;
+  }
+
   /* Tiptap Task List / Checklist Styles */
   .ProseMirror ul[data-type="taskList"] {
     list-style: none !important;

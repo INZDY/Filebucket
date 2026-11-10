@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { DragEvent } from "react";
 
 import { Check, Download, Folder, Move, Trash2 } from "lucide-react";
 import {
@@ -22,6 +22,7 @@ import {
 } from "@/app/media/actions";
 import { bulkMoveItemsAction, bulkTrashItemsAction } from "@/app/bulk/actions";
 import { Button } from "@/components/ui/button";
+import { PageBreadcrumb, PageHeader } from "@/components/page-header";
 import { toastError, toastSuccess } from "@/components/ui/toast";
 import { useSettings } from "@/components/settings-context";
 import { getFolderMode } from "@/lib/mode";
@@ -252,94 +253,79 @@ export function FolderContentsView({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* Folder Contents Header Breadcrumbs */}
-      <div className="border-b border-slate-800 bg-[#191c22] px-5 py-2.5 shrink-0 flex items-center justify-between">
-        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
-          <Link
-            className={cn(
-              "hover:text-slate-100 transition-colors",
-              dragOverFolderId === "vault-root" && "text-amber-500 font-semibold"
-            )}
-            href="/"
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragOverFolderId("vault-root");
-            }}
-            onDragLeave={() => {
-              setDragOverFolderId(null);
-            }}
-            onDrop={(e) => {
-              e.stopPropagation();
-              handleDrop(null, e);
-            }}
-          >
-            Vault
-          </Link>
-          {folderTrail.map((folder) => (
-            <span key={folder.id} className="flex items-center gap-2">
-              <span className="text-slate-600">/</span>
-              <Link
-                className={cn(
-                  "hover:text-slate-100 transition-colors font-medium",
-                  dragOverFolderId === folder.id ? "text-amber-500 font-semibold" : "text-slate-300"
-                )}
-                href={`/?folder=${folder.id}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOverFolderId(folder.id);
-                }}
-                onDragLeave={() => {
-                  setDragOverFolderId(null);
-                }}
-                onDrop={(e) => {
-                  e.stopPropagation();
-                  handleDrop(folder.id, e);
-                }}
-              >
-                {folder.name}
-              </Link>
-            </span>
-          ))}
-        </div>
-
-        {currentFolderMode === "FILES" && (
-          <div className="flex shrink-0 items-center gap-2">
-            {selectionMode ? (
-              <>
+      <PageHeader
+        actions={
+          currentFolderMode === "FILES" ? (
+            <>
+              {selectionMode ? (
+                <>
+                  <Button
+                    className="h-8 gap-1.5 px-3 text-xs"
+                    onClick={toggleSelectAll}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    {allSelected ? "Deselect all" : "Select all"}
+                  </Button>
+                  <Button
+                    className="h-8 px-3 text-xs"
+                    onClick={clearSelection}
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                  >
+                    Cancel
+                  </Button>
+                </>
+              ) : (
                 <Button
-                  className="h-8 gap-1.5 px-3 text-xs"
-                  onClick={toggleSelectAll}
+                  className="h-8 px-3 text-xs"
+                  onClick={() => setSelectionMode(true)}
                   size="sm"
                   type="button"
                   variant="outline"
                 >
-                  <Check className="h-3.5 w-3.5" />
-                  {allSelected ? "Deselect all" : "Select all"}
+                  Select
                 </Button>
-                <Button
-                  className="h-8 px-3 text-xs"
-                  onClick={clearSelection}
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  Cancel
-                </Button>
-              </>
-            ) : (
-              <Button
-                className="h-8 px-3 text-xs"
-                onClick={() => setSelectionMode(true)}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                Select
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
+              )}
+            </>
+          ) : undefined
+        }
+        breadcrumb={
+          <PageBreadcrumb
+            items={[
+              {
+                name: "Vault",
+                href: "/",
+                drag: {
+                  active: dragOverFolderId === "vault-root",
+                  onDragOver: () => setDragOverFolderId("vault-root"),
+                  onDragLeave: () => setDragOverFolderId(null),
+                  onDrop: (event) => {
+                    event.stopPropagation();
+                    handleDrop(null, event);
+                  },
+                },
+              },
+              ...folderTrail.map((folder) => ({
+                name: folder.name,
+                href: `/?folder=${folder.id}`,
+                drag: {
+                  active: dragOverFolderId === folder.id,
+                  onDragOver: () => setDragOverFolderId(folder.id),
+                  onDragLeave: () => setDragOverFolderId(null),
+                  onDrop: (event: DragEvent) => {
+                    event.stopPropagation();
+                    handleDrop(folder.id, event);
+                  },
+                },
+              })),
+            ]}
+          />
+        }
+      />
 
       {/* Grid of Folder Contents */}
       <div
@@ -566,7 +552,6 @@ export function FolderContentsView({
               <Folder className="h-6 w-6" />
             </div>
             <h3 className="text-sm font-semibold text-slate-300">This folder is empty</h3>
-            <p className="text-xs text-slate-500 mt-1">Upload files or create subfolders to get started.</p>
           </div>
         )}
       </div>
@@ -590,7 +575,7 @@ export function FolderContentsView({
           ) : moveOpen ? (
             <form
               name="bulk-move"
-              className="flex items-center gap-2"
+              className="flex flex-wrap items-center gap-2"
               onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
@@ -625,11 +610,11 @@ export function FolderContentsView({
               </Button>
             </form>
           ) : (
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs text-slate-400">
                 <span className="font-semibold text-slate-100">{selectedItems.length}</span> selected
               </p>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   className="h-8 gap-1.5 px-3 text-xs"
                   onClick={() => setMoveOpen(true)}

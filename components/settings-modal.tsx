@@ -221,7 +221,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               )}
             </div>
             <p className="text-xs text-slate-500">
-              Set the total storage space available for uploaded media attachments in your vault.
+              Max storage for media assets.
             </p>
           </div>
 
@@ -271,7 +271,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 )}
               </div>
               <p className="text-xs text-slate-500">
-                Duration of inactivity before the editor autosaves changes to the database.
+                Idle time before autosave.
               </p>
             </div>
 
@@ -289,7 +289,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <option value="mono">Monospace (Code)</option>
               </select>
               <p className="text-xs text-slate-500">
-                Choose the font family to apply cascadingly to the note editor text and headings.
+                Applies to notes editor.
               </p>
             </div>
           </div>
@@ -310,7 +310,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <option value="SQUARE">Square (1:1)</option>
               </select>
               <p className="text-xs text-slate-500">
-                Choose the uniform grid height for displaying note and media file cards in folder views.
+                Card size in folder views.
               </p>
             </div>
           </div>
