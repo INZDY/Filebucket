@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ClientForm } from "@/components/client-form";
 import { ConfirmForm } from "@/components/confirm-form";
+import { PageBreadcrumb, PageHeader } from "@/components/page-header";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -110,7 +111,7 @@ export function TrashWorkspace({
       <div className="flex h-full min-h-0 flex-col">
         <div className="flex items-center justify-between border-b border-slate-800 bg-amber-500/10 px-5 py-3 text-xs text-amber-200">
           <span className="flex items-center gap-1.5 font-medium">
-            This note is in Trash. Restore it to edit.
+            In Trash — restore to edit.
           </span>
           <div className="flex gap-2">
             <ClientForm action={restoreNoteAction}>
@@ -121,7 +122,7 @@ export function TrashWorkspace({
             </ClientForm>
             <ConfirmForm
               action={deleteNoteAction}
-              message={`Are you sure you want to permanently delete the note '${selectedDeletedNote.title}'? This action cannot be undone.`}
+              message={`Permanently delete note '${selectedDeletedNote.title}'?`}
             >
               <input type="hidden" name="noteId" value={selectedDeletedNote.id} />
               <Button size="sm" type="submit" className="h-7 px-2.5 text-xs bg-rose-600 hover:bg-rose-700 text-white">
@@ -130,12 +131,14 @@ export function TrashWorkspace({
             </ConfirmForm>
           </div>
         </div>
-        <div className="border-b border-slate-800 bg-[#191c22] px-5 py-4">
-          <h2 className="text-lg font-semibold truncate">{selectedDeletedNote.title}</h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Note in {selectedDeletedNote.folder?.name ?? "Vault"} · Trashed
-          </p>
-        </div>
+        <PageHeader
+          breadcrumb={
+            <PageBreadcrumb
+              items={[{ name: selectedDeletedNote.title }]}
+              meta={`Note in ${selectedDeletedNote.folder?.name ?? "Vault"} · Trashed`}
+            />
+          }
+        />
         <div className="min-h-0 flex-1 overflow-y-auto bg-[#101217] px-6 py-6 prose prose-slate max-w-none text-sm text-slate-300 leading-7 [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:pl-4 [&_blockquote]:text-muted-foreground [&_code]:rounded [&_code]:bg-slate-800/80 [&_code]:px-1 [&_code]:py-0.5 [&_ol]:list-decimal [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-50 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-800 [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-slate-800 [&_th]:px-2 [&_th]:py-1 [&_ul]:list-disc">
           <ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml>
             {resolveDisplayMarkdown(selectedDeletedNote.body)}
@@ -153,7 +156,7 @@ export function TrashWorkspace({
       <div className="flex h-full min-h-0 flex-col">
         <div className="flex items-center justify-between border-b border-slate-800 bg-amber-500/10 px-5 py-3 text-xs text-amber-200">
           <span className="flex items-center gap-1.5 font-medium">
-            This media asset is in Trash. Restore it to view or play.
+            In Trash — restore to view.
           </span>
           <div className="flex gap-2">
             <ClientForm action={restoreMediaAssetAction}>
@@ -164,7 +167,7 @@ export function TrashWorkspace({
             </ClientForm>
             <ConfirmForm
               action={deleteMediaAssetAction}
-              message={`Are you sure you want to permanently delete the media asset '${selectedDeletedMedia.filename}'? This action cannot be undone.`}
+              message={`Permanently delete media asset '${selectedDeletedMedia.filename}'?`}
             >
               <input type="hidden" name="mediaAssetId" value={selectedDeletedMedia.id} />
               <Button size="sm" type="submit" className="h-7 px-2.5 text-xs bg-rose-600 hover:bg-rose-700 text-white">
@@ -173,12 +176,14 @@ export function TrashWorkspace({
             </ConfirmForm>
           </div>
         </div>
-        <div className="border-b border-slate-800 bg-[#191c22] px-5 py-4">
-          <h2 className="text-lg font-semibold truncate">{selectedDeletedMedia.filename}</h2>
-          <p className="text-xs text-slate-500 mt-1">
-            {selectedDeletedMedia.contentType} · {formatBytes(selectedDeletedMedia.sizeBytes)}
-          </p>
-        </div>
+        <PageHeader
+          breadcrumb={
+            <PageBreadcrumb
+              items={[{ name: selectedDeletedMedia.filename }]}
+              meta={`${selectedDeletedMedia.contentType} · ${formatBytes(selectedDeletedMedia.sizeBytes)}`}
+            />
+          }
+        />
         <div className="min-h-0 flex-1 overflow-y-auto bg-[#101217] px-6 py-6 flex items-center justify-center text-sm text-slate-400">
           {previewKind === "image" && previewUrl ? (
             <>
@@ -215,7 +220,7 @@ export function TrashWorkspace({
           ) : (
             <div className="text-center">
               <FileQuestion className="mx-auto h-8 w-8 text-slate-500 mb-2" />
-              Preview unavailable for this trashed media asset format.
+              No preview.
             </div>
           )}
         </div>
@@ -228,7 +233,7 @@ export function TrashWorkspace({
       <div className="flex h-full min-h-0 flex-col">
         <div className="flex items-center justify-between border-b border-slate-800 bg-amber-500/10 px-5 py-3 text-xs text-amber-200">
           <span className="flex items-center gap-1.5 font-medium">
-            This folder is in Trash. Restore it to browse or create items inside it.
+            In Trash — restore.
           </span>
           <div className="flex gap-2">
             <ClientForm action={restoreFolderAction}>
@@ -239,7 +244,7 @@ export function TrashWorkspace({
             </ClientForm>
             <ConfirmForm
               action={deleteFolderAction}
-              message={`Are you sure you want to permanently delete the folder '${selectedDeletedFolder.name}' and all of its contents? This action cannot be undone.`}
+              message={`Permanently delete folder '${selectedDeletedFolder.name}' and its contents?`}
             >
               <input type="hidden" name="folderId" value={selectedDeletedFolder.id} />
               <Button size="sm" type="submit" className="h-7 px-2.5 text-xs bg-rose-600 hover:bg-rose-700 text-white">
@@ -248,12 +253,11 @@ export function TrashWorkspace({
             </ConfirmForm>
           </div>
         </div>
-        <div className="border-b border-slate-800 bg-[#191c22] px-5 py-4">
-          <h2 className="text-lg font-semibold truncate">{selectedDeletedFolder.name}</h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Read-only Folder · Trashed
-          </p>
-        </div>
+        <PageHeader
+          breadcrumb={
+            <PageBreadcrumb items={[{ name: selectedDeletedFolder.name }]} meta="Read-only Folder · Trashed" />
+          }
+        />
         <div className="min-h-0 flex-1 overflow-y-auto bg-[#101217] px-6 py-6">
           <div className="divide-y divide-slate-800 rounded-md border border-slate-800 bg-[#161a23]/30">
             {deletedFolderContents && (
@@ -308,7 +312,7 @@ export function TrashWorkspace({
         </div>
         <p className="text-sm font-medium text-slate-300">Trash Vault</p>
         <p className="text-xs text-slate-500">
-          Select a deleted folder, note, or media asset from the sidebar Trash list to inspect or restore it.
+          Select an item to restore.
         </p>
       </div>
     </div>

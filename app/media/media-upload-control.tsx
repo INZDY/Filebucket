@@ -1,7 +1,8 @@
 "use client";
 
 import { HardDriveUpload, RefreshCw, X, ChevronDown, ChevronUp } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { getPresignedUploadUrlAction, createMediaAssetAction } from "@/app/media/actions";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,9 @@ function formatSize(size: number) {
 
 export function MediaUploadControl({ disabled, folderId }: MediaUploadControlProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const uploadButtonRef = useRef<HTMLButtonElement>(null);
+  const [panelPosition, setPanelPosition] = useState<{ top: number; left: number } | null>(null);
+
   const [uploads, setUploads] = useState<UploadState[]>([]);
   const [showDetails, setShowDetails] = useState(false);
 
@@ -212,6 +216,30 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
     setUploads((prev) => prev.filter((item) => item.id !== id));
   }
 
+  useEffect(() => {
+    if (uploads.length === 0) {
+      setPanelPosition(null);
+      return;
+    }
+    const PANEL_WIDTH = 288;
+    const placePanel = () => {
+      const button = uploadButtonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      setPanelPosition({
+        top: rect.bottom + 8,
+        left: Math.min(Math.max(8, rect.left), window.innerWidth - PANEL_WIDTH - 8),
+      });
+    };
+    placePanel();
+    window.addEventListener("resize", placePanel);
+    window.addEventListener("scroll", placePanel, true);
+    return () => {
+      window.removeEventListener("resize", placePanel);
+      window.removeEventListener("scroll", placePanel, true);
+    };
+  }, [uploads.length]);
+
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
       <input
@@ -229,6 +257,7 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
         disabled={disabled}
         onClick={() => inputRef.current?.click()}
         size="icon"
+        ref={uploadButtonRef}
         title="Upload media"
         type="button"
         variant="outline"
@@ -236,8 +265,8 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
         <HardDriveUpload className="h-4 w-4" />
       </Button>
 
-      {uploads.length > 0 ? (
-        (() => {
+      {uploads.length > 0 && panelPosition
+        ? (() => {
           const totalCount = uploads.length;
           const activeCount = uploads.filter((u) => u.status === "uploading" || u.status === "waiting").length;
           const completedCount = uploads.filter((u) => u.status === "success").length;
@@ -248,7 +277,11 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
             : 0;
 
           return (
-            <div className="absolute left-3 right-3 top-16 z-30 space-y-2 rounded-md border border-slate-800 bg-[#111318] p-3 text-slate-100 shadow-xl max-w-sm">
+            createPortal(
+              <div
+                className="fixed z-50 w-72 space-y-2 rounded-md border border-slate-800 bg-[#111318] p-3 text-slate-100 shadow-xl"
+                style={{ top: panelPosition.top, left: panelPosition.left }}
+              >
               {/* Summary Header */}
               <div className="flex items-center justify-between text-xs border-b border-slate-800/80 pb-2">
                 <div className="flex flex-col gap-0.5 min-w-0">
@@ -374,10 +407,12 @@ export function MediaUploadControl({ disabled, folderId }: MediaUploadControlPro
                   ))}
                 </div>
               )}
-            </div>
+              </div>,
+              document.body
+            )
           );
         })()
-      ) : null}
+        : null}
     </div>
   );
 }

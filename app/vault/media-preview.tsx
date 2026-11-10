@@ -18,6 +18,7 @@ import { FilebucketPlayer } from "@/components/filebucket-player";
 import { MangaReader, type ReaderPage } from "@/components/manga-reader";
 import { MediaActionsMenu } from "@/app/media/media-actions-menu";
 import { Button } from "@/components/ui/button";
+import { PageBreadcrumb, PageHeader } from "@/components/page-header";
 import { compareAlphanumeric } from "@/lib/sorting";
 import { getMediaAssetUrl, formatBytes } from "@/lib/utils";
 import { getMediaPreviewKind } from "./media-kind";
@@ -202,30 +203,9 @@ export function MediaPreview({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b border-slate-800 bg-[#191c22] px-5 py-2.5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
-              <Link className="hover:text-slate-100" href="/">
-                Vault
-              </Link>
-              {folderTrail.map((folder) => (
-                <span key={folder.id} className="flex items-center gap-2">
-                  <span>/</span>
-                  <Link className="hover:text-slate-100" href={`/?folder=${folder.id}`}>
-                    {folder.name}
-                  </Link>
-                </span>
-              ))}
-              <span>/</span>
-              <span className="max-w-56 truncate font-medium text-slate-200">{selectedMedia.filename}</span>
-              <span className="text-slate-500">•</span>
-              <span className="text-xs text-slate-500">
-                {selectedMedia.contentType} · {formatBytes(selectedMedia.sizeBytes)}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
+      <PageHeader
+        actions={
+          <>
             {previewKind === "image" && (
               <Button
                 className="h-8 gap-1.5 px-3 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-md shadow-blue-600/10 active:scale-95 transition-transform"
@@ -244,9 +224,22 @@ export function MediaPreview({
                 folderId: selectedMedia.folder?.id ?? null,
               }}
             />
-          </div>
-        </div>
-      </div>
+          </>
+        }
+        breadcrumb={
+          <PageBreadcrumb
+            items={[
+              { name: "Vault", href: "/" },
+              ...folderTrail.map((folder) => ({
+                name: folder.name,
+                href: `/?folder=${folder.id}`,
+              })),
+              { name: selectedMedia.filename },
+            ]}
+            meta={`${selectedMedia.contentType} · ${formatBytes(selectedMedia.sizeBytes)}`}
+          />
+        }
+      />
       <div
         className="min-h-0 flex-1 overflow-y-auto bg-[#101217] px-6 py-6 relative group/media-nav"
         onTouchStart={handleTouchStart}
@@ -322,7 +315,7 @@ export function MediaPreview({
                       ) : (
                         <>
                           <BookOpen className="h-3.5 w-3.5" />
-                          Open in Reader
+                          Open
                         </>
                       )}
                     </Button>
@@ -350,7 +343,7 @@ export function MediaPreview({
                     onClick={() => setIsBookReaderOpen(true)}
                     type="button"
                   >
-                    Open in Book Reader
+                    Open
                   </Button>
                 </div>
               );
@@ -371,7 +364,7 @@ export function MediaPreview({
                     onClick={() => setIsBookReaderOpen(true)}
                     type="button"
                   >
-                    Open in Book Reader
+                    Open
                   </Button>
                 </div>
               );
@@ -406,7 +399,7 @@ export function MediaPreview({
                     ) : (
                       <>
                         <BookOpen className="h-3.5 w-3.5" />
-                        Read Archive
+                        Open
                       </>
                     )}
                   </Button>

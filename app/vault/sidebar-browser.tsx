@@ -585,7 +585,7 @@ export function SidebarBrowser({
               {trashCount > 0 ? (
                 <ConfirmForm
                   action={emptyTrashAction}
-                  message="Are you sure you want to empty the trash? All items will be permanently deleted. This action cannot be undone."
+                  message="Empty the trash permanently?"
                 >
                   <Button
                     size="sm"
@@ -637,7 +637,7 @@ export function SidebarBrowser({
                         </ClientForm>
                         <ConfirmForm
                           action={deleteFolderAction}
-                          message={`Are you sure you want to permanently delete the folder '${folder.name}' and all of its contents? This action cannot be undone.`}
+                          message={`Permanently delete folder '${folder.name}' and its contents?`}
                         >
                           <input type="hidden" name="folderId" value={folder.id} />
                           <Button
@@ -690,7 +690,7 @@ export function SidebarBrowser({
                         </ClientForm>
                         <ConfirmForm
                           action={deleteNoteAction}
-                          message={`Are you sure you want to permanently delete the note '${note.title}'? This action cannot be undone.`}
+                          message={`Permanently delete note '${note.title}'?`}
                         >
                           <input type="hidden" name="noteId" value={note.id} />
                           <Button
@@ -743,7 +743,7 @@ export function SidebarBrowser({
                         </ClientForm>
                         <ConfirmForm
                           action={deleteMediaAssetAction}
-                          message={`Are you sure you want to permanently delete the media asset '${media.filename}'? This action cannot be undone.`}
+                          message={`Permanently delete media asset '${media.filename}'?`}
                         >
                           <input type="hidden" name="mediaAssetId" value={media.id} />
                           <Button

@@ -43,8 +43,8 @@ describe("ChatWorkspace UI Component", () => {
       );
     });
 
-    expect(container.textContent).toContain("Welcome to Chat Channels");
-    expect(container.textContent).toContain("Select a channel from the sidebar list");
+    expect(container.textContent).toContain("Chat Channels");
+    expect(container.textContent).toContain("Select a channel");
 
     await act(async () => {
       root.unmount();

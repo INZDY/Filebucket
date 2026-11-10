@@ -354,11 +354,6 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
           <span className="font-semibold text-slate-100 truncate">
             {isAtRoot ? "Chat Channels" : activeChannel!.name}
           </span>
-          {!isAtRoot && (
-            <span className="hidden md:inline text-xs text-slate-500 truncate max-w-[200px]">
-              - chronological stream for text and media uploads
-            </span>
-          )}
         </div>
       </div>
 
@@ -369,10 +364,8 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 mb-4 shadow-[0_0_20px_rgba(99,102,241,0.1)]">
               <MessageSquare className="h-8 w-8" />
             </div>
-            <h3 className="text-base font-semibold text-slate-100">Welcome to Chat Channels</h3>
-            <p className="mt-1 text-sm text-slate-400 max-w-sm">
-              Select a channel from the sidebar list, or create a new folder under Chat Channels to start messaging.
-            </p>
+            <h3 className="text-base font-semibold text-slate-100">Chat Channels</h3>
+            <p className="mt-1 text-sm text-slate-400">Select a channel to start messaging.</p>
           </div>
         ) : isLoading ? (
           <div className="flex h-full items-center justify-center">
@@ -380,8 +373,7 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
           </div>
         ) : messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center p-6">
-            <p className="text-sm text-slate-500">No messages in this channel yet.</p>
-            <p className="mt-1 text-xs text-slate-600">Be the first to post something!</p>
+            <p className="text-sm text-slate-500">No messages yet.</p>
           </div>
         ) : (
           messages.map((msg) => (
@@ -607,7 +599,7 @@ export function ChatWorkspace({ activeChannel, sessionUserId, chatRootId }: Chat
       {isArchiveLoading && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/75 backdrop-blur-sm">
           <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
-          <p className="mt-3 text-sm text-slate-350">Extracting manga pages client-side...</p>
+          <p className="mt-3 text-sm text-slate-350">Extracting...</p>
         </div>
       )}
 
