@@ -3,6 +3,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { act } from "react";
 import { SidebarBrowser } from "@/app/vault/sidebar-browser";
+import { UploadProvider } from "@/components/upload-context";
 
 // Mock server actions to avoid dependency issues in unit tests
 vi.mock("@/app/folders/actions", () => ({
@@ -81,10 +82,12 @@ describe("SidebarBrowser Global Explorer & Action Toolbar", () => {
 
     await act(async () => {
       root.render(
-        <SidebarBrowser
-          {...defaultProps}
-          activeMode="FILES"
-        />
+        <UploadProvider>
+          <SidebarBrowser
+            {...defaultProps}
+            activeMode="FILES"
+          />
+        </UploadProvider>
       );
     });
 
@@ -125,10 +128,12 @@ describe("SidebarBrowser Global Explorer & Action Toolbar", () => {
 
     await act(async () => {
       root.render(
-        <SidebarBrowser
-          {...defaultProps}
-          activeMode="FILES"
-        />
+        <UploadProvider>
+          <SidebarBrowser
+            {...defaultProps}
+            activeMode="FILES"
+          />
+        </UploadProvider>
       );
     });
 
@@ -151,10 +156,12 @@ describe("SidebarBrowser Global Explorer & Action Toolbar", () => {
 
     await act(async () => {
       root.render(
-        <SidebarBrowser
-          {...defaultProps}
-          activeMode="FILES"
-        />
+        <UploadProvider>
+          <SidebarBrowser
+            {...defaultProps}
+            activeMode="FILES"
+          />
+        </UploadProvider>
       );
     });
 
@@ -181,10 +188,12 @@ describe("SidebarBrowser Global Explorer & Action Toolbar", () => {
 
     await act(async () => {
       root.render(
-        <SidebarBrowser
-          {...defaultProps}
-          activeMode="NOTES"
-        />
+        <UploadProvider>
+          <SidebarBrowser
+            {...defaultProps}
+            activeMode="NOTES"
+          />
+        </UploadProvider>
       );
     });
 
@@ -210,11 +219,13 @@ describe("SidebarBrowser Global Explorer & Action Toolbar", () => {
 
     await act(async () => {
       root.render(
-        <SidebarBrowser
-          {...defaultProps}
-          activeMode="CHAT"
-          selectedFolder={{ id: "chat-root", name: "Chat Channels", parentId: null, type: "CHAT_ROOT" }}
-        />
+        <UploadProvider>
+          <SidebarBrowser
+            {...defaultProps}
+            activeMode="CHAT"
+            selectedFolder={{ id: "chat-root", name: "Chat Channels", parentId: null, type: "CHAT_ROOT" }}
+          />
+        </UploadProvider>
       );
     });
 
@@ -240,10 +251,12 @@ describe("SidebarBrowser Global Explorer & Action Toolbar", () => {
 
     await act(async () => {
       root.render(
-        <SidebarBrowser
-          {...defaultProps}
-          activeMode="FILES"
-        />
+        <UploadProvider>
+          <SidebarBrowser
+            {...defaultProps}
+            activeMode="FILES"
+          />
+        </UploadProvider>
       );
     });
 

@@ -15,6 +15,8 @@ import { ActivityBar } from "@/components/activity-bar";
 import { resolveViewMode } from "@/lib/mode";
 import { getMediaAssetUrl } from "@/lib/utils";
 import { SettingsProvider } from "@/components/settings-context";
+import { UploadProvider } from "@/components/upload-context";
+import { UploadTray } from "@/app/media/upload-tray";
 import dynamic from "next/dynamic";
 const SettingsModal = dynamic(
   () => import("@/components/settings-modal").then((mod) => mod.SettingsModal),
@@ -833,8 +835,9 @@ export function VaultDashboard({
         fileCardAspect: (userSettings.fileCardAspect as "VIDEO" | "PORTRAIT" | "SQUARE") || "VIDEO",
       }}
     >
-      <main className="h-full overflow-hidden bg-[#0d0d11] text-slate-100">
-        <GlobalLoader renderKey={renderKey} />
+      <UploadProvider>
+        <main className="h-full overflow-hidden bg-[#0d0d11] text-slate-100">
+          <GlobalLoader renderKey={renderKey} />
       <div className="flex h-full flex-col overflow-hidden">
         <header className="flex min-h-14 flex-col gap-3 border-b border-slate-800/40 bg-[#101015]/60 backdrop-blur-md px-4 py-2.5 md:flex-row md:items-center md:px-5">
           <div className="flex min-w-0 items-center gap-3">
@@ -988,8 +991,10 @@ export function VaultDashboard({
           />
         </div>
       </div>
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-    </main>
+        <UploadTray />
+        <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+        </main>
+      </UploadProvider>
     </SettingsProvider>
   );
 }
