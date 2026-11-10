@@ -242,6 +242,7 @@ export function MediaPreview({
       />
       <div
         className="min-h-0 flex-1 overflow-y-auto bg-[#101217] px-6 py-6 relative group/media-nav"
+        data-swipe-ignore
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

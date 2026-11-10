@@ -15,6 +15,7 @@ import { ActivityBar } from "@/components/activity-bar";
 import { resolveViewMode } from "@/lib/mode";
 import { getMediaAssetUrl } from "@/lib/utils";
 import { SettingsProvider } from "@/components/settings-context";
+import { SwipeToOpenSidebar } from "@/components/swipe-to-open-sidebar";
 import { UploadProvider } from "@/components/upload-context";
 import { UploadTray } from "@/app/media/upload-tray";
 import dynamic from "next/dynamic";
@@ -836,10 +837,11 @@ export function VaultDashboard({
       }}
     >
       <UploadProvider>
+        <SwipeToOpenSidebar>
         <main className="h-full overflow-hidden bg-[#0d0d11] text-slate-100">
           <GlobalLoader renderKey={renderKey} />
       <div className="flex h-full flex-col overflow-hidden">
-        <header className="flex min-h-14 flex-col gap-3 border-b border-slate-800/40 bg-[#101015]/60 backdrop-blur-md px-4 py-2.5 md:flex-row md:items-center md:px-5">
+        <header className="flex min-h-14 flex-col gap-3 border-b border-slate-800/40 bg-[#101015]/60 backdrop-blur-md px-4 py-2.5 md:flex-row md:items-center md:px-5" data-swipe-zone>
           <div className="flex min-w-0 items-center gap-3">
             <HeaderHamburger />
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600/10 border border-blue-500/25 shadow-[0_0_10px_rgba(59,130,246,0.15)] overflow-hidden">
@@ -994,6 +996,7 @@ export function VaultDashboard({
         <UploadTray />
         <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
         </main>
+        </SwipeToOpenSidebar>
       </UploadProvider>
     </SettingsProvider>
   );
